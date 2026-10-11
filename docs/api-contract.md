@@ -1,0 +1,342 @@
+# Sealed API contract: frontend and backend
+
+Status: v1, Oct 11 2026. Owner: @Apa.
+This is the single source of truth for how the frontend (Vercel) and the watcher API (Railway) talk. If this file disagrees with the Architecture doc, the SRD table or any code, **this file wins** and the other one is fixed in the same change.
+
+Built from: SRD (FR-1 to FR-19, NFR-1 to NFR-11, T-1 to T-10), Architecture §3 to §5, `docs/design-screens.md` and `docs/frontend/rules.md`.
+
+## 1. Conflicts found and how this contract settles them
+
+These came up when the 17 Figma screens were checked against the Architecture API table. Each one would have broken a screen or a test.
+
+| # | Conflict | Settled as |
+|---|---|---|
+| C-1 | One `status` field cannot say "pending and below floor" at the same time, but a low tip can be both | Split into `chain_state`, `below_floor` and `format_ok`, plus a derived `display_status` with a fixed precedence (§5.3) |
+| C-2 | Paging by tip id only returns new tips. A tip that goes pending to confirmed, or gets orphaned, would never update in the Inbox | Cursor is a change sequence `seq`. Any new or changed tip gets a higher `seq` (§6.5) |
+| C-3 | The "All tips (5)" and "Below floor, hidden (2)" tabs need counts the API did not return | Tip list returns `counts` (§6.5) |
+| C-4 | "Setup secret" auth had no header name | Header `X-Setup-Secret` (§3) |
+| C-5 | Settings has "Rotate desk token" with no setup secret field, but rotation required the setup secret | Rotation accepts the current desk token **or** the setup secret (§6.7) |
+| C-6 | Delete needs the desk token and the setup secret, but the Settings screen had no setup secret field | Setup secret field added to the Delete card in Figma (Oct 11) |
+| C-7 | The key fingerprint shown on six screens had no defined algorithm. Frontend and backend could compute different values | One algorithm with a test vector (§4.3) |
+| C-8 | Amount units, time format and binary encoding were not defined | Integers in zatoshis, RFC 3339 UTC strings, standard base64 (§4) |
+| C-9 | Network names differ between libraries ("testnet", "test", "TestNetwork") | Wire values are `"test"` and `"main"` only (§4.1) |
+| C-10 | Browser calls from Vercel to Railway need CORS, and the CSP must allow the API origin | CORS and CSP rules (§3) |
+| C-11 | Where the frontend keeps the desk token was not defined | Stored passphrase-wrapped in IndexedDB with the desk key, never in plain storage (§7) |
+| C-12 | Tip floor range was 0 to 100,000,000 zat, but SRD BR-8 forbids a floor below the ZIP 317 two-action fee (10,000 zat) | Range is 10,000 to 100,000,000 on `POST /inbox` and `PATCH /inbox/{id}` (Oct 11) |
+
+## 2. Base
+
+| Item | Value |
+|---|---|
+| Base URL | `https://<railway-host>/v1` from config `api_base_url`. No trailing slash |
+| Format | JSON, UTF-8, `Content-Type: application/json` on every body |
+| Field names | `snake_case` on the wire. The frontend maps to `camelCase` in `src/lib/api.ts` only |
+| Versioning | Path prefix `/v1`. Adding an optional field is allowed. Renaming, removing or changing a type needs `/v2` |
+| Single tenant | One deployment serves one inbox. `{id}` is still in every path so a multi-inbox version needs no URL change |
+
+## 3. Transport, auth and browser rules
+
+**Every response**
+- `Cache-Control: no-store` and `Pragma: no-cache` (NFR-4)
+- No `Set-Cookie`, ever (NFR-4)
+- `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`
+
+**Auth**
+
+| Kind | How it is sent | Used by |
+|---|---|---|
+| None | | `GET /health`, `GET /inbox/{id}` |
+| Desk token | `Authorization: Bearer <token>` | Tip list, one tip, PATCH, rotate, DELETE |
+| Setup secret | `X-Setup-Secret: <secret>` | Create inbox, first token, rotate (alternative), DELETE |
+
+- Tokens and secrets are never put in a URL or query string.
+- The server stores only a hash of each token and of the setup secret, and compares in constant time.
+- On a bad or revoked token the server returns `401 unauthorized`. The frontend sends the desk to the Locked screen.
+
+**CORS** (the browser calls Railway from the Vercel origin)
+- `Access-Control-Allow-Origin`: exact match against `ALLOWED_ORIGINS`. Never `*`.
+- `Access-Control-Allow-Methods: GET, POST, PATCH, DELETE`
+- `Access-Control-Allow-Headers: Authorization, Content-Type, X-Setup-Secret`
+- `Access-Control-Allow-Credentials` is not sent. The frontend uses `credentials: "omit"`.
+- `Access-Control-Max-Age: 600`
+
+**CSP on the frontend** includes the API origin in `connect-src` and nothing else.
+
+**Rate limits**: by token on desk routes, by IP on public routes. IPs are counted in memory only and never written to logs or the database (NFR-2). Over the limit: `429 rate_limited` with `Retry-After` in seconds.
+
+## 4. Shared types and rules
+
+### 4.1 Scalars
+
+| Type | Wire format | Example | Rule |
+|---|---|---|---|
+| Network | string `"test"` or `"main"` | `"test"` | Same value in frontend config and backend env. A mismatch is a fatal config error on both sides |
+| Inbox id | string `[a-z0-9_-]{1,32}` | `"desk"` | Set at deploy time |
+| Tip id | string, opaque | `"tip_01HF…"` | Never parsed by the frontend |
+| Amount | integer zatoshis | `100000` | Fields end in `_zat`. 1 ZEC = 100,000,000. The frontend formats as ZEC with up to 8 decimals |
+| Time | RFC 3339 UTC string | `"2026-10-11T09:41:00Z"` | Fields end in `_at`. The frontend shows local time |
+| Height | integer | `4201108` | Block height |
+| Tx id | 64 lowercase hex | `"8b02e4…77ad"` | Byte order as shown by block explorers |
+| Binary | standard base64 with padding | | Keys and memo bytes. The ZIP 321 link is the only place that uses base64url, by its own spec |
+| Seq | integer, increasing per inbox | `1042` | Change sequence for polling (§6.5) |
+
+### 4.2 Keys and addresses
+
+| Item | Format | Checked by |
+|---|---|---|
+| Desk public key | 32 bytes, base64 (44 chars) | Both. Frontend from libsodium `crypto_box_keypair` |
+| Shielded address | Unified address, HRP `utest` (test) or `u` (main), must contain a Sapling or Orchard receiver | Frontend (prefix) and backend (full decode, FR-11) |
+| Viewing key | Unified full viewing key, HRP `uviewtest` or `uview` | Backend decodes. Frontend checks prefix first |
+| Spend-capable key | Anything that decodes as a spending key (for example `secret-extended-key-test1…`) | Rejected in the browser before sending, and again by the server with `422 spend_key_rejected` (FR-11, NFR-3) |
+
+### 4.3 Key fingerprint (one algorithm for both sides)
+
+```
+fingerprint = upper_hex( BLAKE2b-256( desk_public_key_bytes ) )[0..16]
+display     = groups of 4 joined by a space   →   "3F9A C21E 8B02 77AD"
+```
+
+- Frontend: libsodium `crypto_generichash(32, key)`. Backend: Rust `blake2` crate, `Blake2b<U32>`.
+- The wire carries the 16 hex characters without spaces (`"3F9AC21E8B0277AD"`). Spaces are display only.
+- On create, the server recomputes it and rejects a mismatch with `422 fingerprint_mismatch`.
+- `contracts/fixtures/fingerprint.json` holds at least one key and its expected fingerprint. Both test suites must pass it.
+
+### 4.4 Memo (from SRD §3, never retyped)
+
+| Item | Value |
+|---|---|
+| Memo size | 512 bytes |
+| Plaintext block | 2-byte big-endian length + message, zero padded to 333 bytes. Message at most 331 UTF-8 bytes |
+| Sealed box | `crypto_box_seal`, 381 bytes |
+| Memo text | ASCII `z1:` + standard base64 of the sealed box = 511 bytes, then one zero byte |
+| On the wire | `memo_b64` = base64 of the full 512 raw bytes exactly as received on chain |
+| Format check (server) | `format_ok` = starts with `z1:` and the next 508 bytes are valid base64 decoding to 381 bytes. The server never tries to decrypt |
+
+## 5. Objects
+
+### 5.1 Inbox (public)
+
+```json
+{
+  "id": "desk",
+  "name": "Sealed",
+  "network": "test",
+  "address": "utest1…",
+  "desk_public_key": "base64…",
+  "fingerprint": "3F9AC21E8B0277AD",
+  "tip_floor_zat": 100000,
+  "created_at": "2026-10-11T09:00:00Z"
+}
+```
+
+Never contains the viewing key, token hashes or anything about senders.
+
+### 5.2 Tip (desk token only)
+
+```json
+{
+  "id": "tip_01HF…",
+  "seq": 1042,
+  "txid": "8b02e4…77ad",
+  "output_index": 0,
+  "height": 4201108,
+  "block_time_at": "2026-10-11T09:41:00Z",
+  "seen_at": "2026-10-11T09:41:30Z",
+  "amount_zat": 100000,
+  "confirmations": 12,
+  "chain_state": "confirmed",
+  "below_floor": false,
+  "format_ok": true,
+  "display_status": "confirmed",
+  "memo_b64": "ejE6…AA=="
+}
+```
+
+- `id` is unique by `txid` + `output_index` (FR-13).
+- `height`, `block_time_at` and `confirmations` are `null` while the transaction is unmined.
+- `memo_b64` is `null` when the wallet dropped the memo. The Inbox shows it as an empty tip.
+
+### 5.3 Tip status (settles C-1)
+
+| Field | Values | Meaning |
+|---|---|---|
+| `chain_state` | `pending`, `confirmed`, `orphaned` | `confirmed` at 3 or more confirmations (FR-14). `orphaned` if a reorg removed it |
+| `below_floor` | boolean | `amount_zat < tip_floor_zat` at the time of the response (FR-16) |
+| `format_ok` | boolean | §4.4 (FR-19) |
+| `display_status` | `orphaned`, `unreadable`, `below_floor`, `pending`, `confirmed` | Computed by the server with this precedence, left to right. The frontend shows exactly this value in the Status badge |
+
+The five `display_status` values are the five Status badge variants in Figma, in the same spelling. The frontend never invents another.
+
+### 5.4 Health (public)
+
+```json
+{
+  "network": "test",
+  "tip_height": 4201120,
+  "lag_blocks": 0,
+  "sources": [
+    { "url": "https://testnet.zec.rocks:443", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" },
+    { "url": "https://…", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" }
+  ],
+  "version": "0.1.0"
+}
+```
+
+`lag_blocks` at the top is the worst lag among sources that answer. The Inbox health line reads "{ok count} of {total} servers · {lag_blocks} blocks behind · checked {age} ago". The Tag shows WATCHING when every source is ok and lag is under 3, otherwise WATCHER BEHIND (FR-18).
+
+### 5.5 Error
+
+```json
+{ "error": { "code": "spend_key_rejected", "message": "This key can spend funds.", "field": "ufvk" } }
+```
+
+The frontend picks its text by `code` from the Figma copy and never shows `message` as is. `message` is for logs and curl users.
+
+| HTTP | `code` | When | Screen that handles it |
+|---|---|---|---|
+| 400 | `invalid_request` | Bad JSON, missing or wrong-type field | Field error under the named `field` |
+| 401 | `unauthorized` | Missing, bad or revoked token | Inbox, Locked |
+| 403 | `forbidden` | Wrong setup secret | Create inbox 2, Settings |
+| 404 | `not_found` | Unknown inbox or tip | Full-page error |
+| 409 | `inbox_exists` | Create when an inbox exists | Create inbox 2 |
+| 422 | `spend_key_rejected` | Viewing key has spend authority | Create inbox 2 (Input error state) |
+| 422 | `network_mismatch` | Address or key is for the other network | Create inbox 2 |
+| 422 | `address_mismatch` | Address is not derived from the viewing key | Create inbox 2 |
+| 422 | `address_not_shielded` | No shielded receiver | Create inbox 2 |
+| 422 | `fingerprint_mismatch` | Fingerprint does not match the public key | Create inbox 2 |
+| 422 | `floor_out_of_range` | Tip floor outside 10,000 to 100,000,000 zat | Settings |
+| 429 | `rate_limited` | Too many requests | Any. Retry after `Retry-After` |
+| 503 | `watcher_unavailable` | No lightwalletd source answering | Inbox banner (warning callout) |
+
+## 6. Endpoints
+
+### 6.1 `GET /v1/health`
+Auth: none. Returns Health (§5.4). Polled by the Inbox every 30 s. FR-18.
+
+### 6.2 `GET /v1/inbox/{id}`
+Auth: none. Returns Inbox (§5.1).
+The sender pages use the **bundled config** for the key and address (rules §1.8). They may call this endpoint only to compare. If `desk_public_key`, `fingerprint`, `address` or `network` differ from the config, the page stops and shows a key-mismatch error. It never switches to the API value.
+
+### 6.3 `POST /v1/inbox`
+Auth: `X-Setup-Secret`. Screen: Create inbox step 2.
+
+Request
+```json
+{
+  "id": "desk",
+  "name": "Sealed",
+  "desk_public_key": "base64…",
+  "fingerprint": "3F9AC21E8B0277AD",
+  "address": "utest1…",
+  "ufvk": "uviewtest1…",
+  "tip_floor_zat": 100000,
+  "birthday_height": 4200000
+}
+```
+Response `201` with Inbox (§5.1).
+Server checks, in order: setup secret, network, ufvk decodes and has no spend authority, address decodes and is shielded, address belongs to the ufvk, fingerprint matches the key. First failure returns its 4xx code. `birthday_height` is optional. Default is the current tip minus 100 blocks. FR-11, NFR-3.
+
+### 6.4 `POST /v1/inbox/{id}/tokens`
+Auth: `X-Setup-Secret` **or** the current `Authorization: Bearer` (settles C-5). Screens: Create inbox step 2 (right after create) and Settings "Rotate desk token".
+Request body: none. Response `201`:
+```json
+{ "token": "sld_…", "created_at": "2026-10-11T09:00:05Z" }
+```
+Issuing a token revokes every earlier token for the inbox. The token is returned only in this response. The frontend stores it at once (§7).
+
+### 6.5 `GET /v1/inbox/{id}/tips`
+Auth: Bearer. Screen: Inbox.
+
+| Query | Default | Meaning |
+|---|---|---|
+| `after_seq` | `0` | Return tips with `seq` greater than this (new or changed) |
+| `filter` | `visible` | `visible` (not below floor), `below_floor`, or `all` |
+| `limit` | `50` | 1 to 200 |
+
+Response `200`:
+```json
+{
+  "tips": [ /* Tip objects, ordered by seq ascending */ ],
+  "next_seq": 1042,
+  "has_more": false,
+  "counts": { "visible": 5, "below_floor": 2 }
+}
+```
+Polling (settles C-2): the first load calls with `after_seq=0` and pages while `has_more` is true. Then every 30 s it calls with `after_seq=<last next_seq>` and merges by `id`, replacing older copies. The server bumps `seq` whenever a tip is inserted or any of `confirmations`, `chain_state`, `below_floor` changes. A floor change through PATCH bumps every affected tip. FR-12 to FR-16, NFR-6.
+
+### 6.6 `GET /v1/inbox/{id}/tips/{tip_id}`
+Auth: Bearer. Returns one Tip. Used when the desk opens a link to a single tip.
+
+### 6.7 `PATCH /v1/inbox/{id}`
+Auth: Bearer. Screen: Settings.
+Request `{ "tip_floor_zat": 150000 }`, only this field in v1. Range 10,000 to 100,000,000 (the minimum is the ZIP 317 fee for a two-action transaction, SRD BR-8). The same range applies to `tip_floor_zat` in `POST /v1/inbox`.
+Response `200` with Inbox. Tips are re-sorted, never deleted. FR-16.
+
+### 6.8 `DELETE /v1/inbox/{id}`
+Auth: Bearer **and** `X-Setup-Secret`. Screen: Settings (typed DELETE plus setup secret, settles C-6).
+Response `204`, empty body. Removes the inbox, viewing key, token hashes and every tip row. Later calls return `404`. FR-17, T-9.
+After `204` the frontend wipes the stored token, keeps the desk key (the backup still opens old memos in Decrypt) and shows Create inbox step 1.
+
+### 6.9 Never
+
+- No endpoint accepts a memo, a tip text or anything from a sender. Memos only travel on chain.
+- No endpoint returns the viewing key after create.
+- No endpoint takes or returns the desk private key or passphrase.
+
+## 7. What the frontend keeps where
+
+| Data | Where | Cleared when |
+|---|---|---|
+| Desk private key | IndexedDB, wrapped with the passphrase (Argon2id + `crypto_secretbox`) | Never by the app. The desk can export and delete |
+| Desk token | Same IndexedDB record as the key, wrapped with the same passphrase (settles C-11) | Rotate, delete, or 401 |
+| Unwrapped key and token | Memory only | Lock inbox, 15 minutes idle, tab closed |
+| Decrypted tip text | Memory only | Same as above |
+| Setup secret | Memory only, during Create inbox and the delete form | Leaving that screen |
+| Sender tip text and sealed memo | Memory only | Leaving the flow or closing the tab |
+
+## 8. Configuration that must match on both sides
+
+| Value | Frontend (`sealed.config.json`) | Backend (Railway env) | Must match |
+|---|---|---|---|
+| Network | `network` | `SEALED_NETWORK` | Yes |
+| Inbox id | `inbox_id` | `SEALED_INBOX_ID` | Yes |
+| API base | `api_base_url` | | Frontend only |
+| Frontend origin | | `ALLOWED_ORIGINS` (comma list) | Must include the Vercel URL |
+| Desk public key, fingerprint, address | `desk_public_key`, `fingerprint`, `address` | Stored by `POST /inbox` | Compared by §6.2 |
+| Tip floor | `tip_floor_zat` (shown to senders) | Stored, changed by PATCH | Redeploy the frontend after a PATCH so senders see the new floor |
+| Confirmations | | `SEALED_CONFIRMATIONS=3` | Frontend reads `chain_state` only |
+| Poll interval | Inbox polls every 30 s | `SEALED_POLL_SECONDS=30` | Both 30 |
+| Chain servers | | `SEALED_LIGHTWALLETD_URLS` (at least 2, FR-12) | Backend only |
+| Setup secret | Typed by the desk | `SEALED_SETUP_SECRET_HASH` | Backend stores only the hash |
+| Database | | `SEALED_DB_PATH` on the Railway volume | Backend only |
+
+Both repos ship a `.env.example` listing these names with fake values. Real `.env` files are git-ignored.
+
+## 9. Requirement coverage
+
+| SRD | Endpoint or rule | Screen |
+|---|---|---|
+| FR-1 to FR-5 | None (browser only) | Write, Pay |
+| FR-6 | §4.3, §6.2 compare | Landing, Write, Create inbox 3 |
+| FR-7 | §7 | Create inbox 1, Locked |
+| FR-8 | None (browser only) | Decrypt |
+| FR-9 | `network` in §4.1, §5.4 | Header badge on every page |
+| FR-10 | None (browser only) | Safety check |
+| FR-11 | §4.2, §6.3 | Create inbox 2 |
+| FR-12, FR-13 | §5.2, §6.5 | Inbox |
+| FR-14 | `chain_state`, `seq` | Inbox |
+| FR-15 | Bearer auth, §6.5 | Inbox |
+| FR-16 | `below_floor`, `counts`, §6.7 | Inbox tabs, Settings |
+| FR-17 | §6.8 | Settings |
+| FR-18 | §5.4, §6.1 | Inbox health line |
+| FR-19 | `format_ok`, `display_status` | Inbox row, Decrypt |
+| NFR-1, NFR-2, NFR-4 | §3, §6.9, §7 | All |
+| NFR-3 | §4.2, §6.3 | Create inbox 2 |
+
+## 10. How this contract stays true
+
+1. **Shared fixtures** in `contracts/fixtures/` at the repo root: one JSON file per object and per error (`inbox.json`, `tip.json`, `tips_page.json`, `health.json`, `error_spend_key.json`, `fingerprint.json`).
+2. **Frontend** parses every fixture with the same validator it uses on live responses (`src/lib/api.ts`). A fixture that fails to parse fails the build.
+3. **Backend** serializes its Rust structs and compares them to the fixtures in a test. A difference fails the build.
+4. **A change to this file** comes in one pull request that also updates the fixtures, both sides' code and a row in `docs/frontend/decisions.md`.
+5. **The Architecture §4 table** is a summary. It points here for details.
