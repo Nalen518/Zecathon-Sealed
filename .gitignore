@@ -1,0 +1,61 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output and caches
+dist/
+build/
+out/
+.next/
+.turbo/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# env files (keep the example)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# tests
+coverage/
+test-results/
+playwright-report/
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# local AI assistant settings and worktrees
+.claude/settings.local.json
+.kilo/
+
+# local Claude instructions
+claude.local.md
+CLAUDE.local.md
+
+# foundry
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/broadcast/
+
+# extra build folders (NEXT_DIST_DIR)
+.next-*/
+
+# keys and certificates (never commit a deployer or signing key)
+*.pem
+*.key
+keystore/
+
+# tool caches
+.eslintcache
