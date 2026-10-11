@@ -43,4 +43,4 @@ The parts that run only in the browser (writing, sealing, paying, decrypting, th
 
 ## Licence
 
-To be decided before the repository goes public. See `docs` for the open question.
+Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
