@@ -1,0 +1,35 @@
+/* Figma: Sender screens / Write — Default (20:4478). Left column 560, memo panel 432, gap 48. */
+.write-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 432px;
+  gap: var(--spacing-2xl);
+  align-items: start;
+}
+
+.write-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+/* Figma "Key check": white box, 16 px padding, 12 px gap. */
+.write-key-check {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.write-key-check a {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 859px) {
+  .write-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
