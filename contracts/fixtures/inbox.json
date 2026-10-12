@@ -1,0 +1,10 @@
+{
+  "id": "desk",
+  "name": "Sealed",
+  "network": "test",
+  "address": "utest1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+  "desk_public_key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  "fingerprint": "CB2F5160FC1F7E05",
+  "tip_floor_zat": 100000,
+  "created_at": "2026-10-11T09:00:00Z"
+}

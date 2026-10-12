@@ -1,0 +1,22 @@
+{
+  "network": "test",
+  "tip_height": 4201120,
+  "lag_blocks": 0,
+  "sources": [
+    {
+      "url": "https://testnet.zec.rocks:443",
+      "ok": true,
+      "tip_height": 4201120,
+      "lag_blocks": 0,
+      "last_checked_at": "2026-10-11T09:42:00Z"
+    },
+    {
+      "url": "https://testnet.example.org:443",
+      "ok": true,
+      "tip_height": 4201120,
+      "lag_blocks": 0,
+      "last_checked_at": "2026-10-11T09:42:00Z"
+    }
+  ],
+  "version": "0.1.0"
+}

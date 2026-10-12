@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "spend_key_rejected",
+    "message": "This key can spend funds.",
+    "field": "ufvk"
+  }
+}
