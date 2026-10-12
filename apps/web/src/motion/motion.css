@@ -1,0 +1,55 @@
+/*
+ * Sealed motion tokens. Map the canvas colors to the design tokens from Figma
+ * (Color collection, palette A: ink + Zcash gold). Variable names match the
+ * Figma code syntax, e.g. var(--color-text-inverse).
+ */
+
+.memo-grid {
+  --memo-words: var(--color-text-inverse);
+  --memo-length: var(--color-text-inverse-secondary);
+  --memo-seal: var(--color-accent-seal);
+  --memo-unused: var(--color-border-inverse);
+  display: block;
+  width: 100%;
+  max-width: 477px; /* 32 cells × 12 px + 31 gaps × 3 px, as in Figma */
+}
+
+.memo-grid-label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+  /* no text-transform: the script writes uppercase itself so "z1:" keeps its case */
+  color: var(--color-text-inverse-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.memo-grid-legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-inverse-secondary);
+}
+.memo-grid-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.memo-grid-legend li::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--swatch); }
+.memo-grid-legend .words  { --swatch: var(--color-text-inverse); }
+.memo-grid-legend .sealed { --swatch: var(--color-accent-seal); }
+.memo-grid-legend .unused { --swatch: var(--color-border-inverse); }
+
+.dot-wordmark {
+  --dot-on: var(--color-text-inverse);
+  --dot-off: var(--color-text-inverse);
+  --dot-hot: var(--color-accent-seal);
+  display: block;
+  width: 100%;
+}

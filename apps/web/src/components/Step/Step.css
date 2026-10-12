@@ -1,0 +1,14 @@
+/* Figma: Components / Step (10:26). */
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-lg);
+  border-top: var(--border-width-default) solid var(--color-border-strong);
+  min-width: 0;
+}
+
+.step-number,
+.step-body {
+  color: var(--color-text-secondary);
+}

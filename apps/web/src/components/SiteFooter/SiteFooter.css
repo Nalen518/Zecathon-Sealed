@@ -1,0 +1,78 @@
+/* Figma: Components / Site footer (6:89). */
+.site-footer {
+  background: var(--color-bg-inverse-deep);
+  color: var(--color-text-inverse);
+  padding-block: var(--spacing-3xl) var(--spacing-2xl);
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 40px; /* Figma footer gap, no token */
+}
+
+.site-footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-xl);
+}
+
+.site-footer-about {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-width: 440px;
+}
+
+.site-footer-promise {
+  color: var(--color-text-inverse-secondary);
+}
+
+.site-footer-links {
+  display: flex;
+  gap: var(--spacing-xl);
+}
+
+.site-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--color-text-inverse);
+  text-decoration: underline;
+  text-underline-position: from-font;
+}
+
+.site-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: var(--border-width-default) solid var(--color-border-inverse);
+}
+
+.site-footer-legal {
+  color: var(--color-text-inverse-secondary);
+}
+
+/* Mobile variant: links stacked, no wordmark and no badge (Figma Breakpoint=Mobile). */
+@media (max-width: 859px) {
+  .site-footer {
+    padding-block: var(--spacing-2xl) var(--spacing-xl);
+  }
+  .site-footer-inner {
+    gap: var(--spacing-xl);
+  }
+  .site-footer-top {
+    flex-direction: column;
+  }
+  .site-footer-links {
+    flex-direction: column;
+    gap: var(--spacing-2xs);
+  }
+  .site-footer-wordmark,
+  .site-footer-badge {
+    display: none;
+  }
+}

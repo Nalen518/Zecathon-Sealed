@@ -1,0 +1,60 @@
+/* Figma: Components / Permission row (10:59). Always on the inverse background. */
+.permission-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-inverse);
+  border-bottom: var(--border-width-default) solid var(--color-border-inverse);
+}
+
+.permission-row:last-child {
+  border-bottom: 0;
+}
+
+.permission-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+  min-width: 0;
+}
+
+.permission-row-label {
+  color: var(--color-text-inverse);
+}
+
+.permission-row-detail {
+  color: var(--color-text-inverse-secondary);
+}
+
+.permission-row-status {
+  flex-shrink: 0;
+  padding: var(--spacing-2xs) var(--spacing-xs);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.permission-row-status-sealed {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
+}
+
+.permission-row-status-visible {
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-text);
+}
+
+.permission-row-status-not-protected {
+  background: var(--color-status-danger-bg);
+  color: var(--color-status-danger-text);
+}
+
+/* Layout=Stacked: status above the text. */
+@media (max-width: 859px) {
+  .permission-row {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+}
