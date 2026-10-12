@@ -1,6 +1,7 @@
 import raw from "../../sealed.config.json";
 import { fromBase64 } from "./bytes";
 import { fingerprintOf } from "./fingerprint";
+import { ZIP317_MIN_FEE_ZAT } from "./memo";
 
 /**
  * The bundled configuration (D-08, api-contract §8). The desk key, fingerprint and
@@ -39,7 +40,7 @@ export type ConfigResult =
   | { ok: true; config: SealedConfig; missing: DeskField[] }
   | { ok: false; errors: string[] };
 
-const MIN_FLOOR_ZAT = 10_000; // ZIP 317 two-action fee, BR-8, contract C-12
+const MIN_FLOOR_ZAT = ZIP317_MIN_FEE_ZAT; // BR-8, contract C-12
 const MAX_FLOOR_ZAT = 100_000_000;
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;

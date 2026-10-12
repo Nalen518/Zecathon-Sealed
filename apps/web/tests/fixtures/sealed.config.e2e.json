@@ -1,0 +1,12 @@
+{
+  "network": "test",
+  "inbox_id": "desk",
+  "name": "Sealed",
+  "api_base_url": "",
+  "desk_public_key": "3jazu77JO13IbnGa1fP4Dka2zOaHpaWtM0EQpwfeZRc=",
+  "fingerprint": "C9D6AF3B94A72C34",
+  "address": "utest1e2etestaddressnotrealqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+  "tip_floor_zat": 100000,
+  "source_url": "https://github.com/Nalen518/Zecathon-Sealed",
+  "fingerprint_also_on": null
+}

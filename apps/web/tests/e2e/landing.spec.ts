@@ -3,14 +3,14 @@ import { expect, test } from "@playwright/test";
 import { collectCsp, watchPage } from "./helpers";
 
 test.describe("Landing", () => {
-  test("renders with no CSP violation, no console error and no third-party request", async ({ page }) => {
+  test("renders with no CSP violation, no console error and no third-party request", async ({ page, baseURL }) => {
     const watch = await watchPage(page);
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Send a tip only the desk can read.");
     await page.evaluate(() => document.fonts.ready);
     expect(await collectCsp(page, watch)).toEqual([]);
     expect(watch.consoleErrors).toEqual([]);
-    const foreign = watch.requests.filter((u) => !u.startsWith("http://localhost:4173/") && !u.startsWith("data:"));
+    const foreign = watch.requests.filter((u) => !u.startsWith(`${baseURL}/`) && !u.startsWith("data:"));
     expect(foreign).toEqual([]);
   });
 

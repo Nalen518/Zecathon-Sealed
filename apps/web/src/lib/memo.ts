@@ -19,6 +19,8 @@ export const SEALED_BOX_BYTES = PLAINTEXT_BLOCK_BYTES + SEAL_OVERHEAD_BYTES;
 export const TEXT_PREFIX = "z1:";
 /** "z1:" + standard base64 of the sealed box: 3 + 508 = 511. */
 export const SEALED_MEMO_BYTES = TEXT_PREFIX.length + 4 * Math.ceil(SEALED_BOX_BYTES / 3);
+/** ZIP 317 fee for a two-action transaction, the lowest possible network fee and the floor minimum (BR-8). */
+export const ZIP317_MIN_FEE_ZAT = 10_000;
 /** Default tip floor in zatoshis (0.001 ZEC). */
 export const DEFAULT_TIP_FLOOR_ZAT = 100_000;
 
