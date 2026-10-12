@@ -12,7 +12,7 @@
 
 .fingerprint-row {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: var(--spacing-xs);
 }
 
