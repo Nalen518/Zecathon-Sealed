@@ -7,6 +7,7 @@ import {
   parseBackup,
   rewrapWithToken,
   saveWrappedDesk,
+  unlockDesk,
   unwrapDesk,
   wrapDesk,
   type DeskSecrets,
@@ -55,7 +56,10 @@ describe("keystore", () => {
 
   it("keeps the desk token in the same wrapped record (C-11)", async () => {
     const record = await wrapDesk(secrets, fingerprint, PASS);
-    const withToken = await rewrapWithToken(record, secrets, "sld_token", PASS);
+    const unlocked = await unlockDesk(record, PASS);
+    const withToken = await rewrapWithToken(record, unlocked!, "sld_token");
+    expect(withToken.salt).toBe(record.salt);
+    expect(withToken.nonce).not.toBe(record.nonce);
     expect(JSON.stringify(withToken)).not.toContain("sld_token");
     expect((await unwrapDesk(withToken, PASS))?.token).toBe("sld_token");
   });

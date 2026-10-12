@@ -1,5 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { bundled } from "../lib/config";
+import { DeskLayout } from "./desk/DeskLayout";
+import { CreateInbox } from "./desk/screens/CreateInbox";
+import { Decrypt } from "./desk/screens/Decrypt";
+import { Inbox } from "./desk/screens/Inbox";
+import { Locked } from "./desk/screens/Locked";
+import { Settings } from "./desk/screens/Settings";
 import { TipFlowLayout } from "./flow/TipFlow";
 import { ConfigError } from "./screens/ConfigError";
 import { Landing } from "./screens/Landing/Landing";
@@ -20,6 +26,19 @@ const router = createBrowserRouter([
       { path: "/write", element: <Write /> },
       { path: "/pay", element: <Pay /> },
       { path: "/sent", element: <Sent /> },
+    ],
+  },
+  {
+    // Desk screens share one key session. The private key and token are in memory only while unlocked.
+    path: "/desk",
+    element: <DeskLayout />,
+    errorElement: <NotFound />,
+    children: [
+      { index: true, element: <Inbox /> },
+      { path: "decrypt", element: <Decrypt /> },
+      { path: "settings", element: <Settings /> },
+      { path: "create", element: <CreateInbox /> },
+      { path: "restore", element: <Locked restore /> },
     ],
   },
   { path: "*", element: <NotFound /> },

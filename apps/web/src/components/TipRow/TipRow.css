@@ -1,0 +1,44 @@
+/* Figma: Components / Tip row (19:63). */
+.tip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-md);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tip-row:hover {
+  background: var(--color-bg-subtle);
+}
+
+.tip-row-selected,
+.tip-row-selected:hover {
+  background: var(--color-bg-code);
+  border: 2px solid var(--color-bg-inverse);
+  padding: calc(var(--spacing-md) - 1px);
+}
+
+.tip-row-left,
+.tip-row-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+  min-width: 0;
+}
+
+.tip-row-right {
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.tip-row-meta {
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}

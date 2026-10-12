@@ -1,0 +1,13 @@
+/* Figma: Components / Status badge (18:151). */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-2xs) var(--spacing-xs);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.status-badge-pending { background: var(--color-status-warning-bg); color: var(--color-status-warning-text); }
+.status-badge-confirmed { background: var(--color-status-success-bg); color: var(--color-status-success-text); }
+.status-badge-below_floor { background: var(--color-bg-code); color: var(--color-text-secondary); }
+.status-badge-unreadable { background: var(--color-status-danger-bg); color: var(--color-status-danger-text); }
+.status-badge-orphaned { background: var(--color-bg-code); color: var(--color-text-primary); }

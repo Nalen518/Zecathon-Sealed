@@ -1,0 +1,235 @@
+/* Shared desk screen layout (Figma Desk screens). */
+
+/* Create inbox: left column 596, side panel 380, gap 64. */
+.desk-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+.desk-left {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.desk-side .row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+}
+
+.desk-side .row .eyebrow {
+  color: var(--color-text-secondary);
+}
+
+/* "Private key · shown once" panel. */
+.desk-key-panel {
+  gap: var(--spacing-sm);
+}
+
+.desk-key-panel .key {
+  color: var(--color-text-inverse);
+  overflow-wrap: anywhere;
+}
+
+.desk-key-panel .meta {
+  color: var(--color-text-inverse-secondary);
+}
+
+.desk-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.desk-where {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.desk-error {
+  color: var(--color-status-danger-text);
+}
+
+.desk-unlock-card {
+  max-width: 520px;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.desk-file {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.desk-link-button {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Inbox */
+.inbox-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.inbox-health {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.inbox-columns {
+  display: grid;
+  grid-template-columns: 440px minmax(0, 1fr);
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+.inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.inbox-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+}
+
+.inbox-tab {
+  min-height: 44px;
+  padding: var(--spacing-xs) 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.inbox-tab[aria-selected="true"] {
+  border-bottom-color: var(--color-bg-inverse);
+  color: var(--color-text-primary);
+}
+
+.inbox-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.decrypt-panel {
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.decrypt-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Decrypted tip text: plain text only, never HTML (rules §1.6). */
+.tip-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tip-memo {
+  overflow-wrap: anywhere;
+  color: var(--color-text-secondary);
+}
+
+.tip-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding-top: var(--spacing-md);
+  border-top: var(--border-width-default) solid var(--color-border-default);
+}
+
+.tip-details > div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: var(--spacing-md);
+}
+
+.tip-details dt {
+  color: var(--color-text-secondary);
+}
+
+.tip-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.inbox-empty {
+  padding: var(--spacing-2xl);
+}
+
+.inbox-empty .fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-width: 560px;
+}
+
+/* Decrypt a memo: left 536, result 440. */
+.decrypt-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+/* Settings: one 720 column. */
+.settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-width: 720px;
+}
+
+.settings-danger {
+  border-color: var(--color-status-danger-text);
+}
+
+.settings-danger h2 {
+  color: var(--color-status-danger-text);
+}
+
+@media (max-width: 859px) {
+  .desk-columns,
+  .inbox-columns,
+  .decrypt-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-2xl);
+  }
+  .decrypt-panel,
+  .desk-unlock-card,
+  .inbox-empty {
+    padding: var(--spacing-lg);
+  }
+  .tip-details > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}

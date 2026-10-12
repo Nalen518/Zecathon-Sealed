@@ -1,0 +1,36 @@
+/* Figma: Components / Checkbox (18:128). */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.checkbox-input {
+  appearance: none;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-page);
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.checkbox-input:checked {
+  border-color: var(--color-bg-inverse);
+  background: var(--color-bg-inverse);
+}
+
+/* Icon/check from Figma, drawn as a mask in the inverse text color. */
+.checkbox-input:checked::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-text-inverse);
+  mask: url("../Icon/svg/check.svg") center / contain no-repeat;
+}

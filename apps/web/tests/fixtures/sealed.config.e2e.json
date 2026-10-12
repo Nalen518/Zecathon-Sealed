@@ -2,7 +2,7 @@
   "network": "test",
   "inbox_id": "desk",
   "name": "Sealed",
-  "api_base_url": "",
+  "api_base_url": "https://api.sealed.test/v1",
   "desk_public_key": "3jazu77JO13IbnGa1fP4Dka2zOaHpaWtM0EQpwfeZRc=",
   "fingerprint": "C9D6AF3B94A72C34",
   "address": "utest1e2etestaddressnotrealqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",

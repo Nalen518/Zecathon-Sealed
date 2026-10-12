@@ -84,15 +84,19 @@ export async function wrapDesk(
   }
 }
 
-/** Returns null for a wrong passphrase or a damaged record. Never throws on bad input. */
-export async function unwrapDesk(record: WrappedDesk, passphrase: string): Promise<DeskSecrets | null> {
+/** An unlocked desk: the secrets, plus the derived key to re-wrap the record without asking again. */
+export interface UnlockedDesk {
+  secrets: DeskSecrets;
+  /** Argon2id output for this record's salt. Memory only, wiped on lock like the private key. */
+  kek: Uint8Array;
+}
+
+async function openWithKey(record: WrappedDesk, key: Uint8Array): Promise<DeskSecrets | null> {
   const sodium = await sodiumReady();
-  const salt = fromBase64(record.salt);
   const nonce = fromBase64(record.nonce);
   const ciphertext = fromBase64(record.ciphertext);
   const publicKey = fromBase64(record.public_key);
-  if (!salt || !nonce || !ciphertext || !publicKey) return null;
-  const key = await deriveKey(passphrase, salt, record.opslimit, record.memlimit);
+  if (!nonce || !ciphertext || !publicKey) return null;
   let plain: Uint8Array | null = null;
   try {
     plain = sodium.crypto_secretbox_open_easy(ciphertext, nonce, key);
@@ -106,24 +110,53 @@ export async function unwrapDesk(record: WrappedDesk, passphrase: string): Promi
   } catch {
     return null;
   } finally {
-    wipe(key);
     wipe(plain);
   }
 }
 
-/** Re-wrap with a new token (create, rotate) or none (delete, 401). Needs the passphrase again. */
+/** Returns null for a wrong passphrase or a damaged record. Never throws on bad input. */
+export async function unlockDesk(record: WrappedDesk, passphrase: string): Promise<UnlockedDesk | null> {
+  const salt = fromBase64(record.salt);
+  if (!salt) return null;
+  const kek = await deriveKey(passphrase, salt, record.opslimit, record.memlimit);
+  const secrets = await openWithKey(record, kek);
+  if (!secrets) {
+    wipe(kek);
+    return null;
+  }
+  return { secrets, kek };
+}
+
+export async function unwrapDesk(record: WrappedDesk, passphrase: string): Promise<DeskSecrets | null> {
+  const unlocked = await unlockDesk(record, passphrase);
+  if (!unlocked) return null;
+  wipe(unlocked.kek);
+  return unlocked.secrets;
+}
+
+/**
+ * Re-wrap the record with a new token (create, rotate) or none (delete, 401), using the session key.
+ * Same salt and cost, fresh nonce. The passphrase is not needed again.
+ */
 export async function rewrapWithToken(
   record: WrappedDesk,
-  secrets: DeskSecrets,
+  unlocked: UnlockedDesk,
   token: string | null,
-  passphrase: string,
 ): Promise<WrappedDesk> {
-  return wrapDesk({ ...secrets, token }, record.fingerprint, passphrase, record.created_at);
+  const sodium = await sodiumReady();
+  const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+  const plain = encoder.encode(JSON.stringify({ sk: toBase64(unlocked.secrets.privateKey), token }));
+  try {
+    return { ...record, nonce: toBase64(nonce), ciphertext: toBase64(sodium.crypto_secretbox_easy(plain, nonce, unlocked.kek)) };
+  } finally {
+    wipe(plain);
+  }
 }
 
 // ---------- Backup file ----------
 
-export const BACKUP_FILENAME = "sealed-desk-key-backup.json";
+/** Figma: Create inbox 1, "sealed-desk-backup.json · passphrase-wrapped". */
+export const BACKUP_FILENAME = "sealed-desk-backup.json";
 
 export function backupJson(record: WrappedDesk): string {
   return `${JSON.stringify({ sealed_desk_backup: record }, null, 2)}\n`;
