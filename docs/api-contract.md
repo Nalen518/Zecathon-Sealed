@@ -23,6 +23,8 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-10 | Browser calls from Vercel to Railway need CORS, and the CSP must allow the API origin | CORS and CSP rules (§3) |
 | C-11 | Where the frontend keeps the desk token was not defined | Stored passphrase-wrapped in IndexedDB with the desk key, never in plain storage (§7) |
 | C-12 | Tip floor range was 0 to 100,000,000 zat, but SRD BR-8 forbids a floor below the ZIP 317 two-action fee (10,000 zat) | Range is 10,000 to 100,000,000 on `POST /inbox` and `PATCH /inbox/{id}` (Oct 11) |
+| C-13 | The audit trail (added Oct 12) would have to survive "delete inbox", but FR-17 says delete removes everything | The log is deleted with the inbox. The desk exports it first from the Audit trail page, which the Settings delete card links to (§6.10) |
+| C-14 | `GET /v1/health` is public and returned each chain server's full `url`, so credentials in a server URL would be visible to anyone | Field renamed `origin` and holds the origin only. Same rule as the audit log (§5.6) (Oct 13) |
 
 ## 2. Base
 
@@ -175,12 +177,14 @@ The five `display_status` values are the five Status badge variants in Figma, in
   "tip_height": 4201120,
   "lag_blocks": 0,
   "sources": [
-    { "url": "https://testnet.zec.rocks:443", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" },
-    { "url": "https://…", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" }
+    { "origin": "https://testnet.zec.rocks:443", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" },
+    { "origin": "https://…", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" }
   ],
   "version": "0.1.0"
 }
 ```
+
+`origin` is the chain server's scheme, host and port only, never its path, query or a user name and password (C-14). This endpoint is public.
 
 `lag_blocks` at the top is the worst lag among sources that answer. The Inbox health line reads "{ok count} of {total} servers · {lag_blocks} blocks behind · checked {age} ago". The Tag shows WATCHING when every source is ok and lag is under 3, otherwise WATCHER BEHIND (FR-18).
 
@@ -207,6 +211,60 @@ The frontend picks its text by `code` from the Figma copy and never shows `messa
 | 422 | `floor_out_of_range` | Tip floor outside 10,000 to 100,000,000 zat | Settings |
 | 429 | `rate_limited` | Too many requests | Any. Retry after `Retry-After` |
 | 503 | `watcher_unavailable` | No lightwalletd source answering | Inbox banner (warning callout) |
+
+### 5.6 Audit entry (desk token only, added Oct 12)
+
+```json
+{
+  "seq": 10,
+  "at": "2026-10-12T14:02:11Z",
+  "type": "tip_received",
+  "actor": "watcher",
+  "details": { "tip_id": "tip_01HF…", "txid": "3f9a…c21e", "output_index": 0, "amount_zat": 100000, "height": 4201337, "format_ok": true },
+  "prev_hash": "e7a9…4c10",
+  "hash": "9c41…e07b"
+}
+```
+
+**Hash chain**
+```
+hash      = lower_hex( BLAKE2b-256( UTF-8( JCS( entry without the "hash" field ) ) ) )
+prev_hash = hash of the entry with seq - 1.  For seq 1 it is 64 zeros.
+```
+- JCS is RFC 8785 canonical JSON (sorted keys, no spaces). Both sides use it so the bytes match.
+- **The browser hashes the entry exactly as received** (the raw JSON object minus `hash`), never a parsed or renamed copy. A field added later is then covered by the hash automatically.
+- `seq` starts at 1 per inbox and has no gaps. A gap counts as a break.
+- The browser recomputes every hash. The first entry whose `hash` is wrong, or whose `prev_hash` does not equal the previous `hash`, is shown as Broken and the page shows CHAIN BROKEN AT #n.
+- The server writes an entry in the same database transaction as the change it records, and never updates or deletes entries (except when the whole inbox is deleted, C-13).
+- `contracts/fixtures/audit_chain.json` holds three entries with their expected hashes. Both test suites must pass it.
+
+**Canonical form rules** (so TypeScript and Rust produce the same bytes, Oct 13)
+
+| Item | Rule |
+|---|---|
+| Numbers | Integers only, from 0 to 2^53 − 1. No floats, no exponent, no `-0` |
+| Strings | Valid Unicode only (no lone surrogates). No control characters U+0000 to U+001F. Never normalized: stored and served byte for byte |
+| Keys | ASCII `[a-z_]` only, so UTF-16 and UTF-8 key order agree |
+| `at` | Stored as text and served unchanged, format `YYYY-MM-DDTHH:MM:SSZ` (UTC, no fraction). Never parsed and re-printed |
+| `details` | Every field listed below is always present and never `null`. No other fields |
+| URLs | Only the origin (scheme, host, port) of a chain server. Never a path, query or user name and password |
+
+The server rejects, and never stores, an entry that breaks a rule. The browser treats an entry that breaks a rule as Broken.
+
+**Event types**
+
+| `type` | `actor` | `details` | Shown as |
+|---|---|---|---|
+| `inbox_created` | `setup` | `fingerprint`, `tip_floor_zat`, `network`, `birthday_height` | Inbox created |
+| `token_issued` | `setup` or `desk` | `token_id` (first 8 hex of BLAKE2b-256 of the token), `rotated` (bool) | Desk token issued / Desk token rotated |
+| `floor_changed` | `desk` | `from_zat`, `to_zat` | Tip floor changed |
+| `tip_received` | `watcher` | `tip_id`, `txid`, `output_index`, `amount_zat`, `height`, `format_ok` | Tip received |
+| `tip_confirmed` | `watcher` | `tip_id`, `txid`, `confirmations` | Tip confirmed |
+| `tip_orphaned` | `watcher` | `tip_id`, `txid`, `height` | Tip orphaned |
+| `source_down` | `watcher` | `origin` (for example `https://testnet.zec.rocks:443`) | Chain server not answering |
+| `source_up` | `watcher` | `origin` | Chain server back |
+
+Never in `details`: tip text, memo bytes, token values, the setup secret, IP addresses, user agents, or anything from a chain server URL beyond its origin (credentials in a URL would otherwise land in the log). Reads (GET requests) are not logged. Lock, unlock and decrypt happen only in the browser and cannot be logged.
 
 ## 6. Endpoints
 
@@ -283,6 +341,24 @@ After `204` the frontend wipes the stored token, keeps the desk key (the backup 
 - No endpoint returns the viewing key after create.
 - No endpoint takes or returns the desk private key or passphrase.
 
+### 6.10 `GET /v1/inbox/{id}/audit` (added Oct 12)
+Auth: Bearer. Screen: Audit trail.
+
+| Query | Default | Meaning |
+|---|---|---|
+| `after_seq` | `0` | Entries with `seq` greater than this |
+| `limit` | `200` | 1 to 500 |
+
+Response `200`:
+```json
+{ "entries": [ /* Audit entries, seq ascending */ ], "next_seq": 10, "has_more": false, "total": 10 }
+```
+- The page loads every entry (paging while `has_more`), verifies the chain from `seq` 1, then shows newest first, 50 at a time.
+- **Export** is done in the browser: it saves `{ "inbox_id", "exported_at", "verified", "broken_at", "entries" }` as `sealed-audit-<inbox>-<YYYY-MM-DD>.json` (UTC date). `entries` are the raw entries as received, so anyone can re-check the chain. `broken_at` is the first broken `seq` or `null`. No export endpoint.
+- The file holds tx ids, amounts and arrival times. They are not secret, but they tie each tip to a transaction on the chain. The export button says so: "The file links each tip to its transaction. Keep it on the desk’s own machine."
+- The Settings delete card links to this page ("Export the audit log first"). It does not export by itself.
+- The page shows the latest `hash` with a copy button so the desk can keep it outside Sealed. A rewritten log will not contain an older saved hash.
+
 ## 7. What the frontend keeps where
 
 | Data | Where | Cleared when |
@@ -293,6 +369,7 @@ After `204` the frontend wipes the stored token, keeps the desk key (the backup 
 | Decrypted tip text | Memory only | Same as above |
 | Setup secret | Memory only, during Create inbox and the delete form | Leaving that screen |
 | Sender tip text and sealed memo | Memory only | Leaving the flow or closing the tab |
+| Audit entries and verification result | Memory only. Exported JSON goes to the desk's own disk | Leaving the Audit trail page |
 
 ## 8. Configuration that must match on both sides
 
@@ -332,10 +409,11 @@ Both repos ship a `.env.example` listing these names with fake values. Real `.en
 | FR-19 | `format_ok`, `display_status` | Inbox row, Decrypt |
 | NFR-1, NFR-2, NFR-4 | §3, §6.9, §7 | All |
 | NFR-3 | §4.2, §6.3 | Create inbox 2 |
+| FR-20 (Oct 13): desk audit trail with a verifiable hash chain | §5.6, §6.10 | Audit trail, Settings (link to export before delete) |
 
 ## 10. How this contract stays true
 
-1. **Shared fixtures** in `contracts/fixtures/` at the repo root: one JSON file per object and per error (`inbox.json`, `tip.json`, `tips_page.json`, `health.json`, `error_spend_key.json`, `fingerprint.json`).
+1. **Shared fixtures** in `contracts/fixtures/` at the repo root: one JSON file per object and per error (`inbox.json`, `tip.json`, `tips_page.json`, `health.json`, `error_spend_key.json`, `fingerprint.json`, `audit_chain.json`).
 2. **Frontend** parses every fixture with the same validator it uses on live responses (`src/lib/api.ts`). A fixture that fails to parse fails the build.
 3. **Backend** serializes its Rust structs and compares them to the fixtures in a test. A difference fails the build.
 4. **A change to this file** comes in one pull request that also updates the fixtures, both sides' code and a row in `docs/frontend/decisions.md`.

@@ -1,0 +1,54 @@
+/* Figma: Components / Step indicator (18:200). */
+.step-indicator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.step-indicator-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.step-indicator-line {
+  width: 40px; /* Figma line length, no token */
+  height: var(--border-width-default);
+  margin-right: var(--spacing-xs);
+  background: var(--color-border-default);
+}
+
+.step-indicator-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-page);
+}
+
+.step-indicator-current .step-indicator-marker {
+  border: 2px solid var(--color-bg-inverse);
+  color: var(--color-text-primary);
+}
+
+.step-indicator-todo .step-indicator-marker {
+  border: var(--border-width-default) solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
+.step-indicator-done .step-indicator-marker {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+}
+
+.step-indicator-todo .step-indicator-label {
+  color: var(--color-text-secondary);
+}
+
+.step-indicator-current .step-indicator-label,
+.step-indicator-done .step-indicator-label {
+  color: var(--color-text-primary);
+}

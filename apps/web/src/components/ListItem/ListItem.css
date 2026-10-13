@@ -1,0 +1,28 @@
+/* Figma: Components / List item (10:40). */
+.list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding-block: var(--spacing-sm);
+  border-bottom: var(--border-width-default) solid var(--color-border-default);
+}
+
+.list-item-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+}
+
+.list-item-include .list-item-marker {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
+}
+
+.list-item-exclude .list-item-marker {
+  background: var(--color-status-danger-bg);
+  color: var(--color-status-danger-text);
+}

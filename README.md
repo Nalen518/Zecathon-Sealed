@@ -21,6 +21,10 @@ The parts that run only in the browser (writing, sealing, paying, decrypting, th
 - The page's JavaScript is a trust point. The desk publishes its key fingerprint elsewhere so a sender can compare it.
 - The sender needs ZEC and a Zcash wallet first, and buying ZEC is often traceable.
 
+## Desk key fingerprint
+
+Not published yet. When the desk creates its inbox, its key fingerprint goes here, so sources can compare it with the one on the tip page before they send.
+
 ## Planned structure
 
 | Path | What it holds |

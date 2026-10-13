@@ -1,0 +1,12 @@
+/* Figma: Components / Tag (31:94). */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-2xs) var(--spacing-xs);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.tag-success { background: var(--color-status-success-bg); color: var(--color-status-success-text); }
+.tag-warning { background: var(--color-status-warning-bg); color: var(--color-status-warning-text); }
+.tag-danger { background: var(--color-status-danger-bg); color: var(--color-status-danger-text); }
+.tag-neutral { background: var(--color-bg-code); color: var(--color-text-primary); }

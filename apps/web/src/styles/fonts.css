@@ -1,0 +1,16 @@
+/* Self-hosted fonts (rules §1.2, D-07). SIL Open Font License, see public/fonts/OFL-*.txt. */
+@font-face {
+  font-family: "Albert Sans";
+  src: url("/fonts/AlbertSans-Variable.ttf") format("truetype");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Variable.ttf") format("truetype");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}

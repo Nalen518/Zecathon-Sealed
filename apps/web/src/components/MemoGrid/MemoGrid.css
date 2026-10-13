@@ -1,0 +1,24 @@
+/* Figma: Components / Memo grid (14:1238). Default 477 px wide (12 px cells), Compact 350 px (9 px cells). */
+.memo-grid-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
+}
+
+.memo-grid-default {
+  max-width: 477px;
+}
+
+.memo-grid-compact {
+  max-width: 350px;
+}
+
+.memo-grid-compact .memo-grid {
+  max-width: 350px;
+}
+
+.memo-grid-label {
+  min-height: 20px;
+}

@@ -1,0 +1,17 @@
+/* Figma: Components / Text link (31:162). */
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-position: from-font;
+}
+
+.text-link-default {
+  color: var(--color-text-primary);
+}
+
+.text-link-inverse {
+  color: var(--color-text-inverse);
+}

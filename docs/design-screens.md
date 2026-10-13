@@ -9,10 +9,12 @@ Look: palette A (ink + Zcash gold), Albert Sans / JetBrains Mono at 400 and 500 
 | Page | What is on it |
 |---|---|
 | Foundations | Color, type, spacing and layout tokens (variables), with code syntax `var(--…)` |
-| Components | Button, Icons, Network badge, Site header, Site footer (dot wordmark), Step, List item, Permission row, Callout, FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed), Input, Textarea (byte counter), Checkbox, Radio option, Status badge, Step indicator, Tip row, QR code |
+| Components | Button (Primary, Secondary, Inverse, Nav, Danger), Icons (incl. info), Network badge, Site header (landing, Safety check), Flow header (Write and Pay: no section links, "Leave" asks to confirm), Desk header (lock button hidden on setup and Locked), Site footer (dot wordmark), Step, List item, Permission row, Callout (Info, Warning, Success), FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed × Default, Compact), Input, Textarea (Empty, Typing, At limit, Error), Checkbox, Radio option, Status badge (tip states only), Tag (free-text screen state), Text link (48 px hit area), Step indicator, Tip row, QR code, Audit header row, Audit row (Default, Broken) |
 | Landing page | Landing — Desktop 1280 |
 | Sender screens | Write ×3, Pay ×2, Safety check ×2 |
-| Desk screens | Create inbox ×3, Inbox ×3, Decrypt ×2, Settings |
+| Desk screens | Create inbox ×3, Inbox ×3, Decrypt ×2, Settings, Audit trail ×2 |
+
+Rules from the Oct 11 critique: one voice ("the desk" receives, "Sealed" is the tool, never "us/our/we"), app screens use 64 top padding and 32 between blocks, never scale a component instance (use its Size variant), and never relabel a Status badge (use Tag).
 
 ## Screens and the requirements they cover
 
@@ -34,7 +36,9 @@ Look: palette A (ink + Zcash gold), Albert Sans / JetBrains Mono at 400 and 500 
 | Inbox — Locked | Unlock the passphrase-wrapped key, restore from backup | FR-7 |
 | Decrypt — Opened | Paste a memo, open it with no server | FR-8 |
 | Decrypt — Unreadable | Non-Sealed memo is not rendered | FR-19 |
-| Settings — Delete inbox | Tip floor, network (read-only), rotate token, delete with typed confirmation | FR-16, FR-17, FR-9 |
+| Settings — Delete inbox | Tip floor, network (read-only), rotate token, "Export the audit log first" link to the Audit trail page, delete with setup secret and typed confirmation | FR-16, FR-17, FR-9 |
+| Audit trail — Verified | Chain verified tag, latest entry hash with copy, what is logged, entries newest first, export JSON | FR-20 |
+| Audit trail — Chain broken | Danger tag, warning with next steps, broken row marked "Hash mismatch" | FR-20 |
 
 Not drawn as separate frames, because they come from component states: focus rings (Input Focus, Button Focus), copied state (Fingerprint Copied), pending/orphaned rows (Tip row + Status badge).
 
@@ -72,6 +76,7 @@ Nothing in the shipped UI is hard-coded sample data. Each value comes from one o
 | Inbox, Locked | Unlock the wrapped key | Browser only |
 | Decrypt a memo | Paste and open a memo | Browser only, no server (FR-8) |
 | Settings | Change tip floor, rotate token, delete inbox | `PATCH /v1/inbox/{id}` (new), `POST /v1/inbox/{id}/tokens`, `DELETE /v1/inbox/{id}` (new) |
+| Audit trail | Entries, chain check in the browser, latest hash, export file | `GET /v1/inbox/{id}/audit` (api-contract §6.10). Verification and export run in the browser |
 
 **Two endpoints to add to the architecture API contract.** The Settings screen needs them and they are not in the current table:
 

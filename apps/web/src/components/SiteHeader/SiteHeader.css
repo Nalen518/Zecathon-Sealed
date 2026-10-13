@@ -1,0 +1,66 @@
+/* Figma: Components / Site header (6:51). 80 px desktop, 64 px mobile. */
+.site-header {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+  border-bottom: var(--border-width-default) solid var(--color-border-inverse);
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  min-height: 80px;
+}
+
+.site-header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 44px;
+  text-decoration: none;
+  color: var(--color-text-inverse);
+}
+
+.site-header-divider {
+  width: var(--border-width-default);
+  height: 20px;
+  background: var(--color-border-inverse);
+}
+
+.site-header-tag {
+  color: var(--color-text-inverse-secondary);
+}
+
+.site-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.site-header-nav {
+  display: flex;
+  gap: 28px; /* Figma Nav item spacing, no token */
+}
+
+.site-header-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-text-inverse);
+  text-decoration: none;
+}
+
+.site-header-nav a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 859px) {
+  .site-header-inner {
+    min-height: 64px;
+  }
+  .site-header-nav,
+  .site-header-verify {
+    display: none;
+  }
+}

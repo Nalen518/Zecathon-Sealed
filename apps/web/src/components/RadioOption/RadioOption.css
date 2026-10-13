@@ -1,0 +1,62 @@
+/* Figma: Components / Radio option (18:140). Selected: 2 px ink border and a filled dot. */
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.radio-option-selected {
+  border: 2px solid var(--color-bg-inverse);
+  padding: calc(var(--spacing-md) - 1px);
+}
+
+.radio-option:has(.radio-option-input:focus-visible) {
+  outline: var(--border-width-focus) solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.radio-option-input {
+  appearance: none;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: var(--spacing-2xs) 0 0;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-page);
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.radio-option-input:focus-visible {
+  outline: none;
+}
+
+.radio-option-input:checked {
+  border-color: var(--color-bg-inverse);
+}
+
+.radio-option-input:checked::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-inverse);
+}
+
+.radio-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+  min-width: 0;
+}
+
+.radio-option-hint {
+  color: var(--color-text-secondary);
+}

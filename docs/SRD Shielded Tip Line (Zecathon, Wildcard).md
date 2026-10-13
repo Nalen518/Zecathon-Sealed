@@ -41,6 +41,7 @@ The PRD stays the source for the problem and the audience (a newsroom tip desk);
 | FR-17 | Let the desk delete an inbox, removing its viewing key and every stored tip | S5 | P1 |  | Test |
 | FR-18 | Publish /v1/health with each source's tip height and lag | S6 | P1 |  | Test |
 | FR-19 | Mark a memo that is not in the specified format as unreadable without attempting to render it | S6 | P1 |  | Test |
+| FR-20 | Let the desk view an audit trail of server-observed events, verified in the browser as a hash chain, and export it before deleting the inbox (api-contract §5.6, §6.10, added Oct 13) | S6 | P1 |  | Test, Demo |
 
 Not in scope for this SRD: the reply channel, multi-server cross-checking beyond FR-12 and a deploy template (all Later in the PRD).
 
@@ -67,7 +68,7 @@ Privacy comes first because the judges treat a leak as disqualifying, not as a l
 | ID | Requirement | Verify |
 | --- | --- | --- |
 | NFR-1 | No message plaintext, private key or passphrase appears in any network request, log line, analytics event or error report; the pages load no third-party scripts or analytics | Inspect: browser network trace; grep of the repo |
-| NFR-2 | The server stores only tx id, output index, height, time, amount, ciphertext and source health; it never stores a sender IP, user agent or token in clear | Inspect: schema and logs |
+| NFR-2 | The server stores only tx id, output index, height, time, amount, ciphertext, source health and the audit entries of api-contract §5.6 (no tip text, memo bytes, token values or IPs, chain servers by origin only); it never stores a sender IP, user agent or token in clear | Inspect: schema and logs |
 | NFR-3 | The server holds no key able to spend; FR-11 rejects any key with spend authority | Test |
 | NFR-4 | Public endpoints send no-store caching headers and set no cookies | Test |
 | NFR-5 | Sealing and link building complete in under 1 second on a mid-range laptop | Test |
@@ -96,8 +97,9 @@ The tests run in this order and double as the demo-video script: each one is a s
 | T-8 Unreadable memo | FR-19 | Send a plain text memo | Marked unreadable; amount and time shown |
 | T-9 Key safety | FR-7, FR-11, FR-17 | Reload and clear the browser; register a spend-capable key; delete the inbox | Key survives only through the backup file; spend key rejected; data removed |
 | T-10 Safety check | FR-10 | Run the check with the network disabled | Completes; no request made |
+| T-11 Audit chain | FR-20 | Change one stored audit entry, then open the Audit trail page | The page shows Chain broken at that entry and marks its row Hash mismatch. The untouched fixture shows Chain verified |
 
-**Story to requirement map:** S1 → FR-1, 2, 3, 6; S2 → FR-4, 5; S3 → FR-10; S4 → FR-7; S5 → FR-11, 17; S6 → FR-8, 12 to 15, 18, 19; S7 → FR-16. Two requirements have no test in the table: FR-6 is checked on screen in the demo, and FR-14 needs a unit test with a simulated reorg, since testnet cannot be made to reorg on demand.
+**Story to requirement map:** S1 → FR-1, 2, 3, 6; S2 → FR-4, 5; S3 → FR-10; S4 → FR-7; S5 → FR-11, 17; S6 → FR-8, 12 to 15, 18 to 20; S7 → FR-16. Two requirements have no test in the table: FR-6 is checked on screen in the demo, and FR-14 needs a unit test with a simulated reorg, since testnet cannot be made to reorg on demand.
 
 Open before the build starts: the four PRD spikes and the exact submission deadline.
 

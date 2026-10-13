@@ -1,0 +1,36 @@
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.icon-20 {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-16 {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-check { mask-image: url("./svg/check.svg"); }
+.icon-x { mask-image: url("./svg/x.svg"); }
+.icon-minus { mask-image: url("./svg/minus.svg"); }
+.icon-chevron-down { mask-image: url("./svg/chevron-down.svg"); }
+.icon-chevron-up { mask-image: url("./svg/chevron-up.svg"); }
+.icon-arrow-right { mask-image: url("./svg/arrow-right.svg"); }
+.icon-copy { mask-image: url("./svg/copy.svg"); }
+.icon-external { mask-image: url("./svg/external.svg"); }
+.icon-alert { mask-image: url("./svg/alert.svg"); }
+.icon-info { mask-image: url("./svg/info.svg"); }
+
+/* Network badge dot (Figma "Dot", 8 px). */
+.icon-dot {
+  width: 8px;
+  height: 8px;
+  mask-image: url("./svg/dot.svg");
+}

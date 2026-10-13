@@ -1,0 +1,35 @@
+/* Figma: Components / FAQ item (10:87). Row min height 64 for touch. */
+.faq-item {
+  border-bottom: var(--border-width-default) solid var(--color-border-default);
+}
+
+.faq-item-heading {
+  font: inherit;
+}
+
+.faq-item-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--spacing-md) 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.faq-item-answer {
+  overflow: hidden;
+  padding: 0 var(--spacing-2xl) var(--spacing-lg) 0;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 859px) {
+  .faq-item-answer {
+    padding-right: 0;
+  }
+}

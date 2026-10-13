@@ -1,0 +1,137 @@
+/* Figma: Landing page / "Landing — Desktop 1280" (11:2). Sections 96 px apart (rules §4.8). */
+
+.stack-2xl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xl);
+}
+
+/* Hero (11:24): ink background, text column and the 477 px memo grid. */
+.hero {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+  padding-block: var(--layout-section-pad-desktop);
+}
+
+.hero-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 477px);
+  align-items: center;
+  gap: var(--spacing-3xl);
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.hero-eyebrow,
+.hero-lead,
+.hero-meta {
+  color: var(--color-text-inverse-secondary);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+/* Who it is for (11:50) */
+.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-2xl);
+}
+
+/* How it works (11:91) */
+.how {
+  background: var(--color-bg-subtle);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+/* What it protects (11:109) */
+.permission-panel {
+  overflow: hidden;
+  background: var(--color-bg-inverse);
+  border-radius: var(--radius-lg);
+}
+
+.permission-panel-header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: var(--border-width-default) solid var(--color-border-inverse);
+  color: var(--color-text-inverse-secondary);
+}
+
+/* Questions (11:165) */
+.questions {
+  background: var(--color-bg-subtle);
+}
+
+.questions-columns {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+/* Verify this page (11:210) */
+.verify-columns {
+  display: grid;
+  grid-template-columns: 480px minmax(0, 1fr);
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+.verify-heading .lead a {
+  color: var(--color-text-primary);
+}
+
+.verify-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.verify-checking {
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* Below 860 px every column stacks to one (rules §4.9). */
+@media (max-width: 859px) {
+  .hero {
+    padding-block: var(--layout-section-pad-mobile);
+  }
+  .hero-columns,
+  .two-columns,
+  .steps,
+  .questions-columns,
+  .verify-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero-columns {
+    gap: var(--spacing-2xl);
+  }
+  .questions-columns,
+  .verify-columns {
+    gap: var(--spacing-2xl);
+  }
+}
