@@ -7,7 +7,8 @@ import { defineConfig, devices } from "@playwright/test";
  * PW_CHANNEL picks an installed browser (for example "msedge") when the bundled one is missing (D-42).
  */
 const channel = process.env.PW_CHANNEL;
-const PORT = 4174;
+// Its own port, so a manual preview on 4173 or 4174 can keep running during tests.
+const PORT = 4175;
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -24,7 +25,7 @@ export default defineConfig({
     { name: "narrow", use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 780 } } },
   ],
   webServer: {
-    command: "vite build && vite preview --strictPort",
+    command: `vite build && vite preview --strictPort --port ${PORT}`,
     env: { SEALED_CONFIG: "tests/fixtures/sealed.config.e2e.json" },
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
 import { FaqItem } from "../../../components/FaqItem/FaqItem";
@@ -13,6 +14,7 @@ import { bundled, type DeskStatus, type SealedConfig } from "../../../lib/config
 import { formatFingerprint } from "../../../lib/fingerprint";
 import { formatZec } from "../../../lib/format";
 import { MAX_MESSAGE_BYTES } from "../../../lib/memo";
+import { EASE, gsap, revealOnScroll, ScrollTrigger, useMotion } from "../../../motion/gsap";
 import { useDeskStatus } from "../../useDeskStatus";
 import "./Landing.css";
 
@@ -21,6 +23,32 @@ import "./Landing.css";
  * Every value comes from the bundled config (D-08) or the build. Nothing is sent anywhere.
  */
 export function Landing() {
+  const main = useRef<HTMLElement>(null);
+
+  // D-67: the landing page carries the most motion. Reduced motion skips all of it (rules §7.4).
+  useMotion(main, (root) => {
+    const q = (s: string) => Array.from(root.querySelectorAll(s));
+    gsap.from(q(".hero-text > *"), { opacity: 0, y: 16, duration: 0.6, ease: EASE, stagger: 0.08 });
+    gsap.from(q(".hero .memo-grid-block"), { opacity: 0, y: 16, duration: 0.8, ease: EASE, delay: 0.25 });
+    revealOnScroll(
+      q(".section-heading, .two-columns > div, .permission-panel, .protects .button, .faq-item, .questions-list > .callout, .verify-key"),
+    );
+    revealOnScroll(q(".permission-row"), { y: 12, stagger: 0.06 });
+    // "How it works": each step's top rule draws left to right as the steps arrive.
+    const steps = q(".step");
+    const row = root.querySelector(".steps");
+    if (row && steps.length) {
+      gsap.set(steps, { "--rule-scale": 0, opacity: 0, y: 16 });
+      ScrollTrigger.create({
+        trigger: row,
+        start: "top 85%",
+        once: true,
+        onEnter: () =>
+          gsap.to(steps, { "--rule-scale": 1, opacity: 1, y: 0, duration: 0.7, ease: EASE, stagger: 0.15 }),
+      });
+    }
+  });
+
   // App only renders routes when the config parsed (App.tsx).
   if (!bundled.ok) return null;
   const config = bundled.config;
@@ -32,7 +60,7 @@ export function Landing() {
         Skip to content
       </a>
       <SiteHeader network={config.network} />
-      <main id="main">
+      <main id="main" ref={main}>
         <Hero floor={floor} />
         <WhoItIsFor />
         <HowItWorks floor={floor} />
