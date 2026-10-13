@@ -46,6 +46,20 @@ describe("validation rejects contract breaks", () => {
   it("a non RFC 3339 time", () => {
     expect(() => parseInbox({ ...inbox, created_at: "11/10/2026" })).toThrow(ApiError);
   });
+  it("a chain server named by more than its origin (C-14)", () => {
+    const withSource = (origin: string) => ({ ...health, sources: [{ ...health.sources[0], origin }] });
+    expect(parseHealth(withSource("https://testnet.zec.rocks:443")).sources[0]!.origin).toBe("https://testnet.zec.rocks:443");
+    expect(parseHealth(withSource("https://testnet.zec.rocks")).sources[0]!.origin).toBe("https://testnet.zec.rocks");
+    for (const bad of [
+      "https://user:pass@testnet.zec.rocks:443",
+      "https://testnet.zec.rocks:443/?key=secret",
+      "https://testnet.zec.rocks:443/private/path",
+      "https://testnet.zec.rocks:443#frag",
+      "testnet.zec.rocks",
+    ]) {
+      expect(() => parseHealth(withSource(bad)), bad).toThrow(ApiError);
+    }
+  });
   it("an unknown error code becomes bad_response", () => {
     expect(parseError({ error: { code: "teapot", message: "x" } }, 418, null).code).toBe("bad_response");
   });

@@ -48,7 +48,8 @@ export interface TipsPage {
 }
 
 export interface HealthSource {
-  url: string;
+  /** Scheme, host and port only (C-14). */
+  origin: string;
   ok: boolean;
   tipHeight: number | null;
   lagBlocks: number | null;
@@ -224,6 +225,25 @@ export function parseTipsPage(v: unknown): TipsPage {
   };
 }
 
+/**
+ * A chain server is named by its origin only (C-14, §5.6). Anything more (path, query, user name,
+ * password) is refused, so a credential in a server URL can never reach the screen or a log.
+ */
+export function originOnly(value: string, where: string): string {
+  let u: URL;
+  try {
+    u = new URL(value);
+  } catch {
+    throw new ApiError("bad_response", 0, where);
+  }
+  // `u.host` drops a default port, so ":443" written out is accepted as well.
+  const defaultPort = u.protocol === "https:" ? "443" : "80";
+  const exact = [`${u.protocol}//${u.host}`, `${u.protocol}//${u.hostname}:${u.port || defaultPort}`];
+  const isHttp = u.protocol === "https:" || u.protocol === "http:";
+  if (!isHttp || u.username || u.password || !exact.includes(value)) throw new ApiError("bad_response", 0, where);
+  return value;
+}
+
 export function parseHealth(v: unknown): Health {
   const s = shape(v, "health");
   return {
@@ -234,7 +254,7 @@ export function parseHealth(v: unknown): Health {
       const x = shape(src, `health.sources[${i}]`);
       const checked = x.strOrNull("last_checked_at");
       return {
-        url: x.str("url"),
+        origin: originOnly(x.str("origin"), `health.sources[${i}].origin`),
         ok: x.bool("ok"),
         tipHeight: x.intOrNull("tip_height"),
         lagBlocks: x.intOrNull("lag_blocks"),

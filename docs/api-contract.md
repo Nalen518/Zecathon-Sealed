@@ -24,6 +24,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-11 | Where the frontend keeps the desk token was not defined | Stored passphrase-wrapped in IndexedDB with the desk key, never in plain storage (§7) |
 | C-12 | Tip floor range was 0 to 100,000,000 zat, but SRD BR-8 forbids a floor below the ZIP 317 two-action fee (10,000 zat) | Range is 10,000 to 100,000,000 on `POST /inbox` and `PATCH /inbox/{id}` (Oct 11) |
 | C-13 | The audit trail (added Oct 12) would have to survive "delete inbox", but FR-17 says delete removes everything | The log is deleted with the inbox. The desk exports it first from the Audit trail page, which the Settings delete card links to (§6.10) |
+| C-14 | `GET /v1/health` is public and returned each chain server's full `url`, so credentials in a server URL would be visible to anyone | Field renamed `origin` and holds the origin only. Same rule as the audit log (§5.6) (Oct 13) |
 
 ## 2. Base
 
@@ -176,12 +177,14 @@ The five `display_status` values are the five Status badge variants in Figma, in
   "tip_height": 4201120,
   "lag_blocks": 0,
   "sources": [
-    { "url": "https://testnet.zec.rocks:443", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" },
-    { "url": "https://…", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" }
+    { "origin": "https://testnet.zec.rocks:443", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" },
+    { "origin": "https://…", "ok": true, "tip_height": 4201120, "lag_blocks": 0, "last_checked_at": "2026-10-11T09:42:00Z" }
   ],
   "version": "0.1.0"
 }
 ```
+
+`origin` is the chain server's scheme, host and port only, never its path, query or a user name and password (C-14). This endpoint is public.
 
 `lag_blocks` at the top is the worst lag among sources that answer. The Inbox health line reads "{ok count} of {total} servers · {lag_blocks} blocks behind · checked {age} ago". The Tag shows WATCHING when every source is ok and lag is under 3, otherwise WATCHER BEHIND (FR-18).
 
