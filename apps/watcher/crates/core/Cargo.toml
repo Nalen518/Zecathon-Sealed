@@ -1,0 +1,13 @@
+# Types and pure rules shared by every other crate: fingerprint, canonical JSON, audit hash,
+# display_status, memo format_ok. No I/O (rules §7.4).
+[package]
+name = "sealed-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
