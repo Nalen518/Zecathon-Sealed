@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import auditChain from "../../../../contracts/fixtures/audit_chain.json";
 import errorSpendKey from "../../../../contracts/fixtures/error_spend_key.json";
 import health from "../../../../contracts/fixtures/health.json";
 import inbox from "../../../../contracts/fixtures/inbox.json";
@@ -7,6 +8,7 @@ import tipsPage from "../../../../contracts/fixtures/tips_page.json";
 import token from "../../../../contracts/fixtures/token.json";
 import {
   ApiError,
+  parseAuditPage,
   parseError,
   parseHealth,
   parseInbox,
@@ -28,6 +30,12 @@ describe("contract fixtures parse", () => {
     expect(page.counts).toEqual({ visible: 1, belowFloor: 1 });
   });
   it("health.json", () => expect(parseHealth(health).sources).toHaveLength(2));
+  it("audit_chain.json (page)", () => {
+    const page = parseAuditPage(auditChain.page);
+    expect(page.entries).toHaveLength(3);
+    // Raw objects, untouched: snake_case keys and every field as received.
+    expect(page.entries[0]).toEqual(auditChain.page.entries[0]);
+  });
   it("token.json", () => expect(parseToken(token).token.startsWith("sld_")).toBe(true));
   it("error_spend_key.json", () => {
     const e = parseError(errorSpendKey, 422, null);
@@ -116,6 +124,23 @@ describe("requests follow the contract", () => {
     const h = r.calls[0]!.init.headers as Record<string, string>;
     expect(h.Authorization).toBe("Bearer sld_t");
     expect(h["X-Setup-Secret"]).toBe("secret");
+  });
+
+  it("audit pages from after_seq=0 while has_more, with the bearer header", async () => {
+    const calls: string[] = [];
+    const first = { ...auditChain.page, entries: auditChain.page.entries.slice(0, 2), next_seq: 2, has_more: true };
+    const second = { ...auditChain.page, entries: auditChain.page.entries.slice(2), next_seq: 3, has_more: false };
+    const impl = (async (url: string, init: RequestInit) => {
+      calls.push(url);
+      expect((init.headers as Record<string, string>).Authorization).toBe("Bearer sld_t");
+      return new Response(JSON.stringify(calls.length === 1 ? first : second), { status: 200 });
+    }) as unknown as typeof fetch;
+    const all = await new SealedApi("https://api.example.test/v1", impl).auditAll("desk", "sld_t");
+    expect(all).toHaveLength(3);
+    expect(calls).toEqual([
+      "https://api.example.test/v1/inbox/desk/audit?after_seq=0&limit=500",
+      "https://api.example.test/v1/inbox/desk/audit?after_seq=2&limit=500",
+    ]);
   });
 
   it("maps a 429 with Retry-After", async () => {

@@ -64,6 +64,18 @@ export interface Health {
   version: string;
 }
 
+/**
+ * One page of the audit log (§6.10). Entries stay raw JSON objects exactly as received: the hash
+ * chain is checked over those bytes (§5.6, D-59), and a malformed entry is reported by the chain
+ * check as Broken instead of failing the whole page.
+ */
+export interface AuditPage {
+  entries: Record<string, unknown>[];
+  nextSeq: number;
+  hasMore: boolean;
+  total: number;
+}
+
 export interface IssuedToken {
   token: string;
   createdAt: string;
@@ -265,6 +277,15 @@ export function parseHealth(v: unknown): Health {
   };
 }
 
+export function parseAuditPage(v: unknown): AuditPage {
+  const s = shape(v, "audit_page");
+  const entries = s.arr("entries").map((e, i) => {
+    if (!isObj(e)) throw new ApiError("bad_response", 0, `audit_page.entries[${i}]`);
+    return e;
+  });
+  return { entries, nextSeq: s.int("next_seq"), hasMore: s.bool("has_more"), total: s.int("total") };
+}
+
 export function parseToken(v: unknown): IssuedToken {
   const s = shape(v, "token");
   return { token: s.str("token"), createdAt: time(s.str("created_at"), "token.created_at") };
@@ -401,6 +422,26 @@ export class SealedApi {
     return this.call("GET", `/inbox/${encodeURIComponent(id)}/tips/${encodeURIComponent(tipId)}`, parseTip, {
       auth: { token },
     });
+  }
+
+  /** §6.10, one page. */
+  auditPage(id: string, token: string, opts: { afterSeq?: number; limit?: number } = {}): Promise<AuditPage> {
+    const q = new URLSearchParams();
+    q.set("after_seq", String(opts.afterSeq ?? 0));
+    if (opts.limit !== undefined) q.set("limit", String(opts.limit));
+    return this.call("GET", `/inbox/${encodeURIComponent(id)}/audit?${q.toString()}`, parseAuditPage, { auth: { token } });
+  }
+
+  /** §6.10: every entry from seq 1, paging while has_more, so the whole chain can be checked. */
+  async auditAll(id: string, token: string): Promise<Record<string, unknown>[]> {
+    const all: Record<string, unknown>[] = [];
+    let afterSeq = 0;
+    for (;;) {
+      const page = await this.auditPage(id, token, { afterSeq, limit: 500 });
+      all.push(...page.entries);
+      if (!page.hasMore || page.nextSeq <= afterSeq) return all;
+      afterSeq = page.nextSeq;
+    }
   }
 
   /** §6.7 */
