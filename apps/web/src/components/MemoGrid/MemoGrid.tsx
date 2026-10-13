@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
 import { mountMemoGrid, type MemoGridHandle } from "../../motion/memoGrid";
 import "../../motion/motion.css";
 import "./MemoGrid.css";
@@ -16,9 +16,11 @@ interface MemoGridProps {
   sealed?: boolean;
   /** Fixed accessible description of what the grid shows. */
   label: string;
+  /** Receives the canvas handle, for screens that drive the grid directly (the Write seal sweep). */
+  handleRef?: MutableRefObject<MemoGridHandle | null>;
 }
 
-export function MemoGrid({ mode, size = "default", bytes = 0, sealed = false, label }: MemoGridProps) {
+export function MemoGrid({ mode, size = "default", bytes = 0, sealed = false, label, handleRef }: MemoGridProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const caption = useRef<HTMLDivElement>(null);
   const handle = useRef<MemoGridHandle | null>(null);
@@ -33,9 +35,11 @@ export function MemoGrid({ mode, size = "default", bytes = 0, sealed = false, la
       // Compact: 9 px cells and 2 px gaps fit 32 columns in 350 px (Figma Size=Compact).
       gap: size === "compact" ? 2 : 3,
     });
+    if (handleRef) handleRef.current = handle.current;
     return () => {
       handle.current?.destroy();
       handle.current = null;
+      if (handleRef) handleRef.current = null;
     };
     // Mount once per mode. Byte and seal changes go through the handle below.
   }, [mode]);

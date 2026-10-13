@@ -63,6 +63,8 @@ export interface MemoGridHandle {
   setBytes(bytes: number): void;
   /** Static mode: show the sealed memo. */
   setSealed(sealed: boolean): void;
+  /** Static mode: draw the diagonal seal sweep at progress 0..1 (Write screen, D-67). */
+  setSealProgress(progress: number): void;
   /** Re-read CSS colors, e.g. after a theme change. */
   refreshColors(): void;
   /** Stop animation and remove every listener. */
@@ -117,6 +119,7 @@ export function mountMemoGrid(canvas: HTMLCanvasElement, opts: MemoGridOptions =
   let cell = 0;
   let staticBytes = clampBytes(opts.initialBytes ?? 0);
   let staticSealed = opts.initialSealed ?? false;
+  let staticSeal = staticSealed ? 1 : 0;
   let raf = 0;
   let t0 = 0;
   let onScreen = true;
@@ -215,7 +218,7 @@ export function mountMemoGrid(canvas: HTMLCanvasElement, opts: MemoGridOptions =
   function render() {
     stop();
     if (mode === "static") {
-      paint(staticBytes, staticSealed ? 1 : 0, 1, 0);
+      paint(staticBytes, staticSeal, 1, 0);
       return;
     }
     if (reduceMotion.matches || !onScreen || document.hidden) {
@@ -257,8 +260,14 @@ export function mountMemoGrid(canvas: HTMLCanvasElement, opts: MemoGridOptions =
       staticBytes = clampBytes(bytes);
       if (mode === "static") render();
     },
+    setSealProgress(progress: number) {
+      staticSeal = clamp01(progress);
+      staticSealed = staticSeal >= 1;
+      if (mode === "static") render();
+    },
     setSealed(sealed: boolean) {
       staticSealed = sealed;
+      staticSeal = sealed ? 1 : 0;
       if (mode === "static") render();
     },
     refreshColors() {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
@@ -11,6 +11,8 @@ import { TextLink } from "../../../components/TextLink/TextLink";
 import { bundled } from "../../../lib/config";
 import { MAX_MESSAGE_BYTES, truncateToBytes, utf8Length } from "../../../lib/memo";
 import { DeskKey } from "../../DeskKey";
+import { EASE, gsap, motionAllowed } from "../../../motion/gsap";
+import type { MemoGridHandle } from "../../../motion/memoGrid";
 import { useTipFlow } from "../../flow/TipFlow";
 import { useDeskStatus } from "../../useDeskStatus";
 import "../AppScreen.css";
@@ -28,6 +30,7 @@ export function Write() {
   const status = useDeskStatus();
   const [sealing, setSealing] = useState(false);
   const [sealError, setSealError] = useState(false);
+  const grid = useRef<MemoGridHandle | null>(null);
   if (!bundled.ok) return null;
   const config = bundled.config;
 
@@ -46,7 +49,15 @@ export function Write() {
     setSealing(true);
     setSealError(false);
     try {
+      // Seal first (the real work, in the browser). Then show it: a 500 ms gold sweep, never longer (rules §7.6).
       await flow.seal(status.publicKey);
+      const g = grid.current;
+      if (g && motionAllowed()) {
+        const sweep = { p: 0 };
+        await gsap.to(sweep, { p: 1, duration: 0.5, ease: EASE, onUpdate: () => g.setSealProgress(sweep.p) });
+        // Left the page (Leave) during the sweep: the grid is gone, so do not jump to Pay.
+        if (grid.current !== g) return;
+      }
       navigate("/pay");
     } catch {
       setSealError(true);
@@ -138,6 +149,7 @@ export function Write() {
                 mode="static"
                 size="compact"
                 bytes={bytes}
+                handleRef={grid}
                 label="512 squares stand for the 512-byte Zcash memo. Filled squares show how many bytes your tip uses."
               />
               <p className="text-body-small note">

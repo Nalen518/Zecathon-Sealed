@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
 import { RadioOption } from "../../../components/RadioOption/RadioOption";
@@ -68,6 +69,11 @@ function QuestionStep({
 }) {
   const q = QUESTIONS[index]!;
   const last = index === QUESTIONS.length - 1;
+  const root = useRef<HTMLDivElement>(null);
+  // Each question slides in from the right as the check moves on (D-67). The first one appears in place.
+  useMotion(root, (el) => {
+    if (index > 0) gsap.from(el.querySelector(".safety-left"), { opacity: 0, x: 24, duration: QUICK, ease: EASE });
+  });
 
   // Move focus to the new question so keyboard and screen reader users follow along.
   useEffect(() => {
@@ -75,7 +81,7 @@ function QuestionStep({
   }, [index, headingRef]);
 
   return (
-    <div className="safety-columns">
+    <div className="safety-columns" ref={root}>
       <form
         className="safety-left"
         onSubmit={(e) => {
@@ -140,10 +146,15 @@ function Result({ answers, onRestart }: { answers: Record<string, string>; onRes
   const warnings = picked.filter((o) => o.risk === "warning");
   const oks = picked.filter((o) => o.risk === "ok");
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const root = useRef<HTMLDivElement>(null);
   useEffect(() => titleRef.current?.focus(), []);
+  // Only the heading eases in. The result callouts are warnings and appear at once (rules §7.6).
+  useMotion(root, (el) => {
+    gsap.from(el.querySelector(".app-heading"), { opacity: 0, y: 12, duration: QUICK, ease: EASE });
+  });
 
   return (
-    <div className="app-stack">
+    <div className="app-stack" ref={root}>
       <div className="app-heading">
         <p className="text-mono-eyebrow eyebrow">Safety check · your result</p>
         <h1 ref={titleRef} tabIndex={-1} className="text-heading-h2">

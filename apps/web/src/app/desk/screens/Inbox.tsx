@@ -15,6 +15,7 @@ import { fromBase64 } from "../../../lib/bytes";
 import { formatFingerprint } from "../../../lib/fingerprint";
 import { formatZec } from "../../../lib/format";
 import { openMemo } from "../../../lib/seal";
+import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
 import { useDeskSession } from "../DeskSession";
 import { errorText } from "../errors";
 import { formatAge, formatHeight, formatWhen, shortTxid } from "../format";
@@ -44,6 +45,9 @@ export function Inbox() {
   const [showMemo, setShowMemo] = useState(false);
   const [now, setNow] = useState(Date.now());
   const seq = useRef(0);
+  const rowsRef = useRef<HTMLDivElement>(null);
+  /** Tip ids already on screen. null until the first load, so the first list appears without motion. */
+  const seen = useRef<Set<string> | null>(null);
 
   const onUnauthorized = useCallback(async () => {
     // api-contract §3: a bad or revoked token sends the desk to the Locked screen, and the token is dropped (§7).
@@ -105,6 +109,24 @@ export function Inbox() {
     [tips, tab],
   );
   const selected = selectedId ? tips.get(selectedId) ?? null : null;
+
+  // A new tip slides into the list when it arrives (D-67). Only real arrivals move. Nothing else in the Inbox does.
+  useMotion(
+    rowsRef,
+    (root) => {
+      const ids = list.map((t) => t.id);
+      if (seen.current) {
+        const fresh = ids.filter((id) => !seen.current!.has(id));
+        const els = fresh.map((id) => root.querySelector(`[data-tip-id="${CSS.escape(id)}"]`)).filter(Boolean);
+        if (els.length) gsap.from(els, { opacity: 0, y: -12, duration: QUICK, ease: EASE, stagger: 0.06 });
+      }
+    },
+    [list],
+  );
+  useEffect(() => {
+    if (counts === null) return;
+    seen.current = new Set([...(seen.current ?? []), ...list.map((t) => t.id)]);
+  }, [list, counts]);
 
   // Open the selected tip in this browser (FR-15). The text lives in state only and is dropped on lock.
   useEffect(() => {
@@ -228,10 +250,10 @@ export function Inbox() {
                 Below floor, hidden ({hidden})
               </button>
             </div>
-            <div className="inbox-rows" role="tabpanel">
+            <div className="inbox-rows" role="tabpanel" ref={rowsRef}>
               {list.map((t) => (
+                <div key={t.id} data-tip-id={t.id}>
                 <TipRow
-                  key={t.id}
                   time={formatWhen(t.blockTimeAt ?? t.seenAt)}
                   meta={`tx ${shortTxid(t.txid)}${t.height !== null ? ` · block ${formatHeight(t.height)}` : " · not mined yet"}`}
                   amount={`${formatZec(t.amountZat)} ZEC`}
@@ -239,6 +261,7 @@ export function Inbox() {
                   selected={t.id === selectedId}
                   onSelect={() => setSelectedId(t.id)}
                 />
+                </div>
               ))}
             </div>
           </div>

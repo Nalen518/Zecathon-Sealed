@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AuditHeaderRow, AuditRow } from "../../../components/AuditRow/AuditRow";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
@@ -9,6 +9,7 @@ import { Tag } from "../../../components/Tag/Tag";
 import { ApiError } from "../../../lib/api";
 import { exportAudit, verifyChain, type ChainResult } from "../../../lib/audit";
 import { auditView } from "../auditDisplay";
+import { EASE, gsap, useMotion } from "../../../motion/gsap";
 import { useDeskSession } from "../DeskSession";
 import { errorText } from "../errors";
 import { formatAge } from "../format";
@@ -37,6 +38,21 @@ export function AuditTrail() {
   const [error, setError] = useState<unknown>(null);
   const [shown, setShown] = useState(PAGE);
   const [now, setNow] = useState(Date.now());
+  const main = useRef<HTMLElement>(null);
+
+  // Once the browser has checked the chain: rows arrive oldest first, then the verdict tag settles (D-67).
+  // The check itself is already done. This shows its result, it does not fake progress.
+  useMotion(
+    main,
+    (root) => {
+      if (!loaded) return;
+      const rows = Array.from(root.querySelectorAll(".audit-row")).slice(0, 12);
+      const tl = gsap.timeline();
+      tl.from(rows, { opacity: 0, y: 8, duration: 0.25, ease: EASE, stagger: { each: 0.04, from: "end" } });
+      tl.from(root.querySelector(".audit-title-row .tag"), { opacity: 0, scale: 0.85, duration: 0.25, ease: "back.out(2)" }, ">-0.05");
+    },
+    [loaded],
+  );
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -84,7 +100,7 @@ export function AuditTrail() {
   return (
     <div className="app-page">
       <DeskHeader network={config.network} onLock={lock} />
-      <main id="main" className="app-main">
+      <main id="main" className="app-main" ref={main}>
         <div className="container app-stack">
           <div className="audit-top">
             <div className="audit-title">

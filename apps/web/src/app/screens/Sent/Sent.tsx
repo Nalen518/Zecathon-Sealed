@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { Navigate, useNavigate } from "react-router";
+import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
 import { Button } from "../../../components/Button/Button";
 import { FlowHeader } from "../../../components/FlowHeader/FlowHeader";
 import { SlimFooter } from "../../../components/SlimFooter/SlimFooter";
@@ -16,6 +18,17 @@ import "./Sent.css";
 export function Sent() {
   const navigate = useNavigate();
   const flow = useTipFlow();
+  const main = useRef<HTMLElement>(null);
+  // A short "done" moment (D-67): the card's parts settle in one after another.
+  useMotion(main, (root) => {
+    gsap.from(Array.from(root.querySelectorAll(".sent-card > :not(.sent-items), .sent-items > div")), {
+      opacity: 0,
+      y: 10,
+      duration: QUICK,
+      ease: EASE,
+      stagger: 0.06,
+    });
+  });
   if (!bundled.ok) return null;
   if (!flow.sent) return <Navigate to="/write" replace />;
   const config = bundled.config;
@@ -23,7 +36,7 @@ export function Sent() {
   return (
     <div className="app-page">
       <FlowHeader network={config.network} confirmLeave={false} onLeave={() => navigate("/")} />
-      <main id="main" className="app-main">
+      <main id="main" className="app-main" ref={main}>
         <div className="container app-stack">
           <StepIndicator steps={SENDER_STEPS} current={3} />
           <section className="card sent-card" aria-labelledby="sent-title">

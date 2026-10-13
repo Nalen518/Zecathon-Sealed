@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
 import { Navigate, useNavigate } from "react-router";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
@@ -30,6 +31,14 @@ export function Pay() {
   const config = bundled.ok ? bundled.config : null;
   const sealed = flow.sealed;
 
+  const main = useRef<HTMLElement>(null);
+  // Light motion (D-67): the payment options arrive in reading order, then the checks tick in. The warning stays still.
+  useMotion(main, (root) => {
+    const q = (s: string) => Array.from(root.querySelectorAll(s));
+    gsap.from(q(".qr-code, .pay-open, .pay-left > .card, .pay-confirm"), { opacity: 0, y: 12, duration: QUICK, ease: EASE, stagger: 0.06 });
+    gsap.from(q(".pay-checks li"), { opacity: 0, x: -8, duration: QUICK, ease: EASE, stagger: 0.08, delay: 0.2 });
+  });
+
   // Set only by the "I've sent it" click on this visit. A later visit (browser Back) goes to Write instead.
   const justSent = useRef(false);
 
@@ -59,7 +68,7 @@ export function Pay() {
           navigate("/");
         }}
       />
-      <main id="main" className="app-main">
+      <main id="main" className="app-main" ref={main}>
         <div className="container app-stack">
           <StepIndicator steps={SENDER_STEPS} current={2} />
           <div className="app-heading">
