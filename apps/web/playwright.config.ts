@@ -12,6 +12,8 @@ const PORT = 4174;
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
+  // Each desk test runs Argon2id over 64 MiB. Four workers finish faster than eight on a laptop.
+  workers: 4,
   reporter: [["list"]],
   use: {
     baseURL: `http://localhost:${PORT}`,

@@ -22,10 +22,12 @@ interface Api {
   /** Public key the desk registered, base64. */
   deskKey: string | null;
   status: { tips: number };
+  /** Which audit fixture GET /audit serves (T-11). */
+  audit: "audit_chain" | "audit_chain_tampered";
 }
 
 async function fakeApi(page: Page, origin: string): Promise<Api> {
-  const api: Api = { calls: [], deskKey: null, status: { tips: 200 } };
+  const api: Api = { calls: [], deskKey: null, status: { tips: 200 }, audit: "audit_chain" };
   const cors = {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE",
@@ -58,6 +60,7 @@ async function fakeApi(page: Page, origin: string): Promise<Api> {
       if (key) page.tips[0].memo_b64 = toBase64((await sealTip(TIP, key)).memoBytes);
       return json(route, 200, page);
     }
+    if (req.method() === "GET" && path === "/inbox/desk/audit") return json(route, 200, fixture(api.audit).page);
     if (req.method() === "DELETE" && path === "/inbox/desk") return route.fulfill({ status: 204, headers: cors });
     return json(route, 404, { error: { code: "not_found", message: "no" } });
   });
@@ -81,6 +84,65 @@ async function createDesk(page: Page): Promise<{ backup: string; privateKeyText:
   await expect(page.getByRole("heading", { name: "Connect a receive-only account" })).toBeVisible();
   return { backup, privateKeyText };
 }
+
+/** Create the desk key and register the inbox against the fake API. */
+async function registerDesk(page: Page) {
+  await createDesk(page);
+  await page.getByLabel("Shielded address for tips").fill(ADDRESS);
+  await page.getByLabel("Unified full viewing key").fill(UFVK);
+  await page.getByLabel("Setup secret").fill("setup-secret");
+  await page.getByRole("button", { name: "Register inbox" }).click();
+  await page.getByRole("link", { name: "Open the inbox" }).click();
+  await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
+}
+
+test.describe("Audit trail (FR-20)", () => {
+  test("verifies the chain in the browser, shows the latest hash and exports the raw log", async ({ page, baseURL }, info) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const watch = await watchPage(page);
+    const api = await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("link", { name: "Export the audit log first" }).click();
+    await expect(page.getByRole("heading", { name: "Audit trail", level: 1 })).toBeVisible();
+    await expect(page.getByText("Chain verified")).toBeVisible();
+    await expect(page.getByText(fixture("audit_chain").expected.latest_hash)).toBeVisible();
+    await expect(page.getByRole("row")).toHaveCount(4);
+    await expect(page.getByRole("rowheader", { name: "Inbox created" })).toBeVisible();
+    const call = api.calls.find((c) => c.path.startsWith("/inbox/desk/audit"))!;
+    expect(call.path).toBe("/inbox/desk/audit?after_seq=0&limit=500");
+    expect(call.headers.authorization).toMatch(/^Bearer sld_/);
+
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export log (JSON)" }).click();
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/^sealed-audit-desk-\d{4}-\d{2}-\d{2}\.json$/);
+    const exported = JSON.parse(readFileSync(await file.path(), "utf8"));
+    expect(exported.verified).toBe(true);
+    expect(exported.broken_at).toBeNull();
+    expect(exported.entries).toEqual(fixture("audit_chain").page.entries);
+
+    await checkScreen(page, "desk-audit-verified", info.project.name);
+    expect(await collectCsp(page, watch)).toEqual([]);
+  });
+
+  test("T-11: a tampered entry shows Chain broken at that entry", async ({ page, baseURL }, info) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const api = await fakeApi(page, baseURL!);
+    api.audit = "audit_chain_tampered";
+    await registerDesk(page);
+    await page.getByRole("link", { name: "Audit trail" }).click();
+    await expect(page.getByText("Chain broken at #2")).toBeVisible();
+    await expect(page.getByText("The log does not match itself at entry #2")).toBeVisible();
+    await expect(page.getByText("This hash comes from a log that does not check out. Do not save it as your reference.")).toBeVisible();
+    const row2 = page.getByRole("row").filter({ hasText: "#2" });
+    await expect(row2).toContainText("Hash mismatch");
+    await expect(page.getByRole("row").filter({ hasText: "#3" })).not.toContainText("Hash mismatch");
+    await checkScreen(page, "desk-audit-broken", info.project.name);
+  });
+});
 
 test.describe("Desk", () => {
   test("T-9 and FR-11: create, refuse a spend key in the browser, register, open a tip, lock and unlock", async ({ page, baseURL }) => {

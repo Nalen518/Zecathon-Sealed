@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { bundled } from "../lib/config";
 import { DeskLayout } from "./desk/DeskLayout";
+import { AuditTrail } from "./desk/screens/AuditTrail";
 import { CreateInbox } from "./desk/screens/CreateInbox";
 import { Decrypt } from "./desk/screens/Decrypt";
 import { Inbox } from "./desk/screens/Inbox";
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Inbox /> },
       { path: "decrypt", element: <Decrypt /> },
+      { path: "audit", element: <AuditTrail /> },
       { path: "settings", element: <Settings /> },
       { path: "create", element: <CreateInbox /> },
       { path: "restore", element: <Locked restore /> },

@@ -7,7 +7,7 @@ import "./DeskHeader.css";
 
 /**
  * Figma: Desk header, property "Show lock button". The lock button and the nav are hidden on
- * Create inbox (no inbox yet) and on the Locked screen.
+ * Create inbox (no inbox yet) and on the Locked screen. Nav: Inbox, Decrypt a memo, Audit trail, Settings.
  */
 export function DeskHeader({ network, onLock }: { network: Network; onLock?: () => void }) {
   return (
@@ -25,6 +25,7 @@ export function DeskHeader({ network, onLock }: { network: Network; onLock?: () 
                 Inbox
               </NavLink>
               <NavLink to="/desk/decrypt">Decrypt a memo</NavLink>
+              <NavLink to="/desk/audit">Audit trail</NavLink>
               <NavLink to="/desk/settings">Settings</NavLink>
             </nav>
           )}

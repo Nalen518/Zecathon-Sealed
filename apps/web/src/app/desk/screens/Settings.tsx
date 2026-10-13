@@ -5,6 +5,7 @@ import { Callout } from "../../../components/Callout/Callout";
 import { DeskHeader } from "../../../components/DeskHeader/DeskHeader";
 import { Input } from "../../../components/Input/Input";
 import { SlimFooter } from "../../../components/SlimFooter/SlimFooter";
+import { TextLink } from "../../../components/TextLink/TextLink";
 import { ApiError } from "../../../lib/api";
 import { formatZec } from "../../../lib/format";
 import { ZIP317_MIN_FEE_ZAT } from "../../../lib/memo";
@@ -167,6 +168,9 @@ export function Settings() {
               This removes the viewing key and every stored tip from the server. It cannot be undone. Tips stay on the
               Zcash chain as sealed memos, and your backup file can still open them in “Decrypt a memo”.
             </p>
+            <div>
+              <TextLink to="/desk/audit">Export the audit log first</TextLink>
+            </div>
             <Input
               label="Setup secret"
               mono

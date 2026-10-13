@@ -1,0 +1,104 @@
+/* Figma: Components / Audit header row (41:80) and Audit row (41:79). Columns 64, 150, 190, fill, 96, 150, gap 16. */
+.audit-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.audit-head th {
+  padding: var(--spacing-xs) var(--spacing-xs);
+  background: var(--color-bg-code);
+  color: var(--color-text-secondary);
+  text-align: left;
+  font-weight: 500;
+}
+
+.audit-row th,
+.audit-row td {
+  padding: var(--spacing-sm) var(--spacing-xs);
+  border-bottom: var(--border-width-default) solid var(--color-border-default);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.audit-row:last-child th,
+.audit-row:last-child td {
+  border-bottom: 0;
+}
+
+/* 16 px outer padding and 16 px gaps: each cell carries half a gap on each side. */
+.audit-head th:first-child,
+.audit-row > :first-child {
+  padding-left: var(--spacing-md);
+}
+
+.audit-head th:last-child,
+.audit-row > :last-child {
+  padding-right: var(--spacing-md);
+}
+
+.audit-seq { width: calc(64px + var(--spacing-md) + var(--spacing-xs)); }
+.audit-when { width: calc(150px + var(--spacing-md)); }
+.audit-event { width: calc(190px + var(--spacing-md)); }
+.audit-by { width: calc(96px + var(--spacing-md)); }
+.audit-hash { width: calc(150px + var(--spacing-md) + var(--spacing-xs)); }
+
+.audit-row .audit-seq,
+.audit-row .audit-details,
+.audit-row .audit-by,
+.audit-row .audit-hash {
+  color: var(--color-text-secondary);
+}
+
+.audit-row .audit-when,
+.audit-row .audit-event {
+  color: var(--color-text-primary);
+}
+
+.audit-row-broken th,
+.audit-row-broken td {
+  background: var(--color-status-danger-bg);
+}
+
+.audit-row-broken .audit-hash {
+  color: var(--color-status-danger-text);
+}
+
+/* Below 860 px each entry becomes a stacked card, so the table never scrolls sideways (NFR-10). */
+@media (max-width: 859px) {
+  .audit-table,
+  .audit-table tbody,
+  .audit-row,
+  .audit-row th,
+  .audit-row td {
+    display: block;
+    width: auto;
+  }
+  .audit-head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .audit-row {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: var(--border-width-default) solid var(--color-border-default);
+  }
+  .audit-row:last-child {
+    border-bottom: 0;
+  }
+  .audit-row-broken {
+    background: var(--color-status-danger-bg);
+  }
+  .audit-row th,
+  .audit-row td,
+  .audit-head th:first-child,
+  .audit-row > :first-child,
+  .audit-row > :last-child {
+    padding: 0;
+    border: 0;
+  }
+}

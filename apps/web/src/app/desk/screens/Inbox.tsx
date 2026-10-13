@@ -394,7 +394,7 @@ function TipPanel({
 }
 
 /** A browser without a desk token (after a 401 or a delete) signs in again with the setup secret (C-5). Not in Figma (D-49). */
-function SignInAgain() {
+export function SignInAgain() {
   const { api, config, setToken } = useDeskSession();
   const [secret, setSecret] = useState("");
   const [error, setError] = useState<string | undefined>();
