@@ -40,7 +40,7 @@ export function Landing() {
         <Questions />
         <VerifyThisPage config={config} />
       </main>
-      <SiteFooter network={config.network} sourceUrl={config.sourceUrl} />
+      <SiteFooter network={config.network} />
     </>
   );
 }
@@ -249,7 +249,6 @@ function Questions() {
 function VerifyThisPage({ config }: { config: SealedConfig }) {
   const status = useDeskStatus();
   const readme = `${config.sourceUrl}#desk-key-fingerprint`;
-  const sourceLabel = config.sourceUrl.replace(/^https:\/\//, "");
 
   return (
     <section id="verify" className="section verify" aria-labelledby="verify-title">
@@ -273,10 +272,6 @@ function VerifyThisPage({ config }: { config: SealedConfig }) {
         </div>
         <div className="verify-key">
           <DeskKey status={status} />
-          <p className="text-mono-label verify-build">
-            Source code: <a href={config.sourceUrl}>{sourceLabel}</a>
-            {__SEALED_BUILD__ && <> · Build {__SEALED_BUILD__}</>}
-          </p>
           <div>
             <Button variant="primary" to="/write">
               Write a tip

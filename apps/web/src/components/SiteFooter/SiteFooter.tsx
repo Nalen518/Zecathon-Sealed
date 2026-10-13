@@ -7,14 +7,13 @@ import "./SiteFooter.css";
 
 interface SiteFooterProps {
   network: Network;
-  sourceUrl: string;
 }
 
 /**
  * Figma: Site footer (Breakpoint=Desktop, Mobile), footer F3 with the dot-matrix wordmark (D-05).
- * Landing page only. Links: Source code, Honest limits, Verify this page (D-31).
+ * Landing page only. Links: Honest limits, Verify this page (D-31, D-66).
  */
-export function SiteFooter({ network, sourceUrl }: SiteFooterProps) {
+export function SiteFooter({ network }: SiteFooterProps) {
   const footer = useRef<HTMLElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -37,7 +36,6 @@ export function SiteFooter({ network, sourceUrl }: SiteFooterProps) {
             </p>
           </div>
           <nav aria-label="Footer" className="site-footer-links text-body-small">
-            <a href={sourceUrl}>Source code</a>
             <a href="/#what-it-protects">Honest limits</a>
             <a href="/#verify">Verify this page</a>
           </nav>
@@ -45,7 +43,7 @@ export function SiteFooter({ network, sourceUrl }: SiteFooterProps) {
         <canvas ref={canvas} className="dot-wordmark site-footer-wordmark" width={1040} height={260} aria-hidden="true" />
         <div className="site-footer-bottom">
           <p className="text-mono-badge site-footer-legal">
-            © Sealed · v{__SEALED_VERSION__} · MIT or Apache-2.0
+            © Sealed · MIT or Apache-2.0
           </p>
           <span className="site-footer-badge">
             <NetworkBadge network={network} />

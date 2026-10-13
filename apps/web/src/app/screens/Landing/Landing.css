@@ -110,14 +110,9 @@
   min-width: 0;
 }
 
-.verify-build,
 .verify-checking {
   color: var(--color-text-secondary);
   overflow-wrap: anywhere;
-}
-
-.verify-build a {
-  color: var(--color-text-primary);
 }
 
 /* Below 860 px every column stacks to one (rules §4.9). */
