@@ -40,14 +40,14 @@ Sources of truth, in this order: `docs/api-contract.md`, the SRD, the PRD, the A
    - NEAR Intents is out of scope (transparent ZEC only, no memos, PRD §3)
    - From the PRD: a testnet faucet for TAZ and public lightwalletd servers (zec.rocks)
 2. **Pin exact versions** of every librustzcash crate, verified against the live testnet before use. Do not trust version numbers from memory or old docs.
-3. **Network upgrades are live and moving.** Ironwood (NU6.3) adds a new shielded pool and stops Orchard from accepting new outputs, so the scanner must trial-decrypt **Ironwood outputs as well as Orchard and Sapling**. NU7 is active on testnet with 25-second blocks. Take activation heights and branch IDs from the crates (`zcash_protocol`), never hardcode them.
+3. **Network upgrades are live and moving.** Ironwood (NU6.3) adds a new shielded pool and stops Orchard from accepting new outputs, so the scanner must trial-decrypt **Ironwood outputs as well as Orchard and Sapling**. Ironwood outputs go to Orchard receivers and are found with the Orchard viewing key, so there is no separate Ironwood receiver. NU7 is active on testnet since height 4,465,026 (branch ID `77190ad9`, confirmed by `GetLightdInfo` on Oct 13). Only the pre-release crate line (`zcash_protocol` 0.11.0-pre.0 and up) knows this height, so testnet needs it. Mainnet has no NU7 height yet (decision B-23). Take activation heights and branch IDs from the crates (`zcash_protocol`), never hardcode them.
 4. **One network per deployment**, set by `SEALED_NETWORK`. The service refuses to start if a configured address, viewing key or server belongs to the other network.
 5. **Mainnet is opt-in.** Everything runs on testnet until @Apa says to switch.
 
 ## 4. Watcher correctness
 
 1. Poll every `SEALED_POLL_SECONDS` (30). Fetch compact blocks from the last scanned height, trial-decrypt with the view-only key, fetch the full transaction for each match to read the 512-byte memo.
-2. **At least two lightwalletd sources** (FR-12). A new chain tip is trusted only when a second source returns the same block hash. If only one source is available on testnet, follow decision P-B7 and show it in `/v1/health`.
+2. **At least two lightwalletd sources** (FR-12). A new chain tip is trusted only when a second source returns the same block hash. On testnet both zec.rocks servers are used, and the honest limits say they share one operator (decision B-22). If only one source is available on testnet, follow decision B-18 and show it in `/v1/health`.
 3. **Confirmations:** `confirmed` at 3 blocks (FR-14). On a reorg, rescan from the fork height and mark removed tips `orphaned`. Never delete them.
 4. **Idempotent:** a tip is unique by `txid` + `output_index` (FR-13). Restarts resume from `sync_state` with no duplicate and no lost tip (NFR-7).
 5. **`seq` bumps** on every insert and every change to `confirmations`, `chain_state` or `below_floor`. A tip floor change bumps every tip it affects (contract §6.5).
