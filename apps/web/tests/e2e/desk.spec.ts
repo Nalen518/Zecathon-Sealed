@@ -211,6 +211,8 @@ test.describe("Desk", () => {
   });
 
   test("every desk screen passes axe and has no horizontal scroll", async ({ page, baseURL }, info) => {
+    // Seven axe scans plus Argon2 unlocks: slow when the suite runs in parallel.
+    test.setTimeout(90_000);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await fakeApi(page, baseURL!);
     await page.goto("/desk");
