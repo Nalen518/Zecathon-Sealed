@@ -21,13 +21,13 @@ interface Api {
   calls: { method: string; path: string; headers: Record<string, string>; body: string }[];
   /** Public key the desk registered, base64. */
   deskKey: string | null;
-  status: { tips: number };
+  status: { tips: number; tokenFailures: number };
   /** Which audit fixture GET /audit serves (T-11). */
   audit: "audit_chain" | "audit_chain_tampered";
 }
 
 async function fakeApi(page: Page, origin: string): Promise<Api> {
-  const api: Api = { calls: [], deskKey: null, status: { tips: 200 }, audit: "audit_chain" };
+  const api: Api = { calls: [], deskKey: null, status: { tips: 200, tokenFailures: 0 }, audit: "audit_chain" };
   const cors = {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE",
@@ -44,12 +44,21 @@ async function fakeApi(page: Page, origin: string): Promise<Api> {
     if (req.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
     api.calls.push({ method: req.method(), path: `${path}${url.search}`, headers: req.headers(), body: req.postData() ?? "" });
 
+    if (req.method() === "POST" && path === "/inbox" && api.deskKey) {
+      return json(route, 409, { error: { code: "inbox_exists", message: "exists" } });
+    }
     if (req.method() === "POST" && path === "/inbox") {
       const body = JSON.parse(req.postData() ?? "{}");
       api.deskKey = body.desk_public_key;
       return json(route, 201, { ...fixture("inbox"), desk_public_key: body.desk_public_key, fingerprint: body.fingerprint, address: body.address });
     }
-    if (req.method() === "POST" && path === "/inbox/desk/tokens") return json(route, 201, fixture("token"));
+    if (req.method() === "POST" && path === "/inbox/desk/tokens") {
+      if (api.status.tokenFailures > 0) {
+        api.status.tokenFailures--;
+        return json(route, 503, { error: { code: "watcher_unavailable", message: "down" } });
+      }
+      return json(route, 201, fixture("token"));
+    }
     if (req.method() === "GET" && path === "/health") return json(route, 200, fixture("health"));
     if (req.method() === "GET" && path === "/inbox/desk/tips") {
       if (api.status.tips === 401) return json(route, 401, { error: { code: "unauthorized", message: "bad token" } });
@@ -221,6 +230,20 @@ test.describe("Desk", () => {
     await page.getByRole("button", { name: "Restore" }).click();
     // Restored but not registered on this watcher yet: the Inbox asks to sign in with the setup secret.
     await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
+  });
+
+  test("a failed token request after a successful register can be retried", async ({ page, baseURL }) => {
+    const api = await fakeApi(page, baseURL!);
+    api.status.tokenFailures = 1;
+    await createDesk(page);
+    await page.getByLabel("Shielded address for tips").fill(ADDRESS);
+    await page.getByLabel("Unified full viewing key").fill(UFVK);
+    await page.getByLabel("Setup secret").fill("setup-secret");
+    await page.getByRole("button", { name: "Register inbox" }).click();
+    await expect(page.getByText("The watcher cannot reach the chain")).toBeVisible();
+    await page.getByRole("button", { name: "Register inbox" }).click();
+    await expect(page.getByRole("heading", { name: "Publish your fingerprint" })).toBeVisible();
+    expect(api.calls.filter((c) => c.method === "POST" && c.path === "/inbox")).toHaveLength(1);
   });
 
   test("a revoked token (401) sends the desk to the Locked screen", async ({ page, baseURL }) => {

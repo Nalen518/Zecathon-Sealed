@@ -1,6 +1,7 @@
 /** Desk display helpers. Pure functions, local time (api-contract §4.1: the frontend shows local time). */
 
-const time = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" });
+// 24-hour clock in the desk's own locale, as in Figma ("Today, 14:02").
+const time = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const day = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const num = new Intl.NumberFormat("en-US");
 

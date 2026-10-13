@@ -67,6 +67,20 @@ test.describe("Sender flow", () => {
     await expect(page.getByText("You have used all 331 bytes. Shorten the tip to add more.")).toBeVisible();
   });
 
+  test("Back after I've sent it never returns to the sealed tip or loops on Sent", async ({ page }) => {
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip");
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await page.getByRole("button", { name: "I’ve sent it" }).click();
+    await expect(page).toHaveURL(/\/sent$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/write$/);
+    await expect(page.getByLabel("Your tip", { exact: true })).toHaveValue("");
+    await page.goBack();
+    await expect(page).toHaveURL(/\/write$/);
+    await expect(page.getByRole("img", { name: /Payment request/ })).toHaveCount(0);
+  });
+
   test("Pay without a sealed tip goes back to Write", async ({ page }) => {
     await page.goto("/pay");
     await expect(page).toHaveURL(/\/write$/);

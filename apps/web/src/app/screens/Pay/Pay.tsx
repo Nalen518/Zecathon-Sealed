@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
@@ -30,6 +30,9 @@ export function Pay() {
   const config = bundled.ok ? bundled.config : null;
   const sealed = flow.sealed;
 
+  // Set only by the "I've sent it" click on this visit. A later visit (browser Back) goes to Write instead.
+  const justSent = useRef(false);
+
   const uri = useMemo(
     () =>
       config && sealed
@@ -39,8 +42,8 @@ export function Pay() {
   );
 
   if (!config) return null;
-  // "I've sent it" wipes the sealed tip first, so check that before the "nothing sealed" guard.
-  if (flow.sent) return <Navigate to="/sent" replace />;
+  // "I've sent it" wipes the sealed tip and navigates in the same click. Render nothing in between.
+  if (justSent.current) return null;
   if (!sealed || !uri) return <Navigate to="/write" replace />;
 
   const amount = formatZec(config.tipFloorZat);
@@ -142,7 +145,11 @@ export function Pay() {
           <div className="actions">
             <Button
               variant="secondary"
-              onClick={flow.markSent}
+              onClick={() => {
+                justSent.current = true;
+                flow.markSent();
+                navigate("/sent");
+              }}
             >
               I’ve sent it
             </Button>

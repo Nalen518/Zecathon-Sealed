@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
@@ -28,6 +28,23 @@ export function Settings() {
   const navigate = useNavigate();
   const token = unlocked?.secrets.token ?? null;
   const [floor, setFloor] = useState(formatZec(config.tipFloorZat));
+  const [floorTouched, setFloorTouched] = useState(false);
+
+  // The bundled config can lag behind a PATCH until the next redeploy. Show the floor the server applies (§6.2).
+  useEffect(() => {
+    if (!config.apiBaseUrl) return;
+    let live = true;
+    api.inbox(config.inboxId).then(
+      (inbox) => {
+        if (live && !floorTouched) setFloor(formatZec(inbox.tipFloorZat));
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+    // Load once. Typing in the field must not trigger a reload.
+  }, [api, config.apiBaseUrl, config.inboxId]);
   const [floorError, setFloorError] = useState<string | undefined>();
   const [notice, setNotice] = useState<Notice>(null);
   const [secret, setSecret] = useState("");
@@ -136,7 +153,10 @@ export function Settings() {
               label="Tip floor (ZEC)"
               inputMode="decimal"
               value={floor}
-              onChange={(e) => setFloor(e.target.value)}
+              onChange={(e) => {
+                setFloorTouched(true);
+                setFloor(e.target.value);
+              }}
               helper="Tips below this amount are hidden as spam. Changing it re-sorts existing tips. None are deleted."
               error={floorError}
             />

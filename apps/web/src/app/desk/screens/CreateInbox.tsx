@@ -260,6 +260,8 @@ function ViewingKeyStep({ onDone }: { onDone: () => void }) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [pageError, setPageError] = useState<{ title: string; body: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // True once POST /inbox succeeded in this session: a retry after a failed token request only asks for the token.
+  const [registered, setRegistered] = useState(false);
   const ufvkPrefix = UFVK_HINT_PREFIX[config.network];
   const noApi = !config.apiBaseUrl;
 
@@ -294,18 +296,21 @@ function ViewingKeyStep({ onDone }: { onDone: () => void }) {
     }
     setBusy(true);
     try {
-      await api.createInbox(
-        {
-          id: config.inboxId,
-          name: config.name,
-          deskPublicKey: toBase64(unlocked.secrets.publicKey),
-          fingerprint: record.fingerprint,
-          address: address.trim(),
-          ufvk: ufvk.trim(),
-          tipFloorZat: ok.floorZat,
-        },
-        secret,
-      );
+      if (!registered) {
+        await api.createInbox(
+          {
+            id: config.inboxId,
+            name: config.name,
+            deskPublicKey: toBase64(unlocked.secrets.publicKey),
+            fingerprint: record.fingerprint,
+            address: address.trim(),
+            ufvk: ufvk.trim(),
+            tipFloorZat: ok.floorZat,
+          },
+          secret,
+        );
+        setRegistered(true);
+      }
       const issued = await api.issueToken(config.inboxId, { setupSecret: secret });
       await setToken(issued.token);
       setSecret("");
