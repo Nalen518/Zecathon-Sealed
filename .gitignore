@@ -60,3 +60,6 @@ keystore/
 
 # tool caches
 .eslintcache
+
+# rust build output
+target/
