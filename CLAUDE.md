@@ -13,6 +13,7 @@ Sealed is a shielded tip line for a newsroom desk (Zecathon, Wildcard track). Th
 7. `docs/frontend/feedback.md`
 8. `docs/design-screens.md` (every screen, its states, its Figma frame, where each value comes from)
 9. `docs/motion/` (README, prompts, `src/memoGrid.ts`, `src/dotWordmark.ts`, `motion.css`)
+10. `docs/session-log.md` (the latest entry says where the last session stopped)
 
 Figma: https://www.figma.com/design/pVuD8nfzyPl2HRPPLuACjV/Zecathon (file key `pVuD8nfzyPl2HRPPLuACjV`). Read variables and frames from Figma, never guess values. `docs/figma-handoff-prompt.md` is history only.
 
@@ -26,6 +27,7 @@ Figma: https://www.figma.com/design/pVuD8nfzyPl2HRPPLuACjV/Zecathon (file key `p
 - Copy: voice is "the desk" and "Sealed", never "us", "our" or "we". No dashes or semicolons joining phrases. Copy labels exactly from Figma. No Privacy policy page (D-31).
 - Web only, desktop first at 1280, columns stack below 860 px, no horizontal scroll at 360 px.
 - WCAG 2.1 AA, 44 px targets, real labels, visible focus, reduced motion respected.
+- Motion: GSAP only, inside `gsap.matchMedia()` for reduced motion, never delaying safety text (rules §7, D-67).
 - Exact dependency versions, committed lockfile, TypeScript strict. `src/lib` has no React.
 
 ## Stack and layout (D-33, D-34)
@@ -46,6 +48,10 @@ docs/
 - After each meaningful step update `docs/frontend/decisions.md` and `docs/frontend/feedback.md`.
 - A screen is done only when it passes the checklist at the end of `docs/frontend/rules.md`.
 - Build P0 (browser-only) before any backend call exists. Write tests first for T-1, T-2 and the fingerprint fixture.
+
+## End of each session day
+
+Before a session ends, add that day's entry to `docs/session-log.md` using its template: what was done, findings, bugs and their causes, decisions taken (IDs), what is open, and where to start next. Do this without being asked. Read the latest entry at the start of a new session.
 
 ## Git
 

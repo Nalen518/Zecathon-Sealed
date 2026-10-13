@@ -86,7 +86,11 @@ Rules:
 
 1. Use the modules in `docs/motion` (`mountMemoGrid`, `mountDotWordmark`), copied to `src/motion`. Mount in an effect and call `destroy()` on cleanup. When copying, drop the raw hex fallbacks in `memoGrid.ts` and `motion.css` so colors come only from tokens (§4.1).
 2. Animations pause off-screen and when the tab is hidden.
-3. No animation library unless this file is changed.
+3. **GSAP is the only animation library** (`gsap` and `@gsap/react`, exact versions, bundled from npm, never a CDN). Use `useGSAP()` with a `scope`, so everything is reverted on unmount. ScrollTrigger only from the `gsap/ScrollTrigger` import, registered once in `src/motion/gsap.ts` (D-67).
+4. **Every GSAP animation runs inside `gsap.matchMedia()` under `(prefers-reduced-motion: no-preference)`.** With reduced motion, content is simply there, final state, no movement (§6.8).
+5. **Content never depends on the animation.** Start states are set by JavaScript at run time (`from`, `set`), never in CSS, so a page whose script fails still shows everything. Animate `opacity` and transforms only, never `visibility` or `display`.
+6. **Motion never delays safety or meaning.** No animation on decrypted tip text, warnings, errors or the fingerprint. Sender screens: nothing longer than 400 ms, and the seal sweep on Write at most 500 ms. No scroll-jacking (no ScrollSmoother, no pinning on sender or desk screens) and no splitting text into letters.
+7. Desk screens animate only to show something real: a new tip arriving, a check finishing.
 
 ## 8. Code
 
