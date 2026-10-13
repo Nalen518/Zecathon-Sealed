@@ -41,4 +41,5 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Bugs found:** Back after "I've sent it" looped on the Sent page (Pay redirected to Sent on every visit). Create inbox got stuck on "inbox already exists" when the token request failed after a successful register. Settings showed the config floor instead of the server's. Desk times used a 12-hour clock. The tip page linked to a README section that did not exist. All fixed with regression tests (F-19).
 **Decisions:** C-13, C-14, D-54 to D-67.
 **Open:** D-37 to D-39, D-43, D-44, D-48 to D-52, D-61, D-64 wait for review. Spikes 2 to 4 before the watcher. Rust toolchain not installed.
-**Next:** @Apa reviews the motion on the previews. Then push `feat/web-scaffold`, open the PR into `development`, and start the backend (Rust toolchain, spike 2).
+**Status:** Frontend declared done by @Apa. Previews stopped. `feat/web-scaffold` holds 24 local commits, not pushed.
+**Next:** Push `feat/web-scaffold` and open the PR into `development` when @Apa asks. Then the backend: install the Rust toolchain, run spike 2 (view-only scan of a testnet memo under Ironwood), spike 3 (viewing key export) and spike 4 (Railway fit) before any watcher code.
