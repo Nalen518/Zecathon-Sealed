@@ -112,7 +112,7 @@ Nothing in this build is mocked: every tip in the desk list must come from a rea
 | [ZIPs](https://zips.z.cash/) | The rules we implement: ZIP 321 payment links, ZIP 302 memo layout, ZIP 317 fees, ZIP 316 unified addresses | BR-1, BR-8, BR-9, FR-4 |
 | [librustzcash](https://github.com/zcash/librustzcash) | The watcher's engine: view-only account, block scanning, memo decryption, reorg rollback, link parsing | BR-2 to BR-7, BR-10 |
 | Public lightwalletd servers (named in the PRD) | The only chain access: compact blocks and full transactions over gRPC with TLS | BR-4, BR-5 |
-| [Zodl](https://github.com/zodl-inc) app | A test sender wallet to make real payments with memos; its Android SDK is AGPL-3.0, so we copy no code from it | T-4 only |
+| [zcash-devtool](https://github.com/zcash/zcash-devtool) | Laptop-only test wallet: sends real testnet payments with memos and creates the desk's receive-only account and viewing key. Never shipped; replaces the Zodl app (backend B-20, Oct 13) | T-4, spike 3 |
 | [Zcash docs](https://zcash.readthedocs.io/en/latest/) | Concepts only (shielded pools, viewing keys); no integration | None |
 | [Zebra](https://github.com/ZcashFoundation/zebra) | Not run by us; the public servers sit in front of nodes like it. A node of our own is a later hardening step | None |
 | [NEAR Intents](https://docs.near-intents.org/) | Not used: it supports only transparent ZEC, which cannot carry a memo | None |
@@ -120,15 +120,15 @@ Nothing in this build is mocked: every tip in the desk list must come from a rea
 | ID | The backend MUST | Spike | Verify |
 | --- | --- | --- | --- |
 | BR-1 | Take a single NETWORK setting (test or main) that selects the chain parameters, address prefixes and the lightwalletd list, and refuse to start if a registered key or address belongs to the other network |  | Test |
-| BR-2 | Keep one view-only account per inbox in a librustzcash wallet database (zcash\_client\_sqlite), created by importing the desk's unified full viewing key | S3 | Test |
+| BR-2 | Keep the desk's unified full viewing key encrypted at rest and decrypt it only in memory to trial-decrypt compact block outputs with zcash\_client\_backend. No zcash\_client\_sqlite wallet database, so nothing beyond the api-contract §5 tables is stored (backend B-08, Oct 13) | S3 | Test |
 | BR-3 | Require a birthday height at registration and start scanning from it, so the first sync takes minutes | S4 | Test |
 | BR-4 | Reach the chain only through the lightwalletd gRPC service over TLS: read the latest block, fetch compact blocks in ranges, and fetch the full transaction for every block that matches, because compact blocks do not carry the memo. Method names to be confirmed against the protocol version we pin | S2 | Test |
-| BR-5 | Use at least two servers per network, compare their reported tip, and expose each server's height and lag in /v1/health |  | Test |
+| BR-5 | Use at least two servers on mainnet (one is allowed on testnet, api-contract C-21), compare their reported tip, and expose each server's height and lag in /v1/health |  | Test |
 | BR-6 | Store a memo only for outputs received by the inbox account; ignore change and outgoing outputs | S2 | Test |
 | BR-7 | Derive the inbox's unified address from the viewing key and show only a receiver the pinned librustzcash version can scan. Which pools to include depends on the Ironwood changes and is settled in spike 2 | S2 | Test, Demo |
 | BR-8 | Treat the tip floor as a per-inbox value in zatoshis, and never set it below the ZIP 317 minimum fee for a two-action transaction (10,000 zatoshis) |  | Test |
 | BR-9 | Validate every payment link the sender page builds with the official zip321 crate in an automated test, replacing my hand-written checker |  | Test |
-| BR-10 | Use the library's rollback to the fork height on a reorg and mark affected tips orphaned (FR-14) |  | Test |
+| BR-10 | Detect a reorg by comparing stored block hashes with the chain server, rescan from the fork height and mark affected tips orphaned (FR-14, backend B-08, Oct 13) |  | Test |
 | BR-11 | Pin exact versions of every Zcash crate and record the Ironwood-compatible release in the README | S2 | Inspect |
 | BR-12 | Run on Railway from one Dockerfile with a persistent volume for the database, and read configuration only from environment variables | S4 | Demo |
 | BR-13 | Reject registration input that is not a unified full viewing key for the selected network (a seed phrase or spending key is refused and never stored). This replaces the wording of FR-11 | S3 | Test |

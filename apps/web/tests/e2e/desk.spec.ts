@@ -184,7 +184,7 @@ test.describe("Desk", () => {
     await page.getByRole("link", { name: "Open the inbox" }).click();
     await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
     await expect(page.getByText("Watching")).toBeVisible();
-    await expect(page.getByRole("tab", { name: "All tips (1)" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "All tips (2)" })).toBeVisible();
     await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
     await expect(page.getByText(TIP)).toBeVisible();
     const tipsCall = api.calls.find((c) => c.path.startsWith("/inbox/desk/tips"))!;
