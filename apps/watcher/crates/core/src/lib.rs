@@ -5,3 +5,4 @@ pub mod fingerprint;
 pub mod jcs;
 pub mod memo;
 pub mod status;
+pub mod wire;
