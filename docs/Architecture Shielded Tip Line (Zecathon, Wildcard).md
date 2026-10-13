@@ -46,6 +46,7 @@ One SQLite file beside the librustzcash wallet database; the app tables below ho
 | tip | id, inbox\_id, txid, output\_index, height, block\_time, amount\_zat, memo\_ct (512 bytes as received), status, seen\_at | One row per received shielded output carrying a memo |
 | desk\_token | inbox\_id, token\_hash, created\_at, revoked\_at | Bearer tokens for the desk page, stored hashed |
 | sync\_state | server\_url, last\_height, last\_checked\_at, ok | Health of each lightwalletd source |
+| audit\_log | inbox\_id, seq, at, type, actor, details\_json, prev\_hash, hash | Tamper-evident desk activity log (FR-20, api-contract §5.6). Each entry is written in the same transaction as the change it records and is never updated. Rows go only when the whole inbox is deleted (C-13) |
 
 Tip status is stored as three fields (chain_state, below_floor, format_ok) plus a seq column, and the API derives one display_status with a fixed precedence. See api-contract.md §5.3. The display values are: pending (seen, fewer than the confirmation depth), confirmed, orphaned (dropped by a reorg), below\_floor (amount under the inbox floor, kept but hidden by default), unreadable (memo is not in our format).
 
@@ -65,6 +66,7 @@ Summary only. The full request and response contract, error codes and shared rul
 | PATCH /v1/inbox/{id} | desk token | updates tip_floor_zat; tips are re-sorted into or out of below_floor, none deleted (FR-16) |
 | DELETE /v1/inbox/{id} | desk token and setup secret | deletes the inbox, its viewing key, tokens and every stored tip; returns 204 (FR-17, T-9) |
 | GET /v1/health | none | per-source tip height, last sync, lag in blocks |
+| GET /v1/inbox/{id}/audit?after\_seq={seq} | desk token | audit entries in seq order with prev\_hash and hash, verified in the browser (FR-20) |
 
 Added Oct 11 for the Settings screen: PATCH and DELETE above. Design rules: polling uses a change sequence (seq) so status changes reach the desk, not only new tips; no endpoint ever accepts a memo from a sender (the memo only travels on-chain); rate-limit by token and by IP, but do not log IPs on the public endpoint.
 
