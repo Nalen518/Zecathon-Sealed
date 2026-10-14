@@ -142,15 +142,21 @@ export function Inbox() {
     return { kind: "sealed" };
   }, [selected, opened]);
 
+  // Bumped whenever the selection or the key changes, so an opening still in flight is dropped
+  // instead of showing that tip already open the next time it is chosen.
+  const openRun = useRef(0);
   useEffect(() => {
+    openRun.current++;
     setShowMemo(false);
     setOpened(null);
   }, [selectedId, unlocked]);
 
   const openSelected = useCallback(async () => {
     if (!selected?.memoB64 || !unlocked) return;
+    const run = ++openRun.current;
     const bytes = fromBase64(selected.memoB64);
     const r = bytes ? await openMemo(bytes, unlocked.secrets) : null;
+    if (run !== openRun.current) return;
     setOpened({ tipId: selected.id, result: r?.ok ? { kind: "text", text: r.text } : { kind: "unreadable" } });
   }, [selected, unlocked]);
 
