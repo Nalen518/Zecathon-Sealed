@@ -39,7 +39,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 | Desk — Restore | `/desk/restore`, where a browser with no desk key lands. Backup file picker, passphrase, "Restore and unlock", "Create a new inbox instead", "Judging Sealed?" callout on the judging deploy | FR-7 |
 | Decrypt — Opened | Paste a memo, open it with no server | FR-8 |
 | Decrypt — Unreadable | Non-Sealed memo is not rendered | FR-19 |
-| Settings — Delete inbox | Tip floor, network (read-only), rotate token, "Export the audit log first" link to the Audit trail page, delete with setup secret and typed confirmation | FR-16, FR-17, FR-9 |
+| Settings — Delete inbox | Tip floor, network (read-only), rotate token, backup file download with the current token (D-94), "Export the audit log first" link to the Audit trail page, delete with setup secret and typed confirmation | FR-16, FR-17, FR-9 |
 | Inbox — Tip sealed | Selected tip as a sealed envelope with the real block and time, "Open with desk key" | FR-15 |
 | Seal moment — storyboard (Sender page) | Four frames and a motion spec for the 1 second seal animation from Write to Pay | FR-2 (presentation only) |
 | Audit trail — Verified | Chain verified tag, latest entry hash with copy, what is logged, testnet explorer link, entries newest first with a copy button per transaction id, export JSON | FR-20 |
@@ -81,7 +81,7 @@ Nothing in the shipped UI is hard-coded sample data. Each value comes from one o
 | Inbox, Locked | Unlock the wrapped key | Browser only |
 | Desk — Restore | Read the backup file, unwrap it with the passphrase (Argon2id), keep it in IndexedDB. Judge callout from `demo_desk` | Browser only. The file is never uploaded |
 | Decrypt a memo | Paste and open a memo | Browser only, no server (FR-8) |
-| Settings | Change tip floor, rotate token, delete inbox | `PATCH /v1/inbox/{id}` (new), `POST /v1/inbox/{id}/tokens`, `DELETE /v1/inbox/{id}` (new) |
+| Settings | Change tip floor, rotate token, download the backup file (browser only), delete inbox | `PATCH /v1/inbox/{id}` (new), `POST /v1/inbox/{id}/tokens`, `DELETE /v1/inbox/{id}` (new) |
 | Audit trail | Entries, chain check in the browser, latest hash, export file | `GET /v1/inbox/{id}/audit` (api-contract §6.10). Verification and export run in the browser. Explorer link from `outbound_links` (testnet only, home page, never per transaction) |
 
 **Two endpoints to add to the architecture API contract.** The Settings screen needs them and they are not in the current table:
