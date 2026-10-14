@@ -39,7 +39,7 @@ export default defineConfig({
     port: configOverride ? 4174 : 4173,
   },
   test: {
-    include: ["tests/unit/**/*.test.ts"],
+    include: ["tests/unit/**/*.test.ts", "tests/unit/**/*.test.tsx"],
     environment: "node",
   },
 });
