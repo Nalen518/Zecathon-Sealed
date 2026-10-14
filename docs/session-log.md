@@ -110,6 +110,13 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** C-24 (yes needed). `cargo deny` (tool install needed). Dockerfile, `.env.example` and Railway (step D, ask first). PR #2 merge and rebase. Testnet T-6 and T-8 tips (below floor, plain memo) need two more small sends.
 **Next:** C-24 answer, then step D.
 
+## 2026-10-14 (integration, local branch `integration/web-api`)
+
+**Done:** Merged `origin/development` (finished frontend, PRs #3 to #5) into the backend branch locally. Conflicts only in the two append-only logs: both sides kept, and the backend's C-23 frontend row renumbered D-81 to D-86 because development already used D-81. Ran the real `sealed` binary (port 8787, fresh database) and the frontend dev server pointed at it (port 5173, config outside the repo) on NU7 testnet. Full flow through the real pages: desk key made in the browser, inbox registered with the desk wallet's viewing key, key published to the config, sender wrote a tip and Pay built a 511-byte `z1:` memo and an 889-character ZIP 321 link, 0.001 TAZ sent with that memo (tx `11e4c209…bfb1`, block 4,500,857), the watcher stored it, a browser restored from the backup file signed in with the setup secret and opened it to the exact text.
+**Bugs found:** (1) The desk e2e test still expected the pre C-15 fixtures (12 confirmations, the no-memo tip as tip 2). Fixed to C-16 and C-17. (2) With one of two servers down, the Inbox shows WATCHER BEHIND and "the watcher is 0 blocks behind" at 0 lag, which reads as a fault. Zaino has been down all day.
+**Findings:** The in-app browser pane never runs `requestAnimationFrame`, so the seal moment never finishes there. Use Playwright in Edge for flows with motion. A restored browser has the key but no desk token and must sign in with the setup secret (C-5), as designed. The Pay faucet link (Valar) pays on the NU7 chain. Nothing in the public pages links to `/desk`.
+**Open:** How judges reach the desk. Whether to drop Zaino from the testnet sources until it answers (B-18). C-24, `cargo deny`, Dockerfile.
+
 ## 2026-10-14 (backend, demo inbox lock)
 
 **Done:** Contract C-24 drafted from the judge kit spec §8, committed on `feat/contract-c24` from `development` and opened as PR #7. `feat/watcher-core` pushed, with the C-23 frontend row renumbered D-81 to D-86. Demo lock built on `feat/watcher-demo-lock` (from `feat/watcher-core`, with `feat/contract-c24` merged in): `SEALED_DEMO_INBOX_ID` in config, refused on main with a clear log line, `demo_locked` on token issue and PATCH without a correct setup secret, checked before any change. 6 new tests, 108 Rust tests green, clippy and log grep green. The real binary exits 1 on main with the variable set and creates no database.
