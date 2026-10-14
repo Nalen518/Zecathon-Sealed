@@ -25,6 +25,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-12 | Tip floor range was 0 to 100,000,000 zat, but SRD BR-8 forbids a floor below the ZIP 317 two-action fee (10,000 zat) | Range is 10,000 to 100,000,000 on `POST /inbox` and `PATCH /inbox/{id}` (Oct 11) |
 | C-13 | The audit trail (added Oct 12) would have to survive "delete inbox", but FR-17 says delete removes everything | The log is deleted with the inbox. The desk exports it first from the Audit trail page, which the Settings delete card links to (§6.10) |
 | C-14 | `GET /v1/health` is public and returned each chain server's full `url`, so credentials in a server URL would be visible to anyone | Field renamed `origin` and holds the origin only. Same rule as the audit log (§5.6) (Oct 13) |
+| C-24 | Judges share one testnet demo desk through a backup file that carries the desk token. The desk token alone can rotate itself and change the tip floor, so one judge could break every other judge's backup (401) or move tips below the floor | A demo inbox lock set by `SEALED_DEMO_INBOX_ID`: on that inbox, token issue and PATCH need the setup secret and otherwise return `403 demo_locked` (§5.5, §6.4, §6.7, §8). Testnet only (Oct 14) |
 
 ## 2. Base
 
@@ -201,6 +202,7 @@ The frontend picks its text by `code` from the Figma copy and never shows `messa
 | 400 | `invalid_request` | Bad JSON, missing or wrong-type field | Field error under the named `field` |
 | 401 | `unauthorized` | Missing, bad or revoked token | Inbox, Locked |
 | 403 | `forbidden` | Wrong setup secret | Create inbox 2, Settings |
+| 403 | `demo_locked` | Token issue or PATCH on the demo inbox (`SEALED_DEMO_INBOX_ID`) without a correct setup secret (C-24). Nothing is changed or logged | Settings |
 | 404 | `not_found` | Unknown inbox or tip | Full-page error |
 | 409 | `inbox_exists` | Create when an inbox exists | Create inbox 2 |
 | 422 | `spend_key_rejected` | Viewing key has spend authority | Create inbox 2 (Input error state) |
@@ -302,6 +304,8 @@ Request body: none. Response `201`:
 ```
 Issuing a token revokes every earlier token for the inbox. The token is returned only in this response. The frontend stores it at once (§7).
 
+**Demo inbox (C-24).** When `{id}` is the inbox named by `SEALED_DEMO_INBOX_ID`, the desk token alone is not enough: the request also needs a correct `X-Setup-Secret`, otherwise `403 demo_locked`. The check runs before any change, and a refused request writes no audit entry.
+
 ### 6.5 `GET /v1/inbox/{id}/tips`
 Auth: Bearer. Screen: Inbox.
 
@@ -329,6 +333,8 @@ Auth: Bearer. Returns one Tip. Used when the desk opens a link to a single tip.
 Auth: Bearer. Screen: Settings.
 Request `{ "tip_floor_zat": 150000 }`, only this field in v1. Range 10,000 to 100,000,000 (the minimum is the ZIP 317 fee for a two-action transaction, SRD BR-8). The same range applies to `tip_floor_zat` in `POST /v1/inbox`.
 Response `200` with Inbox. Tips are re-sorted, never deleted. FR-16.
+
+**Demo inbox (C-24).** On the inbox named by `SEALED_DEMO_INBOX_ID`, PATCH needs the desk token **and** a correct `X-Setup-Secret`, otherwise `403 demo_locked`, before any change and with no audit entry. `GET` routes, tips, audit and health are unchanged, and DELETE already needs the setup secret (§6.8).
 
 ### 6.8 `DELETE /v1/inbox/{id}`
 Auth: Bearer **and** `X-Setup-Secret`. Screen: Settings (typed DELETE plus setup secret, settles C-6).
@@ -386,6 +392,7 @@ Response `200`:
 | Chain servers | | `SEALED_LIGHTWALLETD_URLS` (at least 2, FR-12) | Backend only |
 | Setup secret | Typed by the desk | `SEALED_SETUP_SECRET_HASH` | Backend stores only the hash |
 | Database | | `SEALED_DB_PATH` on the Railway volume | Backend only |
+| Demo inbox | `demo_desk` (judge box, testnet only) | `SEALED_DEMO_INBOX_ID`: unset everywhere except the testnet judging deploy. The backend refuses to start if it is set on main (C-24) | Set together on the judging deploy |
 
 Both repos ship a `.env.example` listing these names with fake values. Real `.env` files are git-ignored.
 
