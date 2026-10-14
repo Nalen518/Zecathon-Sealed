@@ -85,6 +85,7 @@ export type ErrorCode =
   | "invalid_request"
   | "unauthorized"
   | "forbidden"
+  | "demo_locked"
   | "not_found"
   | "inbox_exists"
   | "spend_key_rejected"
@@ -100,6 +101,7 @@ const ERROR_CODES: readonly ErrorCode[] = [
   "invalid_request",
   "unauthorized",
   "forbidden",
+  "demo_locked",
   "not_found",
   "inbox_exists",
   "spend_key_rejected",

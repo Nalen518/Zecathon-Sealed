@@ -23,13 +23,13 @@ interface Api {
   calls: { method: string; path: string; headers: Record<string, string>; body: string }[];
   /** Public key the desk registered, base64. */
   deskKey: string | null;
-  status: { tips: number; tokenFailures: number };
+  status: { tips: number; tokenFailures: number; demoLocked: boolean };
   /** Which audit fixture GET /audit serves (T-11). */
   audit: "audit_chain" | "audit_chain_tampered";
 }
 
 async function fakeApi(page: Page, origin: string): Promise<Api> {
-  const api: Api = { calls: [], deskKey: null, status: { tips: 200, tokenFailures: 0 }, audit: "audit_chain" };
+  const api: Api = { calls: [], deskKey: null, status: { tips: 200, tokenFailures: 0, demoLocked: false }, audit: "audit_chain" };
   const cors = {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE",
@@ -53,6 +53,10 @@ async function fakeApi(page: Page, origin: string): Promise<Api> {
       const body = JSON.parse(req.postData() ?? "{}");
       api.deskKey = body.desk_public_key;
       return json(route, 201, { ...fixture("inbox"), desk_public_key: body.desk_public_key, fingerprint: body.fingerprint, address: body.address });
+    }
+    // C-24: on the demo inbox, a token request without the setup secret is refused and changes nothing.
+    if (req.method() === "POST" && path === "/inbox/desk/tokens" && api.status.demoLocked && !req.headers()["x-setup-secret"]) {
+      return json(route, 403, fixture("error_demo_locked"));
     }
     if (req.method() === "POST" && path === "/inbox/desk/tokens") {
       if (api.status.tokenFailures > 0) {
@@ -456,5 +460,21 @@ test.describe("Desk entry and judge kit (D-87 to D-90)", () => {
     for (const b of bodies) for (const s of secrets) expect(b).not.toContain(s);
     expect(await collectCsp(page, watch)).toEqual([]);
     await checkScreen(page, "desk-restored-inbox", info.project.name);
+  });
+
+  test("C-24: rotating the token on the locked demo desk shows why and changes nothing", async ({ page, baseURL }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const api = await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    api.status.demoLocked = true;
+    await page.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Rotate desk token" }).click();
+    await expect(page.getByText("This is the shared demo desk, so its settings are locked during judging.")).toBeVisible();
+    await expect(page.getByText("Nothing was changed.")).toBeVisible();
+    await expect(page.getByText("Desk token rotated")).toHaveCount(0);
+    // The desk is still signed in with the same token.
+    await page.getByRole("link", { name: "Inbox" }).click();
+    await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
   });
 });
