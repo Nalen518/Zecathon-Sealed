@@ -139,13 +139,6 @@
   padding: var(--spacing-xl);
 }
 
-.decrypt-panel-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
 /* Decrypted tip text: plain text only, never HTML (rules §1.6). */
 .tip-text {
   white-space: pre-wrap;

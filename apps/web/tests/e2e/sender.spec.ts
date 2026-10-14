@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fromBase64, fromBase64Url } from "../../src/lib/bytes";
 import { openMemo } from "../../src/lib/seal";
 import { parsePaymentUri } from "../../src/lib/zip321";
-import { collectCsp, watchPage } from "./helpers";
+import { checkScreen, collectCsp, watchPage } from "./helpers";
 
 const deskKey = JSON.parse(readFileSync(new URL("../fixtures/desk-key.e2e.json", import.meta.url), "utf8")) as {
   public_key: string;
@@ -30,6 +30,11 @@ test.describe("Sender flow", () => {
     await expect(page).toHaveURL(/\/pay$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pay from your wallet");
     await expect(page.getByRole("img", { name: /Payment request/ })).toBeVisible();
+    // D-71, D-76: the envelope shows what the chain sees, and the same facts are real text next to it.
+    const chainSees = /^Sealed envelope\. What the chain sees: sender hidden, recipient hidden, amount hidden, memo 511 bytes\.$/;
+    const caption = "The chain sees a shielded payment with a 511 byte memo. Sender, recipient and amount stay hidden.";
+    await expect(page.getByRole("img", { name: chainSees })).toBeVisible();
+    await expect(page.getByText(caption)).toBeVisible();
 
     const href = await page.getByRole("link", { name: "Open in wallet" }).getAttribute("href");
     const parsed = parsePaymentUri(href!);
@@ -47,6 +52,9 @@ test.describe("Sender flow", () => {
     await page.getByRole("button", { name: "I’ve sent it" }).click();
     await expect(page).toHaveURL(/\/sent$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sent. Only the desk can read it.");
+    await expect(page.getByText("Marked as sent")).toBeVisible();
+    await expect(page.getByRole("img", { name: chainSees })).toBeVisible();
+    await expect(page.getByText(caption)).toBeVisible();
 
     // NFR-1: no request carried the tip in any form.
     const needles = [TIP, encodeURIComponent(TIP), "décidé", "Bridge tender"];
@@ -79,6 +87,31 @@ test.describe("Sender flow", () => {
     await page.goBack();
     await expect(page).toHaveURL(/\/write$/);
     await expect(page.getByRole("img", { name: /Payment request/ })).toHaveCount(0);
+  });
+
+  test("Seal moment: plays once after a successful seal, never over the facts", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip");
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await expect(page).toHaveURL(/\/pay$/);
+    // The facts are readable while it plays.
+    await expect(page.getByText(/The chain sees a shielded payment/)).toBeVisible();
+    // The sealed memo grid folds into the envelope and is then removed.
+    await expect(page.locator(".pay-seal-ghost")).toHaveCount(0, { timeout: 3000 });
+    await expect
+      .poll(() => page.locator(".pay-envelope .env-seal").evaluate((el) => getComputedStyle(el).opacity))
+      .toBe("1");
+  });
+
+  test("Seal moment: reduced motion shows the still final frame", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip");
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await expect(page).toHaveURL(/\/pay$/);
+    await expect(page.getByRole("img", { name: /^Sealed envelope\./ })).toBeVisible();
+    await expect(page.locator(".pay-seal-ghost")).toHaveCount(0);
   });
 
   test("D-83: the faucet opens in a new tab with no Referer, and the sealed tip stays in this tab", async ({ page, context, baseURL }) => {
@@ -135,6 +168,32 @@ test.describe("Sender flow", () => {
     await page.getByRole("button", { name: "Leave" }).click();
     await page.getByRole("button", { name: "Leave and discard" }).click();
     await expect(page).toHaveURL(/\/$/);
+  });
+});
+
+test.describe("Sender screens", () => {
+  test("Write, Pay, Sent and the Safety check pass axe and have no horizontal scroll", async ({ page }, info) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const watch = await watchPage(page);
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip about the tender");
+    await checkScreen(page, "sender-write", info.project.name);
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await expect(page.getByRole("heading", { name: "Pay from your wallet" })).toBeVisible();
+    await checkScreen(page, "sender-pay", info.project.name);
+    await page.getByRole("button", { name: "I’ve sent it" }).click();
+    await expect(page.getByText("Marked as sent")).toBeVisible();
+    await checkScreen(page, "sender-sent", info.project.name);
+    await page.goto("/safety-check");
+    await checkScreen(page, "safety-question", info.project.name);
+    await page.getByText("I bought it on an exchange with my ID").click();
+    await page.getByRole("button", { name: "Next question" }).click();
+    await page.getByText("A few days ago or more").click();
+    await page.getByRole("button", { name: "Next question" }).click();
+    await page.getByText("A work, school or shared network").click();
+    await page.getByRole("button", { name: "See the result" }).click();
+    await checkScreen(page, "safety-result", info.project.name);
+    expect(await collectCsp(page, watch)).toEqual([]);
   });
 });
 

@@ -3,10 +3,10 @@ import { Link } from "react-router";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
 import { DeskHeader } from "../../../components/DeskHeader/DeskHeader";
+import { Envelope } from "../../../components/Envelope/Envelope";
 import { Fingerprint } from "../../../components/Fingerprint/Fingerprint";
 import { Input } from "../../../components/Input/Input";
 import { SlimFooter } from "../../../components/SlimFooter/SlimFooter";
-import { StatusBadge } from "../../../components/StatusBadge/StatusBadge";
 import { Tag } from "../../../components/Tag/Tag";
 import { TextLink } from "../../../components/TextLink/TextLink";
 import { TipRow } from "../../../components/TipRow/TipRow";
@@ -14,6 +14,7 @@ import { ApiError, type Health, type Tip } from "../../../lib/api";
 import { fromBase64 } from "../../../lib/bytes";
 import { formatFingerprint } from "../../../lib/fingerprint";
 import { formatZec } from "../../../lib/format";
+import { utf8Length } from "../../../lib/memo";
 import { openMemo } from "../../../lib/seal";
 import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
 import { useDeskSession } from "../DeskSession";
@@ -30,6 +31,8 @@ export const POLL_MS = 30_000;
 
 type Tab = "visible" | "below_floor";
 type Opened = { kind: "text"; text: string } | { kind: "unreadable" } | { kind: "empty" };
+/** What the panel shows: the sealed envelope until the desk opens it, or what opening found. */
+type PanelState = { kind: "sealed" } | Opened;
 
 export function Inbox() {
   const { config, api, unlocked, lock, setToken } = useDeskSession();
@@ -41,7 +44,8 @@ export function Inbox() {
   const [healthError, setHealthError] = useState<ApiError | null>(null);
   const [tab, setTab] = useState<Tab>("visible");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [opened, setOpened] = useState<Opened | null>(null);
+  /** The tip opened in this browser, keyed by tip id. Held in state only and dropped on lock. */
+  const [opened, setOpened] = useState<{ tipId: string; result: Opened } | null>(null);
   const [showMemo, setShowMemo] = useState(false);
   const [now, setNow] = useState(Date.now());
   const seq = useRef(0);
@@ -128,21 +132,32 @@ export function Inbox() {
     seen.current = new Set([...(seen.current ?? []), ...list.map((t) => t.id)]);
   }, [list, counts]);
 
-  // Open the selected tip in this browser (FR-15). The text lives in state only and is dropped on lock.
+  // A tip stays sealed until the desk chooses "Open with desk key" (FR-15, Figma "Inbox — Tip sealed").
+  // Memos that cannot be a Sealed tip are never opened and show their reason at once (FR-19).
+  const panel: PanelState | null = useMemo(() => {
+    if (!selected) return null;
+    if (selected.memoB64 === null) return { kind: "empty" };
+    if (!selected.formatOk || !fromBase64(selected.memoB64)) return { kind: "unreadable" };
+    if (opened && opened.tipId === selected.id) return opened.result;
+    return { kind: "sealed" };
+  }, [selected, opened]);
+
+  // Bumped whenever the selection or the key changes, so an opening still in flight is dropped
+  // instead of showing that tip already open the next time it is chosen.
+  const openRun = useRef(0);
   useEffect(() => {
+    openRun.current++;
     setShowMemo(false);
-    if (!selected || !unlocked) return setOpened(null);
-    if (selected.memoB64 === null) return setOpened({ kind: "empty" });
-    if (!selected.formatOk) return setOpened({ kind: "unreadable" });
+    setOpened(null);
+  }, [selectedId, unlocked]);
+
+  const openSelected = useCallback(async () => {
+    if (!selected?.memoB64 || !unlocked) return;
+    const run = ++openRun.current;
     const bytes = fromBase64(selected.memoB64);
-    if (!bytes) return setOpened({ kind: "unreadable" });
-    let live = true;
-    void openMemo(bytes, unlocked.secrets).then((r) => {
-      if (live) setOpened(r.ok ? { kind: "text", text: r.text } : { kind: "unreadable" });
-    });
-    return () => {
-      live = false;
-    };
+    const r = bytes ? await openMemo(bytes, unlocked.secrets) : null;
+    if (run !== openRun.current) return;
+    setOpened({ tipId: selected.id, result: r?.ok ? { kind: "text", text: r.text } : { kind: "unreadable" } });
   }, [selected, unlocked]);
 
   if (!config.apiBaseUrl || !token) {
@@ -265,8 +280,15 @@ export function Inbox() {
               ))}
             </div>
           </div>
-          {selected ? (
-            <TipPanel tip={selected} opened={opened} showMemo={showMemo} onToggleMemo={() => setShowMemo((v) => !v)} />
+          {selected && panel ? (
+            <TipPanel
+              key={selected.id}
+              tip={selected}
+              panel={panel}
+              onOpen={openSelected}
+              showMemo={showMemo}
+              onToggleMemo={() => setShowMemo((v) => !v)}
+            />
           ) : (
             <p className="text-body-default muted">Choose a tip to open it in this browser.</p>
           )}
@@ -302,17 +324,23 @@ function HonestLimits() {
 
 function TipPanel({
   tip,
-  opened,
+  panel,
+  onOpen,
   showMemo,
   onToggleMemo,
 }: {
   tip: Tip;
-  opened: Opened | null;
+  panel: PanelState;
+  onOpen: () => Promise<void>;
   showMemo: boolean;
   onToggleMemo: () => void;
 }) {
   const { config } = useDeskSession();
   const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const rootRef = useRef<HTMLElement>(null);
+  /** Set by the click on "Open with desk key", so the flap plays only for a real opening (D-78). */
+  const justOpened = useRef(false);
   const memoText = useMemo(() => {
     const bytes = tip.memoB64 ? fromBase64(tip.memoB64) : null;
     if (!bytes) return "";
@@ -321,18 +349,62 @@ function TipPanel({
     return new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, end));
   }, [tip.memoB64]);
 
-  return (
-    <section className="card decrypt-panel" aria-label="Selected tip">
-      <div className="decrypt-panel-head">
-        <p className="text-mono-eyebrow muted">
-          {opened?.kind === "text" ? "Opened in this browser" : opened?.kind === "empty" ? "No memo" : "Not opened"}
-        </p>
-        <StatusBadge status={tip.displayStatus} />
-      </div>
+  // The button that was focused is gone once the tip opens, so focus moves to the letter.
+  useEffect(() => {
+    if (panel.kind !== "text" || !justOpened.current) return;
+    rootRef.current?.querySelector<HTMLElement>(".env-letter")?.focus();
+  }, [panel.kind]);
 
-      {opened === null && <p className="text-body-default muted">Opening the tip in this browser.</p>}
-      {opened?.kind === "text" && <p className="text-body-lead tip-text">{opened.text}</p>}
-      {opened?.kind === "unreadable" && (
+  // D-78: the seal breaks, the flap swings up past its hinge and the letter rises, about 700 ms.
+  // The tip text is real and selectable from the first frame. Only transform moves the letter, never opacity.
+  useMotion(
+    rootRef,
+    (root) => {
+      if (panel.kind !== "text" || !justOpened.current) return;
+      const flap = root.querySelector(".env-open-flap");
+      const seal = root.querySelector(".env-broken-seal");
+      const letter = root.querySelector(".env-letter");
+      if (!flap || !seal || !letter) return;
+      gsap
+        .timeline({ defaults: { ease: EASE } })
+        .from(seal, { scale: 1.6, opacity: 0, duration: 0.2, transformOrigin: "50% 50%" }, 0)
+        // Closed, the flap hangs down over the letter. It passes the hinge at the midpoint and drops behind it.
+        .fromTo(
+          flap,
+          { scaleY: -1, zIndex: 4, transformOrigin: "50% 100%" },
+          { scaleY: 0, duration: 0.2, ease: "power1.in" },
+          0.05,
+        )
+        .set(flap, { zIndex: "" }, 0.25)
+        .to(flap, { scaleY: 1, duration: 0.2, ease: "power1.out" }, 0.25)
+        .from(letter, { y: 120, duration: 0.35 }, 0.35);
+    },
+    [panel.kind],
+  );
+
+  async function open() {
+    setBusy(true);
+    justOpened.current = true;
+    try {
+      await onOpen();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card decrypt-panel" aria-label="Selected tip" ref={rootRef}>
+      {panel.kind === "sealed" && (
+        <Envelope
+          context="desk"
+          state="sealed"
+          amountZat={tip.amountZat}
+          height={tip.height}
+          blockTime={tip.blockTimeAt}
+        />
+      )}
+      {panel.kind === "text" && <Envelope context="desk" state="open" tip={panel.text} bytes={utf8Length(panel.text)} />}
+      {panel.kind === "unreadable" && (
         <div>
           <h2 className="text-heading-h3">Not a Sealed tip</h2>
           <p className="text-body-default muted">
@@ -341,7 +413,7 @@ function TipPanel({
           </p>
         </div>
       )}
-      {opened?.kind === "empty" && (
+      {panel.kind === "empty" && (
         <div>
           <h2 className="text-heading-h3">The wallet sent no memo</h2>
           <p className="text-body-default muted">
@@ -380,38 +452,53 @@ function TipPanel({
 
       {showMemo && memoText && <p className="text-mono-code tip-memo">{memoText}</p>}
 
-      <div className="actions">
-        {opened?.kind === "text" && (
-          <Button
-            variant="secondary"
-            showIcon={false}
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(opened.text);
-                setCopied(true);
-                window.setTimeout(() => setCopied(false), 2000);
-              } catch {
-                setCopied(false);
-              }
-            }}
-          >
-            {copied ? "Copied" : "Copy text"}
-          </Button>
-        )}
-        {memoText && (
-          <button
-            type="button"
-            className="text-link text-link-default text-body-default-medium desk-link-button"
-            aria-expanded={showMemo}
-            onClick={onToggleMemo}
-          >
-            {showMemo ? "Hide the sealed memo" : "Show the sealed memo"}
-          </button>
-        )}
-      </div>
-      <p className="text-body-small muted">
-        The server holds only the sealed text. Lock the inbox or close this tab and the opened words are gone.
-      </p>
+      {panel.kind === "sealed" ? (
+        <>
+          <div className="actions">
+            <Button onClick={() => void open()} disabled={busy}>
+              Open with desk key
+            </Button>
+          </div>
+          <p className="text-body-small muted">
+            Opening happens in this browser with your desk key. The server only ever had the sealed memo.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="actions">
+            {panel.kind === "text" && (
+              <Button
+                variant="secondary"
+                showIcon={false}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(panel.text);
+                    setCopied(true);
+                    window.setTimeout(() => setCopied(false), 2000);
+                  } catch {
+                    setCopied(false);
+                  }
+                }}
+              >
+                {copied ? "Copied" : "Copy text"}
+              </Button>
+            )}
+            {memoText && (
+              <button
+                type="button"
+                className="text-link text-link-default text-body-default-medium desk-link-button"
+                aria-expanded={showMemo}
+                onClick={onToggleMemo}
+              >
+                {showMemo ? "Hide the sealed memo" : "Show the sealed memo"}
+              </button>
+            )}
+          </div>
+          <p className="text-body-small muted">
+            The server holds only the sealed text. Lock the inbox or close this tab and the opened words are gone.
+          </p>
+        </>
+      )}
     </section>
   );
 }

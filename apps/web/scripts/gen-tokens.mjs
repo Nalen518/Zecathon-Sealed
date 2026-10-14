@@ -16,6 +16,15 @@ lines.push("", "  /* Color */");
 for (const [name, alias] of Object.entries(src.color)) lines.push(`  ${name}: var(${alias});`);
 lines.push("", "  /* Spacing, radius, layout, border */");
 for (const [name, px] of Object.entries(src.dimension)) lines.push(`  ${name}: ${px}px;`);
+// Effect styles (D-72): the only shadows in the system. Box-shadow form, plus a drop-shadow() form for SVG shapes.
+if (src.effects) {
+  lines.push("", "  /* Elevation (Figma effect styles) */");
+  for (const [name, e] of Object.entries(src.effects)) {
+    const color = `rgb(${e.rgb.join(" ")} / ${e.alpha})`;
+    lines.push(`  ${name}: ${e.x}px ${e.y}px ${e.blur}px ${e.spread}px ${color};`);
+    lines.push(`  ${name}-filter: drop-shadow(${e.x}px ${e.y}px ${e.blur / 2}px ${color});`);
+  }
+}
 lines.push("", "  /* Families */");
 lines.push('  --font-sans: "Albert Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;');
 lines.push('  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;');

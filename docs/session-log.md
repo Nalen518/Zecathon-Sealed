@@ -44,6 +44,15 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Status:** Frontend declared done by @Apa. Previews stopped. `feat/web-scaffold` holds 24 local commits, not pushed.
 **Next:** Push `feat/web-scaffold` and open the PR into `development` when @Apa asks. Then the backend: install the Rust toolchain, run spike 2 (view-only scan of a testnet memo under Ironwood), spike 3 (viewing key export) and spike 4 (Railway fit) before any watcher code.
 
+## 2026-10-14
+
+**Done:** Envelope design decisions written up (commit 0ab4467). Built the Envelope on `feat/web-envelope`: elevation tokens from the Figma effect styles (`gen-tokens.mjs` now emits box-shadow and drop-shadow forms), Envelope component (sealed variants as one scalable SVG with a text label, open variant as a drawing around a real HTML letter), Pay right column with "What the chain will see" envelope and caption, Sent envelope and "Marked as sent" tag, the 1 s seal moment from Write to Pay, and the desk Inbox showing each tip sealed until "Open with desk key" with the flap animation (D-78). New e2e checks: envelope facts and caption, seal moment with and without reduced motion, sealed then open with the real byte count, flap timing, axe on the sealed Inbox.
+**Findings:** The Figma open envelope shows only the flap's tip above the letter. That is the design, not a clipping bug. The seal moment needs to know whether a seal just happened, so the tip flow now counts seals (`sealCount`) and remembers which one it already played. The Inbox used to decrypt on every 30 s poll because the effect depended on the tip object. Keying the opened tip by id fixed that as a side effect.
+**Bugs found:** Open envelope fields overlapped at 360 px (fixed by wrapping, D-80, covered by the 360 px axe and screenshot check). A test assumed switching tabs reseals the tip. It does not, because the selection stays the same, so the test now chooses the other tip.
+**Decisions:** D-69 to D-78 accepted. D-79 and D-80 proposed. F-23 to F-25 done.
+**Open:** D-79, D-80 and the older proposed decisions wait for review. Figma: caption under the sender envelope (D-76) and, if accepted, Details under the desk envelope (D-79). Live check against the real watcher API once the backend `api` crate exists (T-4, T-5).
+**Next:** @Apa reviews the Envelope locally. Then push `feat/web-envelope` and open the PR into `development` when asked. Backend work continues in its own session.
+
 ## 2026-10-14 (feat/web-network-links)
 
 **Done:** On `feat/web-network-links` off `development`: Network badge without the dot (D-81), testnet explorer link and a copy button per transaction id on the Audit trail (D-82), testnet faucet link in the Pay "Check in your wallet" panel (D-83), all from `outbound_links` in sealed.config.json and null on mainnet (D-84). Rules §2.7 added. New unit tests render the links with `react-dom/server` (Vitest now also runs `.test.tsx`). New e2e: faucet opens a new tab with no opener and no Referer while the sealed tip stays in the first tab, explorer and copy button on both Audit trail states, no request to either domain.
@@ -52,3 +61,10 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Decisions:** D-81 to D-84, F-26.
 **Open:** Whether the txid copy button should also be hidden on mainnet (it shows on both now, as in the Figma Audit row). `feat/web-envelope` and this branch both change Pay.tsx and the docs logs, so the second one merged needs a small conflict fix.
 **Next:** @Apa reviews the screenshots. Push and open the PR into `development` only when asked. Remove the worktree once the backend session has committed and `D:\ZECathon` can check out this branch.
+
+## 2026-10-14 (merge check before development)
+
+**Done:** Merged `development` (network links) into `feat/web-envelope` and resolved the conflicts (tests and the four doc logs, both sides kept). `.gitignore` now also covers Playwright blob reports, its cache and scratch screenshots. Bug hunt before the merge into `development`.
+**Bugs found:** (1) Opening tip A and choosing tip B before A finished let A appear already open the next time it was chosen, without "Open with desk key" (D-79). Fixed with a run counter in the Inbox that drops a stale opening. (2) Write, Pay, Sent and the Safety check had no axe and no-horizontal-scroll check, although rules §9 asks for one on every screen. Added one test covering all of them at 1280 and 360 px. It passes. (3) The merge dropped a closing brace in `sender.spec.ts`. Fixed before commit.
+**Not bugs:** Locking while a tip opens cannot keep the text, because the Locked screen unmounts the Inbox.
+**Next:** @Apa confirms, then `feat/web-envelope` goes into `development` by pull request.

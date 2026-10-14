@@ -9,12 +9,14 @@ Look: palette A (ink + Zcash gold), Albert Sans / JetBrains Mono at 400 and 500 
 | Page | What is on it |
 |---|---|
 | Foundations | Color, type, spacing and layout tokens (variables), with code syntax `var(--…)` |
-| Components | Button (Primary, Secondary, Inverse, Nav, Danger), Icons (incl. info), Network badge, Site header (landing, Safety check), Flow header (Write and Pay: no section links, "Leave" asks to confirm), Desk header (lock button hidden on setup and Locked), Site footer (dot wordmark), Step, List item, Permission row, Callout (Info, Warning, Success), FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed × Default, Compact), Input, Textarea (Empty, Typing, At limit, Error), Checkbox, Radio option, Status badge (tip states only), Tag (free-text screen state), Text link (48 px hit area), Step indicator, Tip row, QR code, Audit header row, Audit row (Default, Broken) |
+| Components | Button (Primary, Secondary, Inverse, Nav, Danger), Icons (incl. info), Network badge, Site header (landing, Safety check), Flow header (Write and Pay: no section links, "Leave" asks to confirm), Desk header (lock button hidden on setup and Locked), Site footer (dot wordmark), Step, List item, Permission row, Callout (Info, Warning, Success), FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed × Default, Compact), Input, Textarea (Empty, Typing, At limit, Error), Checkbox, Radio option, Status badge (tip states only), Tag (free-text screen state), Text link (48 px hit area), Step indicator, Tip row, QR code, Audit header row, Audit row (Default, Broken), Envelope (Sender, Desk × Sealed, Open) |
 | Landing page | Landing — Desktop 1280 |
 | Sender screens | Write ×3, Pay ×2, Safety check ×2 |
-| Desk screens | Create inbox ×3, Inbox ×3, Decrypt ×2, Settings, Audit trail ×2 |
+| Desk screens | Create inbox ×3, Inbox ×4, Decrypt ×2, Settings, Audit trail ×2 |
 
 Rules from the Oct 11 critique: one voice ("the desk" receives, "Sealed" is the tool, never "us/our/we"), app screens use 64 top padding and 32 between blocks, never scale a component instance (use its Size variant), and never relabel a Status badge (use Tag).
+
+Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State=Sealed/Open, used on Pay, Pay Sent, Inbox and Inbox Tip sealed. It shows only real data: the sender envelope shows what the chain sees (everything hidden except the 511 byte memo), the desk postmark shows the tip's real block and time from the API. The open letter grows to fit the whole tip in code so no text is ever hidden behind the pocket.
 
 ## Screens and the requirements they cover
 
@@ -37,6 +39,8 @@ Rules from the Oct 11 critique: one voice ("the desk" receives, "Sealed" is the 
 | Decrypt — Opened | Paste a memo, open it with no server | FR-8 |
 | Decrypt — Unreadable | Non-Sealed memo is not rendered | FR-19 |
 | Settings — Delete inbox | Tip floor, network (read-only), rotate token, "Export the audit log first" link to the Audit trail page, delete with setup secret and typed confirmation | FR-16, FR-17, FR-9 |
+| Inbox — Tip sealed | Selected tip as a sealed envelope with the real block and time, "Open with desk key" | FR-15 |
+| Seal moment — storyboard (Sender page) | Four frames and a motion spec for the 1 second seal animation from Write to Pay | FR-2 (presentation only) |
 | Audit trail — Verified | Chain verified tag, latest entry hash with copy, what is logged, testnet explorer link, entries newest first with a copy button per transaction id, export JSON | FR-20 |
 | Audit trail — Chain broken | Danger tag, warning with next steps, broken row marked "Hash mismatch", same explorer link and copy buttons | FR-20 |
 

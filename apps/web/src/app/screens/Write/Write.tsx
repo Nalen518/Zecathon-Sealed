@@ -49,12 +49,13 @@ export function Write() {
     setSealing(true);
     setSealError(false);
     try {
-      // Seal first (the real work, in the browser). Then show it: a 500 ms gold sweep, never longer (rules §7.6).
+      // Seal first (the real work, in the browser). Then show it: the 350 ms gold sweep, frames 1 and 2 of the
+      // seal moment (D-70). Pay plays frames 3 and 4.
       await flow.seal(status.publicKey);
       const g = grid.current;
       if (g && motionAllowed()) {
         const sweep = { p: 0 };
-        await gsap.to(sweep, { p: 1, duration: 0.5, ease: EASE, onUpdate: () => g.setSealProgress(sweep.p) });
+        await gsap.to(sweep, { p: 1, duration: 0.35, ease: EASE, onUpdate: () => g.setSealProgress(sweep.p) });
         // Left the page (Leave) during the sweep: the grid is gone, so do not jump to Pay.
         if (grid.current !== g) return;
       }

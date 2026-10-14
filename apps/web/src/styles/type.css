@@ -99,3 +99,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+.text-display { font-family: var(--font-sans); font-weight: 500; font-size: 56px; line-height: 64px; letter-spacing: -0.015em; }
+@media (max-width: 859px) { .text-display { font-family: var(--font-sans); font-weight: 500; font-size: 36px; line-height: 44px; letter-spacing: -0.01em; } }
+.text-heading-h2 { font-family: var(--font-sans); font-weight: 500; font-size: 36px; line-height: 44px; letter-spacing: -0.01em; }
+@media (max-width: 859px) { .text-heading-h2 { font-family: var(--font-sans); font-weight: 500; font-size: 28px; line-height: 36px; letter-spacing: -0.005em; } }

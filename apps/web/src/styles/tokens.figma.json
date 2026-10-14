@@ -87,19 +87,133 @@
     "--border-width-focus": 3
   },
   "textStyles": {
-    "display-desktop": { "family": "sans", "weight": 500, "size": 56, "lineHeight": 64, "letterSpacingPercent": -1.5 },
-    "display-mobile": { "family": "sans", "weight": 500, "size": 36, "lineHeight": 44, "letterSpacingPercent": -1 },
-    "heading-h2-desktop": { "family": "sans", "weight": 500, "size": 36, "lineHeight": 44, "letterSpacingPercent": -1 },
-    "heading-h2-mobile": { "family": "sans", "weight": 500, "size": 28, "lineHeight": 36, "letterSpacingPercent": -0.5 },
-    "heading-h3": { "family": "sans", "weight": 500, "size": 22, "lineHeight": 30, "letterSpacingPercent": -0.5 },
-    "body-lead": { "family": "sans", "weight": 400, "size": 20, "lineHeight": 32, "letterSpacingPercent": 0 },
-    "body-default": { "family": "sans", "weight": 400, "size": 17, "lineHeight": 28, "letterSpacingPercent": 0 },
-    "body-default-medium": { "family": "sans", "weight": 500, "size": 17, "lineHeight": 28, "letterSpacingPercent": 0 },
-    "body-small": { "family": "sans", "weight": 400, "size": 15, "lineHeight": 24, "letterSpacingPercent": 0 },
-    "button-label": { "family": "sans", "weight": 500, "size": 16, "lineHeight": 24, "letterSpacingPercent": 0 },
-    "mono-eyebrow": { "family": "mono", "weight": 500, "size": 13, "lineHeight": 20, "letterSpacingPercent": 8, "upper": true },
-    "mono-label": { "family": "mono", "weight": 500, "size": 14, "lineHeight": 20, "letterSpacingPercent": 2 },
-    "mono-code": { "family": "mono", "weight": 400, "size": 15, "lineHeight": 24, "letterSpacingPercent": 0 },
-    "mono-badge": { "family": "mono", "weight": 500, "size": 12, "lineHeight": 16, "letterSpacingPercent": 6, "upper": true }
+    "display-desktop": {
+      "family": "sans",
+      "weight": 500,
+      "size": 56,
+      "lineHeight": 64,
+      "letterSpacingPercent": -1.5
+    },
+    "display-mobile": {
+      "family": "sans",
+      "weight": 500,
+      "size": 36,
+      "lineHeight": 44,
+      "letterSpacingPercent": -1
+    },
+    "heading-h2-desktop": {
+      "family": "sans",
+      "weight": 500,
+      "size": 36,
+      "lineHeight": 44,
+      "letterSpacingPercent": -1
+    },
+    "heading-h2-mobile": {
+      "family": "sans",
+      "weight": 500,
+      "size": 28,
+      "lineHeight": 36,
+      "letterSpacingPercent": -0.5
+    },
+    "heading-h3": {
+      "family": "sans",
+      "weight": 500,
+      "size": 22,
+      "lineHeight": 30,
+      "letterSpacingPercent": -0.5
+    },
+    "body-lead": {
+      "family": "sans",
+      "weight": 400,
+      "size": 20,
+      "lineHeight": 32,
+      "letterSpacingPercent": 0
+    },
+    "body-default": {
+      "family": "sans",
+      "weight": 400,
+      "size": 17,
+      "lineHeight": 28,
+      "letterSpacingPercent": 0
+    },
+    "body-default-medium": {
+      "family": "sans",
+      "weight": 500,
+      "size": 17,
+      "lineHeight": 28,
+      "letterSpacingPercent": 0
+    },
+    "body-small": {
+      "family": "sans",
+      "weight": 400,
+      "size": 15,
+      "lineHeight": 24,
+      "letterSpacingPercent": 0
+    },
+    "button-label": {
+      "family": "sans",
+      "weight": 500,
+      "size": 16,
+      "lineHeight": 24,
+      "letterSpacingPercent": 0
+    },
+    "mono-eyebrow": {
+      "family": "mono",
+      "weight": 500,
+      "size": 13,
+      "lineHeight": 20,
+      "letterSpacingPercent": 8,
+      "upper": true
+    },
+    "mono-label": {
+      "family": "mono",
+      "weight": 500,
+      "size": 14,
+      "lineHeight": 20,
+      "letterSpacingPercent": 2
+    },
+    "mono-code": {
+      "family": "mono",
+      "weight": 400,
+      "size": 15,
+      "lineHeight": 24,
+      "letterSpacingPercent": 0
+    },
+    "mono-badge": {
+      "family": "mono",
+      "weight": 500,
+      "size": 12,
+      "lineHeight": 16,
+      "letterSpacingPercent": 6,
+      "upper": true
+    }
+  },
+  "effects": {
+    "--elevation-envelope": {
+      "x": 0,
+      "y": 16,
+      "blur": 32,
+      "spread": -12,
+      "rgb": [
+        13,
+        13,
+        15
+      ],
+      "alpha": 0.28,
+      "source": "Elevation/Envelope"
+    },
+    "--elevation-seal": {
+      "x": 0,
+      "y": 3,
+      "blur": 6,
+      "spread": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alpha": 0.35,
+      "source": "Elevation/Seal"
+    }
   }
 }

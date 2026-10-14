@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
 import { Button } from "../../../components/Button/Button";
+import { Envelope } from "../../../components/Envelope/Envelope";
 import { FlowHeader } from "../../../components/FlowHeader/FlowHeader";
 import { SlimFooter } from "../../../components/SlimFooter/SlimFooter";
 import { StepIndicator } from "../../../components/StepIndicator/StepIndicator";
@@ -9,6 +10,7 @@ import { Tag } from "../../../components/Tag/Tag";
 import { TextLink } from "../../../components/TextLink/TextLink";
 import { bundled } from "../../../lib/config";
 import { formatZec } from "../../../lib/format";
+import { SEALED_MEMO_BYTES } from "../../../lib/memo";
 import { useTipFlow } from "../../flow/TipFlow";
 import { SENDER_STEPS } from "../Write/Write";
 import "../AppScreen.css";
@@ -41,7 +43,7 @@ export function Sent() {
           <StepIndicator steps={SENDER_STEPS} current={3} />
           <section className="card sent-card" aria-labelledby="sent-title">
             <div>
-              <Tag tone="success">Sent from your wallet</Tag>
+              <Tag tone="success">Marked as sent</Tag>
             </div>
             <h1 id="sent-title" className="text-heading-h2">
               Sent. Only the desk can read it.
@@ -49,6 +51,14 @@ export function Sent() {
             <p className="text-body-lead muted">
               Your tip reaches the desk after about 3 block confirmations, usually a few minutes.
             </p>
+            {/* D-73: headline first, then the envelope. The facts repeat as text in the caption (D-76). */}
+            <div className="sent-envelope">
+              <Envelope context="sender" state="sealed" />
+              <p className="text-body-small envelope-caption">
+                The chain sees a shielded payment with a {SEALED_MEMO_BYTES} byte memo. Sender, recipient and amount
+                stay hidden.
+              </p>
+            </div>
             <dl className="sent-items">
               <div>
                 <dt className="text-body-default-medium">Nothing to keep</dt>
