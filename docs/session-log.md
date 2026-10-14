@@ -84,3 +84,11 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Decisions:** D-87 to D-91, F-28, F-29, rules §4.10.
 **Open:** C-24 (`demo_locked`) waits for @Apa's yes and the contract merge. Judge kit export and `demo_desk: true` before Oct 20. Q-1 and Q-2 in the spec.
 **Next:** @Apa reviews the screenshots. Push and open the PR only when asked. Then C-24 on the backend side.
+
+## 2026-10-14 (open items)
+
+**Done:** PR #6 (desk entry and judge kit) merged into `development`. On `feat/web-desk-header`: the desk header shows its four links on Create inbox, Locked and Restore (D-92). The backend session renumbered its C-23 row to D-86 on `feat/watcher-core` and committed C-24 on `feat/contract-c24`. The untracked spec and critique copies in `D:\ZECathon` no longer block a checkout, because `development` tracks identical files.
+**Findings:** The backend session needs @Apa's yes typed in its own session before it pushes or merges. A yes relayed by this session does not count there.
+**Decisions:** D-92, F-30.
+**Open:** Push and merge of `feat/contract-c24` and `feat/watcher-core` (backend session, @Apa's yes there). Then the frontend maps `demo_locked` in `desk/errors.ts`. Judge kit export once the watcher runs on testnet, then `demo_desk: true`. Q-1 and Q-2 in the spec.
+**Next:** Push `feat/web-desk-header` when @Apa asks. Map `demo_locked` after C-24 is on `development`.
