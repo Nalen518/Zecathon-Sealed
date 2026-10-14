@@ -9,7 +9,7 @@ use sealed_core::chain::{Pool, output_index};
 use sealed_core::memo::MEMO_BYTES;
 use zcash_client_backend::TransferType;
 use zcash_client_backend::decrypt_transaction;
-use zcash_client_backend::proto::compact_formats::CompactBlock;
+pub use zcash_client_backend::proto::compact_formats::CompactBlock;
 use zcash_client_backend::scanning::{ScanningKeys, SpendIdentifiers, scan_block};
 use zcash_keys::keys::UnifiedFullViewingKey;
 use zcash_primitives::transaction::Transaction;

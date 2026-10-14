@@ -2,6 +2,7 @@
 
 pub mod detect;
 pub mod health;
+pub mod keys;
 pub mod source;
 pub mod watcher;
 

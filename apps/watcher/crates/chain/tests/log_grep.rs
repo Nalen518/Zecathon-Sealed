@@ -5,10 +5,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const BANNED: &[&str] = &["ip", "user_agent", "token", "secret", "memo", "ufvk"];
-const LOG_MACROS: &[&str] = &["trace!", "debug!", "info!", "warn!", "error!", "event!", "span!"];
+const LOG_MACROS: &[&str] = &[
+    "trace!", "debug!", "info!", "warn!", "error!", "event!", "span!",
+];
 
 fn rust_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(dir) else { return };
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
@@ -57,7 +61,11 @@ fn words(text: &str) -> impl Iterator<Item = String> + '_ {
 }
 
 fn offending(call: &str) -> Option<String> {
-    words(call).find(|w| BANNED.contains(&w.as_str()) || w.split('_').any(|part| BANNED.contains(&part) && part != "user"))
+    words(call).find(|w| {
+        BANNED.contains(&w.as_str())
+            || w.split('_')
+                .any(|part| BANNED.contains(&part) && part != "user")
+    })
 }
 
 #[test]
@@ -78,7 +86,11 @@ fn no_log_call_names_a_sensitive_field() {
             }
         }
     }
-    assert!(found.is_empty(), "sensitive words in log calls:\n{}", found.join("\n"));
+    assert!(
+        found.is_empty(),
+        "sensitive words in log calls:\n{}",
+        found.join("\n")
+    );
 }
 
 #[test]
@@ -91,5 +103,8 @@ fn the_check_catches_what_it_must_and_ignores_lookalikes() {
     assert!(offending(r#"(setup_secret = %s)"#).is_some());
     assert!(offending(r#"(height = h, "skip this block")"#).is_none());
     assert!(offending(r#"(count = n, "scanned")"#).is_none());
-    assert_eq!(log_calls(r#"tracing::warn!(height = h, "reorg"); x"#), vec![r#"(height = h, "reorg")"#]);
+    assert_eq!(
+        log_calls(r#"tracing::warn!(height = h, "reorg"); x"#),
+        vec![r#"(height = h, "reorg")"#]
+    );
 }
