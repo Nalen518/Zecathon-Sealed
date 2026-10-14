@@ -19,8 +19,9 @@ pub use seal::DbKey;
 
 const MIGRATIONS: &[&str] = &[include_str!("../migrations/0001_init.sql")];
 
-/// Blocks kept in `chain_block` below the scanned height, for finding a fork.
-pub const KEEP_BLOCKS: u32 = 300;
+/// Blocks kept in `chain_block` below the scanned height, for finding a fork. Above the deepest
+/// reorg seen on testnet (317 blocks, B-29).
+pub const KEEP_BLOCKS: u32 = 1_000;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
@@ -317,15 +318,47 @@ impl Store {
     pub fn insert_tip(&mut self, id: &str, t: &NewTip) -> Result<Option<String>> {
         let tx = self.conn.transaction()?;
         let tip = tip_id(id, t.txid, t.output_index);
-        let exists: bool = tx.query_row(
-            "SELECT EXISTS (SELECT 1 FROM tip WHERE id = ?1)",
-            [&tip],
-            |r| r.get(0),
-        )?;
-        if exists {
-            return Ok(None);
-        }
+        let state_now: Option<String> = tx
+            .query_row("SELECT chain_state FROM tip WHERE id = ?1", [&tip], |r| {
+                r.get(0)
+            })
+            .optional()?;
         let confirmations = t.confirmations.min(status::CONFIRMATIONS_CAP);
+        match state_now.as_deref() {
+            None => {}
+            // Mined again on the new chain after a reorg: back to pending or confirmed at its new
+            // height. The contract has no own event for this, so it is a new `tip_received`.
+            Some("orphaned") => {
+                let state = status::chain_state(confirmations);
+                tx.execute(
+                    "UPDATE tip SET height = ?2, block_time_at = ?3, confirmations = ?4, chain_state = ?5
+                     WHERE id = ?1",
+                    params![tip, t.height, t.block_time_at, confirmations, state.as_str()],
+                )?;
+                bump_seq(&tx, id, &tip)?;
+                let format_ok: bool =
+                    tx.query_row("SELECT format_ok FROM tip WHERE id = ?1", [&tip], |r| {
+                        r.get(0)
+                    })?;
+                append_audit(
+                    &tx,
+                    id,
+                    t.seen_at,
+                    Actor::Watcher,
+                    &Event::TipReceived {
+                        tip_id: tip.clone(),
+                        txid: t.txid.to_owned(),
+                        output_index: t.output_index.into(),
+                        amount_zat: t.amount_zat,
+                        height: t.height.into(),
+                        format_ok,
+                    },
+                )?;
+                tx.commit()?;
+                return Ok(Some(tip));
+            }
+            Some(_) => return Ok(None),
+        }
         let state = status::chain_state(confirmations);
         let format_ok = memo::format_ok(t.memo);
         let stored_memo = memo::memo_b64(t.memo).map(|_| t.memo.to_vec());
@@ -666,6 +699,13 @@ impl Store {
         )?;
         tx.commit()?;
         Ok(())
+    }
+
+    /// Lowest height with a stored block hash, the deepest point a fork search can reach.
+    pub fn oldest_block(&self) -> Result<Option<u32>> {
+        Ok(self
+            .conn
+            .query_row("SELECT MIN(height) FROM chain_block", [], |r| r.get(0))?)
     }
 
     pub fn block_hash(&self, height: u32) -> Result<Option<[u8; 32]>> {

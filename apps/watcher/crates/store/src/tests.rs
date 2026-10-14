@@ -374,3 +374,51 @@ fn a_file_database_reopens_without_rerunning_migrations() {
     drop(s);
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn a_tip_mined_again_after_a_reorg_comes_back_from_orphaned() {
+    let mut s = store();
+    let memo = z1_memo();
+    s.insert_tip("desk", &tip(TXID_A, 4_497_105, 100_000, 1, &memo))
+        .unwrap();
+    s.orphan_above("desk", 4_497_100, T1).unwrap();
+    let orphaned = s.tips_page("desk", 0, TipFilter::All, 50).unwrap();
+    assert_eq!(orphaned.tips[0].display_status, DisplayStatusWire::Orphaned);
+
+    let back = s
+        .insert_tip("desk", &tip(TXID_A, 4_497_107, 100_000, 1, &memo))
+        .unwrap();
+    assert!(back.is_some());
+    let page = s
+        .tips_page("desk", orphaned.next_seq, TipFilter::All, 50)
+        .unwrap();
+    assert_eq!(page.tips.len(), 1);
+    assert_eq!(page.tips[0].height, Some(4_497_107));
+    assert_eq!(page.tips[0].display_status, DisplayStatusWire::Pending);
+    // Still one row, and a second insert of the live tip changes nothing.
+    assert_eq!(
+        s.insert_tip("desk", &tip(TXID_A, 4_497_107, 100_000, 1, &memo))
+            .unwrap(),
+        None
+    );
+    assert_eq!(
+        s.tips_page("desk", 0, TipFilter::All, 50)
+            .unwrap()
+            .tips
+            .len(),
+        1
+    );
+    assert_eq!(verify_chain(&audit_values(&s)), Ok(()));
+}
+
+#[test]
+fn oldest_block_tracks_the_kept_window() {
+    let mut s = store();
+    assert_eq!(s.oldest_block().unwrap(), None);
+    s.put_scanned_block("desk", 4_497_001, &[1; 32]).unwrap();
+    s.put_scanned_block("desk", 4_497_002, &[2; 32]).unwrap();
+    assert_eq!(s.oldest_block().unwrap(), Some(4_497_001));
+    s.put_scanned_block("desk", 4_497_001 + KEEP_BLOCKS + 5, &[3; 32])
+        .unwrap();
+    assert_eq!(s.oldest_block().unwrap(), Some(4_497_001 + KEEP_BLOCKS + 5));
+}
