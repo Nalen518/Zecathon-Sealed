@@ -515,3 +515,43 @@ test.describe("Desk entry and judge kit (D-87 to D-90)", () => {
     expect(tipsCalls.at(-1)!.headers.authorization).toBe(`Bearer ${token}`);
   });
 });
+
+test.describe("Desk Leave (D-96)", () => {
+  test("Leave from the unlocked Inbox goes to the tip page and locks the desk", async ({ page, baseURL }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+    await page.getByRole("banner").getByRole("button", { name: "Leave" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Send a tip only the desk can read.");
+    // Back in the desk, the key is locked again and the opened tip is gone.
+    await page.goto("/desk");
+    await expect(page.getByRole("heading", { name: "Unlock the desk key" })).toBeVisible();
+    await expect(page.getByText(TIP)).toHaveCount(0);
+  });
+
+  test("Leave on Create inbox asks first while the new key is not saved", async ({ page }) => {
+    await page.goto("/desk/create");
+    await expect(page.getByText(/^sealed-desk-key-v1 · /)).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("banner").getByRole("button", { name: "Leave" }).click();
+    const dialog = page.getByRole("dialog", { name: "Leave without saving the desk key?" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Stay on this page" }).click();
+    await expect(page).toHaveURL(/\/desk\/create$/);
+    await page.getByRole("banner").getByRole("button", { name: "Leave" }).click();
+    await dialog.getByRole("button", { name: "Leave and discard" }).click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test("Leave on Restore goes straight to the tip page", async ({ page }) => {
+    await page.goto("/desk");
+    await expect(page).toHaveURL(/\/desk\/restore$/);
+    await page.getByRole("banner").getByRole("button", { name: "Leave" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page).toHaveURL(/\/$/);
+  });
+});

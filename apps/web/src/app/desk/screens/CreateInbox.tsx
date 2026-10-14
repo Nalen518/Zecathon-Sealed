@@ -43,7 +43,8 @@ export function CreateInbox() {
 
   return (
     <div className="app-page">
-      <DeskHeader network={config.network} />
+      {/* D-96: before the new key is saved in this browser, Leave asks first. */}
+      <DeskHeader network={config.network} confirmLeave={step === 1 && record === null} />
       <main id="main" className="app-main">
         <div className="container app-stack">
           <StepIndicator steps={DESK_STEPS} current={step} />
