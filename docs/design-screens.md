@@ -26,7 +26,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 | Write — Default | Tip box with UTF-8 byte counter, memo grid at 127 bytes, desk key fingerprint to compare, Seal and continue | FR-1, FR-2, FR-6 |
 | Write — Empty | Button disabled, placeholder, hint | FR-1 |
 | Write — At limit | 331 / 331 bytes in red with icon + message, grid full | FR-1 |
-| Pay — Default | QR code (320 px), Open in wallet, copy fallback (address, amount, memo), checklist, keep-tab-open warning, cost, testnet faucet link under the cost line (new tab, D-83) | FR-4, FR-5 |
+| Pay — Default | QR code (320 px, "Show a larger code" up to 560 px, D-95), Open in wallet, copy fallback (address, amount, memo), checklist, keep-tab-open warning, cost, testnet faucet link under the cost line (new tab, D-83) | FR-4, FR-5 |
 | Pay — Sent | Done step, what happens next, nothing stored | S2 |
 | Safety check — Question | 1 of 3, radio options, "runs offline", answers never sent | FR-10 |
 | Safety check — Result | Two warnings + one OK, honest note on research age | FR-10 |
