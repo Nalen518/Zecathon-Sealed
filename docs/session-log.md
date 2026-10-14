@@ -135,3 +135,23 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** PR #7 merge (then tell the frontend session, which maps `demo_locked`). PR #2. A PR for the watcher branches. C-25, `cargo deny`, Dockerfile, Railway.
 **Next:** @Apa merges PR #7. Then push `feat/watcher-demo-lock` when asked.
 
+## 2026-10-14 (backup export)
+
+**Done:** On `feat/web-backup-export` off `development`: "Download backup file" in Settings exports the current record with the desk token (D-94). Figma Settings — Delete inbox has the new card. e2e test: register, download from Settings, the token is inside only in encrypted form, a wiped browser restores the file and lands in the Inbox with tips. 28 desk e2e checks pass.
+**Findings:** The only backup until now was made at Create inbox 1, before registration, so it had no token, and nothing exported a newer one. A judge kit would have stopped at "sign in again", which needs the setup secret. The Pay QR holds about 914 characters (a fixed 511 byte memo as base64url plus the address), which makes a version 21 code at level L with about 3 px per module at 320 px. It cannot get shorter without making memos different lengths.
+**Decisions:** D-94, F-31.
+**QR:** the scan was with a phone camera or Google Lens, which cannot use `zcash:` links, so "no usable data found" is expected. Added "Show a larger code" (D-95) and the link in the Figma QR code component. Caption and link now centered as in Figma.
+**Open:** Test the QR with a Zcash wallet scanner on a real testnet address. Judge kit export after the watcher runs on testnet.
+**Next:** Push `feat/web-backup-export` when @Apa asks.
+
+## 2026-10-14 (desk Leave)
+
+**Done:** On `feat/web-desk-leave` (on top of `feat/web-backup-export`): Leave in the Figma Desk header, then in code (D-96). 34 desk e2e checks pass.
+**Decisions:** D-96, F-32.
+**Next:** Push `feat/web-backup-export` and `feat/web-desk-leave` when @Apa asks. Then the real testnet payment path with the backend session.
+
+## 2026-10-14 (end of day)
+
+**Done:** Settings backup export, larger QR and desk Leave pushed and merged with this PR. Whole day summarised in `docs/session-summary-2026-10-14.md` (findings, done, not done, frontend and backend).
+**Open:** See §3 of that file.
+**Next:** Real testnet desk for the live page, then the judge kit.

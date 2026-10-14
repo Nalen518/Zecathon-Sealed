@@ -7,8 +7,10 @@ import { Input } from "../../../components/Input/Input";
 import { SlimFooter } from "../../../components/SlimFooter/SlimFooter";
 import { TextLink } from "../../../components/TextLink/TextLink";
 import { ApiError } from "../../../lib/api";
+import { BACKUP_FILENAME } from "../../../lib/keystore";
 import { formatZec } from "../../../lib/format";
 import { ZIP317_MIN_FEE_ZAT } from "../../../lib/memo";
+import { downloadBackup } from "../backup";
 import { useDeskSession } from "../DeskSession";
 import { errorText } from "../errors";
 import { parseZec } from "../format";
@@ -24,7 +26,7 @@ const CONFIRM_WORD = "DELETE";
 type Notice = { tone: "success" | "warning"; title: string; body: string } | null;
 
 export function Settings() {
-  const { config, api, unlocked, lock, setToken } = useDeskSession();
+  const { config, api, record, unlocked, lock, setToken } = useDeskSession();
   const navigate = useNavigate();
   const token = unlocked?.secrets.token ?? null;
   const [floor, setFloor] = useState(formatZec(config.tipFloorZat));
@@ -96,7 +98,11 @@ export function Settings() {
     try {
       const issued = await api.issueToken(config.inboxId, { token });
       await setToken(issued.token);
-      setNotice({ tone: "success", title: "Desk token rotated", body: "Every other browser using this inbox is signed out." });
+      setNotice({
+        tone: "success",
+        title: "Desk token rotated",
+        body: "Every other browser using this inbox is signed out. Download the backup file again so it carries the new token.",
+      });
     } catch (err) {
       await handle(err);
     } finally {
@@ -179,6 +185,24 @@ export function Settings() {
               <span className="text-body-small muted">Signs out every other browser using this inbox.</span>
             </div>
           </form>
+
+          {/* D-94: the backup from Create inbox 1 has no desk token yet. This one carries the current token. */}
+          <section className="card" aria-labelledby="backup-title">
+            <h2 id="backup-title" className="text-heading-h3">
+              Backup file
+            </h2>
+            <p className="text-body-default">
+              The file from Create inbox has the desk key but no desk token. Download it again after the inbox is
+              registered and after every token rotation, so a restore signs straight in. It stays locked with your
+              passphrase.
+            </p>
+            <div className="desk-inline">
+              <Button variant="secondary" showIcon={false} onClick={() => record && downloadBackup(record)} disabled={!record}>
+                Download backup file
+              </Button>
+              <span className="text-mono-label muted">{BACKUP_FILENAME} · passphrase-wrapped</span>
+            </div>
+          </section>
 
           <form className="card settings-danger" onSubmit={onDelete} aria-labelledby="delete-title">
             <h2 id="delete-title" className="text-heading-h3">
