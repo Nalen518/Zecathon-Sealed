@@ -1,6 +1,6 @@
 # Sealed API contract: frontend and backend
 
-Status: v1, Oct 11 2026, clarified Oct 13 and 14 2026 (C-15 to C-23, no route, field or type change). Owner: @Apa.
+Status: v1, Oct 11 2026, clarified Oct 13 and 14 2026 (C-15 to C-25, no route, field or type change except the C-24 error code). Owner: @Apa.
 This is the single source of truth for how the frontend (Vercel) and the watcher API (Railway) talk. If this file disagrees with the Architecture doc, the SRD table or any code, **this file wins** and the other one is fixed in the same change.
 
 Built from: SRD (FR-1 to FR-19, NFR-1 to NFR-11, T-1 to T-10), Architecture §3 to §5, `docs/design-screens.md` and `docs/frontend/rules.md`.
@@ -35,6 +35,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-22 | `next_seq` on an empty page and `field` on an error about no single field were undefined | `next_seq` equals the `after_seq` sent when the page is empty (§6.5, §6.10). `field` is left out when no single field is at fault (§5.5) (Oct 13) |
 | C-23 | A tip is unique by `txid` + `output_index` (FR-13), but each shielded pool numbers its outputs from 0, so a transaction that pays the desk in two pools would give two tips the same key and one would be lost | `output_index` is the output's position across every shielded output of the transaction, counted Sapling outputs first, then Orchard actions, then Ironwood actions (§5.2) (Oct 14) |
 | C-24 | Judges share one testnet demo desk through a backup file that carries the desk token. The desk token alone can rotate itself and change the tip floor, so one judge could break every other judge's backup (401) or move tips below the floor | A demo inbox lock set by `SEALED_DEMO_INBOX_ID`: on that inbox, token issue and PATCH need the setup secret and otherwise return `403 demo_locked` (§5.5, §6.4, §6.7, §8). Testnet only (Oct 14) |
+| C-25 | The code and the contract differed in three places: C-18 said tip, audit and health routes never return 503, but a storage failure or a request over the 10 s limit has no other code. A transparent address could never reach check 9 ("no shielded receiver") because check 8 refused every non-unified address, and ZIP 316 gives every unified address a shielded receiver. `name` had no length rule | A storage failure or a request over 10 s answers `503 watcher_unavailable` on any route, health included (C-18 still holds for an unreachable chain). A transparent address fails check 9 with `422 address_not_shielded`, any other non-unified address fails check 8. `name` is 1 to 64 characters (check 2) (Oct 14) |
 
 ## 2. Base
 
@@ -228,7 +229,7 @@ The frontend picks its text by `code` from the Figma copy and never shows `messa
 | 422 | `fingerprint_mismatch` | Fingerprint does not match the public key | Create inbox 2 |
 | 422 | `floor_out_of_range` | Tip floor outside 10,000 to 100,000,000 zat | Settings |
 | 429 | `rate_limited` | Too many requests | Any. Retry after `Retry-After` |
-| 503 | `watcher_unavailable` | Create inbox without `birthday_height` while no lightwalletd source answers (C-18). Tip, audit and health routes never return it | Create inbox 2. The Inbox reads chain state from health |
+| 503 | `watcher_unavailable` | Create inbox without `birthday_height` while no lightwalletd source answers (C-18). Also any route, health included, when storage fails or the request runs over 10 s (C-25). An unreachable chain alone never makes tip, audit or health routes return it | Create inbox 2. Any screen as a retry |
 
 ### 5.6 Audit entry (desk token only, added Oct 12)
 
@@ -315,14 +316,14 @@ Server checks, in this order (C-19). The first failure returns its code:
 | # | Check | Failure |
 |---|---|---|
 | 1 | `X-Setup-Secret` present and correct | `403 forbidden` |
-| 2 | Body is JSON with every required field of the right type and no unknown field | `400 invalid_request` |
+| 2 | Body is JSON with every required field of the right type and no unknown field, and `name` is 1 to 64 characters (C-25) | `400 invalid_request` (field `name` for the length) |
 | 3 | `id` equals the deployment's `SEALED_INBOX_ID` | `400 invalid_request`, field `id` |
 | 4 | No inbox exists yet | `409 inbox_exists` |
 | 5 | `ufvk` is not a spending key, seed phrase or any key with spend authority, for either network | `422 spend_key_rejected` |
 | 6 | `ufvk` and `address` are for the deployment's network | `422 network_mismatch` |
 | 7 | `ufvk` decodes as a unified full viewing key | `400 invalid_request`, field `ufvk` |
-| 8 | `address` decodes as a unified address | `400 invalid_request`, field `address` |
-| 9 | `address` has a shielded receiver | `422 address_not_shielded` |
+| 8 | `address` decodes as a unified address, or as a transparent address (which then fails check 9) | `400 invalid_request`, field `address` |
+| 9 | `address` has a shielded receiver. A transparent address fails here (C-25) | `422 address_not_shielded`, field `address` |
 | 10 | `address` is derived from the `ufvk` | `422 address_mismatch` |
 | 11 | `desk_public_key` is 32 bytes of standard base64 | `400 invalid_request`, field `desk_public_key` |
 | 12 | `fingerprint` matches `desk_public_key` (§4.3) | `422 fingerprint_mismatch` |
