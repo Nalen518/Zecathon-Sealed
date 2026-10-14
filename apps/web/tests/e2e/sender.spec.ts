@@ -173,6 +173,8 @@ test.describe("Sender flow", () => {
 
 test.describe("Sender screens", () => {
   test("Write, Pay, Sent and the Safety check pass axe and have no horizontal scroll", async ({ page }, info) => {
+    // Five axe scans in one test: slow when the suite runs in parallel.
+    test.setTimeout(90_000);
     await page.emulateMedia({ reducedMotion: "reduce" });
     const watch = await watchPage(page);
     await page.goto("/write");

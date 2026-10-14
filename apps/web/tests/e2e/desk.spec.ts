@@ -88,7 +88,8 @@ async function createDesk(page: Page): Promise<{ backup: string; privateKeyText:
   await expect(page).toHaveURL(/\/desk\/restore$/);
   await page.getByRole("link", { name: "Create a new inbox instead" }).click();
   await expect(page).toHaveURL(/\/desk\/create$/);
-  await expect(page.getByText(/^sealed-desk-key-v1 · /)).toBeVisible();
+  // The key is made after libsodium's WebAssembly loads, which takes longer on a busy machine.
+  await expect(page.getByText(/^sealed-desk-key-v1 · /)).toBeVisible({ timeout: 20_000 });
   const privateKeyText = (await page.getByText(/^sealed-desk-key-v1 · /).textContent()) ?? "";
   await page.getByLabel("Passphrase", { exact: true }).fill(PASS);
   await page.getByLabel("Repeat the passphrase").fill(PASS);
@@ -184,6 +185,8 @@ test.describe("Audit trail (FR-20)", () => {
 
 test.describe("Desk", () => {
   test("T-9 and FR-11: create, refuse a spend key in the browser, register, open a tip, lock and unlock", async ({ page, baseURL }) => {
+    // Several Argon2id runs over 64 MiB (create, unlock, wrong passphrase, unlock): the slowest desk test under load.
+    test.setTimeout(90_000);
     const watch = await watchPage(page);
     const api = await fakeApi(page, baseURL!);
     const { backup, privateKeyText } = await createDesk(page);
