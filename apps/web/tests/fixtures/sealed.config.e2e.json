@@ -18,5 +18,6 @@
       "explorer_url": null,
       "faucet_url": null
     }
-  }
+  },
+  "demo_desk": true
 }
