@@ -54,3 +54,7 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Status:** `feat/watcher-spikes` and `feat/watcher-core` hold local commits, not pushed. The web dev server on port 5173 may still be running.
 **Next:** Merge PR #2 and rebase. Contract C-23. Build the `chain` crate with simulated reorg and restart tests. Send the first sealed tip once TAZ arrives.
 
+
+## 2026-10-14 (backend)
+
+**Done:** State check of the watcher branches (48 tests green, PR #2 still open). Envelope check for D-69 to D-80: the desk envelope reads `amount_zat`, `height` and `block_time_at` for the postmark, and the open envelope counts the bytes of the text decrypted in the browser from `memo_b64`. The Details rows (D-79) read `seen_at`, `height`, `confirmations`, `amount_zat`, `below_floor` and `txid`. All are in contract §5.2 and `contracts/fixtures/tip.json`, and `src/lib/api.ts` is unchanged on `feat/web-envelope`. **No backend change needed for D-69 to D-80.** C-15 makes `height` and `block_time_at` never null in v1, and the envelope already handles null.
