@@ -25,10 +25,17 @@ describe("contract fixtures parse", () => {
   it("tip.json", () => expect(parseTip(tip).displayStatus).toBe("confirmed"));
   it("tips_page.json", () => {
     const page = parseTipsPage(tipsPage);
-    expect(page.tips).toHaveLength(2);
-    expect(page.tips[1]!.height).toBeNull();
-    expect(page.tips[1]!.memoB64).toBeNull();
-    expect(page.counts).toEqual({ visible: 1, belowFloor: 1 });
+    expect(page.tips).toHaveLength(3);
+    expect(page.tips[1]!.displayStatus).toBe("below_floor");
+    // C-16: no memo means format_ok false and an unreadable badge.
+    expect(page.tips[2]!.memoB64).toBeNull();
+    expect(page.tips[2]!.formatOk).toBe(false);
+    expect(page.tips[2]!.displayStatus).toBe("unreadable");
+    expect(page.counts).toEqual({ visible: 2, belowFloor: 1 });
+  });
+  it("still accepts a null height, kept for a later mempool view (C-15)", () => {
+    const unmined = { ...tip, height: null, block_time_at: null, confirmations: null, chain_state: "pending" };
+    expect(parseTip(unmined).height).toBeNull();
   });
   it("health.json", () => expect(parseHealth(health).sources).toHaveLength(2));
   it("audit_chain.json (page)", () => {

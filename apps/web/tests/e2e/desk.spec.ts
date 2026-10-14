@@ -213,19 +213,18 @@ test.describe("Desk", () => {
     await page.getByRole("link", { name: "Open the inbox" }).click();
     await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
     await expect(page.getByText("Watching")).toBeVisible();
-    await expect(page.getByRole("tab", { name: "All tips (1)" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "All tips (2)" })).toBeVisible();
     await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
     // FR-15: the tip arrives sealed. The postmark and the details carry its real block, time and amount.
     await expect(page.getByRole("img", { name: /^Sealed tip for this desk\. Postmark: block 4,201,108, \d\d:\d\d\. Amount 0\.001 ZEC\./ })).toBeVisible();
-    await expect(page.getByText("4,201,108 · 12 confirmations")).toBeVisible();
+    await expect(page.getByText("4,201,108 · 10 confirmations")).toBeVisible();
     await expect(page.getByText(TIP)).toHaveCount(0);
     await page.getByRole("button", { name: "Open with desk key" }).click();
     await expect(page.getByText(TIP)).toBeVisible();
     await expect(page.getByText(`${new TextEncoder().encode(TIP).length} BYTES`)).toBeVisible();
     await expect(page.getByRole("article", { name: "Tip opened in this browser" })).toBeFocused();
-    // Choosing another tip and coming back seals it again.
-    await page.getByRole("tab", { name: /Below floor/ }).click();
-    await page.getByRole("button", { name: /tx 9c13…88be/ }).click();
+    // Choosing another tip and coming back seals it again. Since C-16 the tip with no memo is tip 3.
+    await page.getByRole("button", { name: /tx ad24…99cf/ }).click();
     await expect(page.getByRole("heading", { name: "The wallet sent no memo" })).toBeVisible();
     await expect(page.getByText(TIP)).toHaveCount(0);
     await page.getByRole("tab", { name: /All tips/ }).click();

@@ -1,6 +1,6 @@
 # Sealed API contract: frontend and backend
 
-Status: v1, Oct 11 2026. Owner: @Apa.
+Status: v1, Oct 11 2026, clarified Oct 13 and 14 2026 (C-15 to C-23, no route, field or type change). Owner: @Apa.
 This is the single source of truth for how the frontend (Vercel) and the watcher API (Railway) talk. If this file disagrees with the Architecture doc, the SRD table or any code, **this file wins** and the other one is fixed in the same change.
 
 Built from: SRD (FR-1 to FR-19, NFR-1 to NFR-11, T-1 to T-10), Architecture §3 to §5, `docs/design-screens.md` and `docs/frontend/rules.md`.
@@ -25,6 +25,15 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-12 | Tip floor range was 0 to 100,000,000 zat, but SRD BR-8 forbids a floor below the ZIP 317 two-action fee (10,000 zat) | Range is 10,000 to 100,000,000 on `POST /inbox` and `PATCH /inbox/{id}` (Oct 11) |
 | C-13 | The audit trail (added Oct 12) would have to survive "delete inbox", but FR-17 says delete removes everything | The log is deleted with the inbox. The desk exports it first from the Audit trail page, which the Settings delete card links to (§6.10) |
 | C-14 | `GET /v1/health` is public and returned each chain server's full `url`, so credentials in a server URL would be visible to anyone | Field renamed `origin` and holds the origin only. Same rule as the audit log (§5.6) (Oct 13) |
+| C-15 | §5.2 allowed unmined tips (`height` null), but §5.6 says `tip_received` details are never null, and compact blocks do not carry the mempool | A tip appears only once it is in a block. In v1 `height`, `block_time_at` and `confirmations` are never null. Clients still accept null so mempool tips can come later without `/v2` (§5.2) (Oct 13) |
+| C-16 | A tip with no memo had `format_ok: true` in `tips_page.json`, but §4.4 needs the `z1:` prefix | `memo_b64: null` means the ZIP 302 "no memo" value. `format_ok` is `false`, so `display_status` is `unreadable` (§4.4, §5.2) (Oct 13) |
+| C-17 | `seq` bumps on every `confirmations` change, so with 25-second testnet blocks every tip changed on every poll, forever | `confirmations` stops at 10 and no longer changes after that (§5.2) (Oct 13) |
+| C-18 | Health had no defined answer when no chain server answers, and no route said when `503 watcher_unavailable` is returned | Health always answers `200` (§5.4). Stored tips and the audit log are served from the database and never return `503`. Only Create inbox without `birthday_height` needs the chain (§5.5, §6.3) (Oct 13) |
+| C-19 | Create inbox checked the network before spend authority, so a spending key for the other network got `network_mismatch`, and the order left out several errors | One full check order, spend key first (§6.3) (Oct 13) |
+| C-20 | `SEALED_DB_KEY` (viewing key encryption at rest) and Railway's `PORT` were missing from §8 | Added to §8 (Oct 13) |
+| C-21 | §8 required two chain servers, but testnet may have only one live server | Two or more on main. One is allowed on test, and health then reads "1 of 1 servers" (§8) (Oct 13) |
+| C-22 | `next_seq` on an empty page and `field` on an error about no single field were undefined | `next_seq` equals the `after_seq` sent when the page is empty (§6.5, §6.10). `field` is left out when no single field is at fault (§5.5) (Oct 13) |
+| C-23 | A tip is unique by `txid` + `output_index` (FR-13), but each shielded pool numbers its outputs from 0, so a transaction that pays the desk in two pools would give two tips the same key and one would be lost | `output_index` is the output's position across every shielded output of the transaction, counted Sapling outputs first, then Orchard actions, then Ironwood actions (§5.2) (Oct 14) |
 | C-24 | Judges share one testnet demo desk through a backup file that carries the desk token. The desk token alone can rotate itself and change the tip floor, so one judge could break every other judge's backup (401) or move tips below the floor | A demo inbox lock set by `SEALED_DEMO_INBOX_ID`: on that inbox, token issue and PATCH need the setup secret and otherwise return `403 demo_locked` (§5.5, §6.4, §6.7, §8). Testnet only (Oct 14) |
 
 ## 2. Base
@@ -114,6 +123,7 @@ display     = groups of 4 joined by a space   →   "3F9A C21E 8B02 77AD"
 | Memo text | ASCII `z1:` + standard base64 of the sealed box = 511 bytes, then one zero byte |
 | On the wire | `memo_b64` = base64 of the full 512 raw bytes exactly as received on chain |
 | Format check (server) | `format_ok` = starts with `z1:` and the next 508 bytes are valid base64 decoding to 381 bytes. The server never tries to decrypt |
+| No memo | First byte 0xF6 (ZIP 302 "no memo"). The server sends `memo_b64: null` and `format_ok: false` (C-16) |
 
 ## 5. Objects
 
@@ -146,7 +156,7 @@ Never contains the viewing key, token hashes or anything about senders.
   "block_time_at": "2026-10-11T09:41:00Z",
   "seen_at": "2026-10-11T09:41:30Z",
   "amount_zat": 100000,
-  "confirmations": 12,
+  "confirmations": 10,
   "chain_state": "confirmed",
   "below_floor": false,
   "format_ok": true,
@@ -156,8 +166,10 @@ Never contains the viewing key, token hashes or anything about senders.
 ```
 
 - `id` is unique by `txid` + `output_index` (FR-13).
-- `height`, `block_time_at` and `confirmations` are `null` while the transaction is unmined.
-- `memo_b64` is `null` when the wallet dropped the memo. The Inbox shows it as an empty tip.
+- `output_index` counts every shielded output of the transaction in one sequence: Sapling outputs first, then Orchard actions, then Ironwood actions, each in its order within its bundle (C-23). A transaction with 2 Sapling outputs and 2 Ironwood actions numbers them 0, 1, 2, 3. The frontend never parses it.
+- A tip is listed only once its transaction is in a block (C-15). In v1 `height`, `block_time_at` and `confirmations` are never `null`. Clients still accept `null` for them, kept for a later mempool view.
+- `confirmations` counts the tip's own block as 1 and stops at 10. After 10 it does not change, so it no longer bumps `seq` (C-17). The `confirmed` rule (3 or more) is unchanged.
+- `memo_b64` is `null` when the wallet sent no memo (§4.4). `format_ok` is then `false` and `display_status` is `unreadable` unless the tip is orphaned. The Inbox shows it as an empty tip.
 
 ### 5.3 Tip status (settles C-1)
 
@@ -165,7 +177,7 @@ Never contains the viewing key, token hashes or anything about senders.
 |---|---|---|
 | `chain_state` | `pending`, `confirmed`, `orphaned` | `confirmed` at 3 or more confirmations (FR-14). `orphaned` if a reorg removed it |
 | `below_floor` | boolean | `amount_zat < tip_floor_zat` at the time of the response (FR-16) |
-| `format_ok` | boolean | §4.4 (FR-19) |
+| `format_ok` | boolean | §4.4 (FR-19). `false` when `memo_b64` is `null` |
 | `display_status` | `orphaned`, `unreadable`, `below_floor`, `pending`, `confirmed` | Computed by the server with this precedence, left to right. The frontend shows exactly this value in the Status badge |
 
 The five `display_status` values are the five Status badge variants in Figma, in the same spelling. The frontend never invents another.
@@ -187,13 +199,17 @@ The five `display_status` values are the five Status badge variants in Figma, in
 
 `origin` is the chain server's scheme, host and port only, never its path, query or a user name and password (C-14). This endpoint is public.
 
-`lag_blocks` at the top is the worst lag among sources that answer. The Inbox health line reads "{ok count} of {total} servers · {lag_blocks} blocks behind · checked {age} ago". The Tag shows WATCHING when every source is ok and lag is under 3, otherwise WATCHER BEHIND (FR-18).
+`lag_blocks` at the top is the worst lag among sources that answer.
+
+When no source answers, health still returns `200` (C-18): `tip_height` is the highest tip seen since the service started (0 if none yet), `lag_blocks` is 0, and every source has `ok: false`. A source keeps its last answered `tip_height` and `lag_blocks`, or `null` if it never answered. `last_checked_at` is the last attempt, or `null` before the first one. The Inbox health line reads "{ok count} of {total} servers · {lag_blocks} blocks behind · checked {age} ago". The Tag shows WATCHING when every source is ok and lag is under 3, otherwise WATCHER BEHIND (FR-18).
 
 ### 5.5 Error
 
 ```json
 { "error": { "code": "spend_key_rejected", "message": "This key can spend funds.", "field": "ufvk" } }
 ```
+
+`field` names the request field at fault. It is left out when no single field is at fault (C-22).
 
 The frontend picks its text by `code` from the Figma copy and never shows `message` as is. `message` is for logs and curl users.
 
@@ -212,7 +228,7 @@ The frontend picks its text by `code` from the Figma copy and never shows `messa
 | 422 | `fingerprint_mismatch` | Fingerprint does not match the public key | Create inbox 2 |
 | 422 | `floor_out_of_range` | Tip floor outside 10,000 to 100,000,000 zat | Settings |
 | 429 | `rate_limited` | Too many requests | Any. Retry after `Retry-After` |
-| 503 | `watcher_unavailable` | No lightwalletd source answering | Inbox banner (warning callout) |
+| 503 | `watcher_unavailable` | Create inbox without `birthday_height` while no lightwalletd source answers (C-18). Tip, audit and health routes never return it | Create inbox 2. The Inbox reads chain state from health |
 
 ### 5.6 Audit entry (desk token only, added Oct 12)
 
@@ -294,7 +310,27 @@ Request
 }
 ```
 Response `201` with Inbox (§5.1).
-Server checks, in order: setup secret, network, ufvk decodes and has no spend authority, address decodes and is shielded, address belongs to the ufvk, fingerprint matches the key. First failure returns its 4xx code. `birthday_height` is optional. Default is the current tip minus 100 blocks. FR-11, NFR-3.
+Server checks, in this order (C-19). The first failure returns its code:
+
+| # | Check | Failure |
+|---|---|---|
+| 1 | `X-Setup-Secret` present and correct | `403 forbidden` |
+| 2 | Body is JSON with every required field of the right type and no unknown field | `400 invalid_request` |
+| 3 | `id` equals the deployment's `SEALED_INBOX_ID` | `400 invalid_request`, field `id` |
+| 4 | No inbox exists yet | `409 inbox_exists` |
+| 5 | `ufvk` is not a spending key, seed phrase or any key with spend authority, for either network | `422 spend_key_rejected` |
+| 6 | `ufvk` and `address` are for the deployment's network | `422 network_mismatch` |
+| 7 | `ufvk` decodes as a unified full viewing key | `400 invalid_request`, field `ufvk` |
+| 8 | `address` decodes as a unified address | `400 invalid_request`, field `address` |
+| 9 | `address` has a shielded receiver | `422 address_not_shielded` |
+| 10 | `address` is derived from the `ufvk` | `422 address_mismatch` |
+| 11 | `desk_public_key` is 32 bytes of standard base64 | `400 invalid_request`, field `desk_public_key` |
+| 12 | `fingerprint` matches `desk_public_key` (§4.3) | `422 fingerprint_mismatch` |
+| 13 | `tip_floor_zat` is from 10,000 to 100,000,000 | `422 floor_out_of_range` |
+| 14 | `birthday_height`, when sent, is not above the current chain tip | `400 invalid_request`, field `birthday_height` |
+| 15 | Without `birthday_height`, a chain server answers so the default can be set | `503 watcher_unavailable` |
+
+`birthday_height` is optional. Default is the current tip minus 100 blocks. FR-11, NFR-3.
 
 ### 6.4 `POST /v1/inbox/{id}/tokens`
 Auth: `X-Setup-Secret` **or** the current `Authorization: Bearer` (settles C-5). Screens: Create inbox step 2 (right after create) and Settings "Rotate desk token".
@@ -324,6 +360,8 @@ Response `200`:
   "counts": { "visible": 5, "below_floor": 2 }
 }
 ```
+When no tip matches, `tips` is empty and `next_seq` equals the `after_seq` sent (C-22).
+
 Polling (settles C-2): the first load calls with `after_seq=0` and pages while `has_more` is true. Then every 30 s it calls with `after_seq=<last next_seq>` and merges by `id`, replacing older copies. The server bumps `seq` whenever a tip is inserted or any of `confirmations`, `chain_state`, `below_floor` changes. A floor change through PATCH bumps every affected tip. FR-12 to FR-16, NFR-6.
 
 ### 6.6 `GET /v1/inbox/{id}/tips/{tip_id}`
@@ -359,6 +397,7 @@ Response `200`:
 ```json
 { "entries": [ /* Audit entries, seq ascending */ ], "next_seq": 10, "has_more": false, "total": 10 }
 ```
+- When no entry matches, `entries` is empty and `next_seq` equals the `after_seq` sent (C-22).
 - The page loads every entry (paging while `has_more`), verifies the chain from `seq` 1, then shows newest first, 50 at a time.
 - **Export** is done in the browser: it saves `{ "inbox_id", "exported_at", "verified", "broken_at", "entries" }` as `sealed-audit-<inbox>-<YYYY-MM-DD>.json` (UTC date). `entries` are the raw entries as received, so anyone can re-check the chain. `broken_at` is the first broken `seq` or `null`. No export endpoint.
 - The file holds tx ids, amounts and arrival times. They are not secret, but they tie each tip to a transaction on the chain. The export button says so: "The file links each tip to its transaction. Keep it on the desk’s own machine."
@@ -389,9 +428,11 @@ Response `200`:
 | Tip floor | `tip_floor_zat` (shown to senders) | Stored, changed by PATCH | Redeploy the frontend after a PATCH so senders see the new floor |
 | Confirmations | | `SEALED_CONFIRMATIONS=3` | Frontend reads `chain_state` only |
 | Poll interval | Inbox polls every 30 s | `SEALED_POLL_SECONDS=30` | Both 30 |
-| Chain servers | | `SEALED_LIGHTWALLETD_URLS` (at least 2, FR-12) | Backend only |
+| Chain servers | | `SEALED_LIGHTWALLETD_URLS` (comma list. At least 2 on main, FR-12. 1 allowed on test, C-21) | Backend only |
 | Setup secret | Typed by the desk | `SEALED_SETUP_SECRET_HASH` | Backend stores only the hash |
 | Database | | `SEALED_DB_PATH` on the Railway volume | Backend only |
+| Database key | | `SEALED_DB_KEY`: 32 random bytes, standard base64. Encrypts the viewing key at rest (C-20) | Backend only, never in the repo |
+| Listen port | | `PORT`, set by Railway (C-20) | Backend only |
 | Demo inbox | `demo_desk` (judge box, testnet only) | `SEALED_DEMO_INBOX_ID`: unset everywhere except the testnet judging deploy. The backend refuses to start if it is set on main (C-24) | Set together on the judging deploy |
 
 Both repos ship a `.env.example` listing these names with fake values. Real `.env` files are git-ignored.
