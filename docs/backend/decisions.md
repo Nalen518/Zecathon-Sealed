@@ -124,3 +124,15 @@ Effect: the stable line (`zcash_client_backend` 0.24.0, `zcash_protocol` 0.10.6)
 | Open with the frontend's `openMemo` and the test desk key | "Sealed spike 2 test tip" |
 | Chain split found while chasing the faucet | Hashes agree up to 4,465,025 and differ from 4,465,026 (NU7). B-29 |
 
+### Oct 14: T-6, T-8, T-9 and T-11 on NU7 testnet (local `sealed`, one source, B-35)
+
+| Test | What ran | Result |
+|---|---|---|
+| T-6 below floor | 0.0005 TAZ with a memo sealed by the frontend's `sealTip` to the desk key `BA31 7197 EEAA 5D03` (tx `a37a655b…d624`, block 4,501,801) | `below_floor: true`, `display_status: below_floor`, absent from `filter=visible`, present in `filter=below_floor`, counts `visible 2, below_floor 1` |
+| T-8 unreadable | 0.001 TAZ with the plain memo "Plain text memo for the T-8 test." (tx `c59be07a…63b5`, block 4,501,806) | `format_ok: false`, `display_status: unreadable`, memo kept as received |
+| T-11 audit chain | One stored entry edited in SQLite (#2 `rotated` false to true, trigger dropped and restored) | Frontend `verifyChain`: before `verified: true` (9 entries), after `verified: false, brokenAt: 2, reason: hash` |
+| T-9 key safety | DELETE with the token only, then with the token and setup secret. Then a spending key registered | 403, then 204. Inbox and tips 404, the `inbox`, `tip`, `desk_token` and `audit_log` tables empty. `422 spend_key_rejected` and nothing stored |
+| Health with one source | `SEALED_LIGHTWALLETD_URLS=https://testnet.zec.rocks:443` | 1 of 1 answering, no WATCHER BEHIND |
+
+Spent: 0.0017 TAZ from `sender` (0.0015 landed in the desk wallet, 0.0002 in fees).
+

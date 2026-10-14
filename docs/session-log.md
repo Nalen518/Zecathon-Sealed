@@ -135,3 +135,10 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** PR #7 merge (then tell the frontend session, which maps `demo_locked`). PR #2. A PR for the watcher branches. C-25, `cargo deny`, Dockerfile, Railway.
 **Next:** @Apa merges PR #7. Then push `feat/watcher-demo-lock` when asked.
 
+## 2026-10-14 (backend, items 1, 2, 7, 8)
+
+**Done:** Contract C-25 written on `feat/contract-c25` (B-34, frontend D-94). On `feat/watcher-build`: `cargo deny` added (B-36), `rustls` 0.23.45 to 0.23.46 for RUSTSEC-2026-0346 to 0349, `.env.example` with every contract §8 variable and testnet on one server (B-35). Dockerfile, `.dockerignore` and `railway.json` written, not committed. T-6, T-8, T-9 and T-11 passed on NU7 testnet against a local `sealed`.
+**Findings:** `cargo deny` caught four `rustls` advisories on its first run, fixed by a release from the same day. Docker Desktop is installed but its engine was not running, so the image is not built yet. With only `testnet.zec.rocks` configured, health reads 1 of 1 and the WATCHER BEHIND warning is gone.
+**Decisions:** B-34, B-35, B-36, BF-20.
+**Open:** @Apa's call on the Dockerfile (keep and test locally, keep untested, or drop for Railway auto-detect). Push and merge `feat/contract-c25` and `feat/watcher-build`. Railway and Vercel near the deadline.
+
