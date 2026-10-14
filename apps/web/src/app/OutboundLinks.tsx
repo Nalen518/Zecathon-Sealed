@@ -11,9 +11,9 @@ import "./OutboundLinks.css";
 export function FaucetLine({ url }: { url: string | null }) {
   if (!url) return null;
   return (
-    <div className="outbound-line outbound-line-stacked">
+    <div className="outbound-line">
       <p className="text-body-small note">Need testnet ZEC?</p>
-      <TextLink tone="inverse" href={url} external>
+      <TextLink tone="inverse" size="small" href={url} external>
         Get free TAZ from the faucet
       </TextLink>
     </div>
@@ -29,7 +29,7 @@ export function ExplorerLine({ url }: { url: string | null }) {
   return (
     <div className="outbound-line">
       <p className="text-body-small muted">See what the chain shows.</p>
-      <TextLink href={url} external>
+      <TextLink size="small" href={url} external>
         Open the testnet explorer
       </TextLink>
     </div>
