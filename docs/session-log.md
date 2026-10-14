@@ -143,3 +143,9 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **QR:** the scan was with a phone camera or Google Lens, which cannot use `zcash:` links, so "no usable data found" is expected. Added "Show a larger code" (D-95) and the link in the Figma QR code component. Caption and link now centered as in Figma.
 **Open:** Test the QR with a Zcash wallet scanner on a real testnet address. Judge kit export after the watcher runs on testnet.
 **Next:** Push `feat/web-backup-export` when @Apa asks.
+
+## 2026-10-14 (desk Leave)
+
+**Done:** On `feat/web-desk-leave` (on top of `feat/web-backup-export`): Leave in the Figma Desk header, then in code (D-96). 34 desk e2e checks pass.
+**Decisions:** D-96, F-32.
+**Next:** Push `feat/web-backup-export` and `feat/web-desk-leave` when @Apa asks. Then the real testnet payment path with the backend session.
