@@ -36,6 +36,7 @@ Status values: **Accepted** (in force), **Proposed** (recommended, waiting for @
 | B-26 | Oct 13 | **`store` crate and migration 0001** (not released yet): tables `inbox` (viewing key sealed with XChaCha20-Poly1305, `SEALED_DB_KEY`, inbox id as associated data), `tip` (512 memo bytes or NULL for no memo, unique by inbox + txid + output index and by inbox + seq), `desk_token` (BLAKE2b-256 hashes only), `sync_state` (origin only), `chain_block` (recent block hashes for reorg detection), `audit_log` (triggers block UPDATE, and DELETE while the inbox exists). `below_floor` is computed at read time. Tip ids are derived from inbox + txid + output index, so a rescan after a lost volume keeps them. Crates: `rusqlite` =0.40.2 (`bundled`, `fallible_uint`), `chacha20poly1305` =0.11.0, `getrandom` =0.4.3, `zeroize` =1.9.1 | Store `below_floor` as a column. Random tip ids. A separate scan table | Rules §5. A computed `below_floor` cannot go stale. `fallible_uint` makes a too-large `u64` an error instead of a silent wrap | Accepted |
 | B-27 | Oct 13 | **`output_index` is the position across all of the transaction's shielded outputs**: Sapling outputs first, then Orchard actions, then Ironwood actions. Keeps FR-13 (unique by txid + output index) correct when one transaction pays the desk in two pools. To land as contract C-23 in its own pull request | Add a `pool` field to the tip. Leave it | No new field or type, the frontend is untouched. Without it a second tip in another pool of the same transaction would be dropped as a duplicate | Accepted, contract change pending |
 | B-28 | Oct 13 | **`chain` crate dependencies approved:** the B-24 line in the workspace (`zcash_client_backend` =0.25.0-pre.1, `zcash_keys` =0.17.0-pre.1, `zcash_primitives` =0.31.0-pre.1, `zcash_protocol` =0.11.0-pre.0), `zcash_address` =0.14.0-pre.1, `tonic` =0.14.6 (`tls-ring`), `tokio` =1.53.2, and `tracing` at an exact version to be checked on crates.io | Keep them in the spike only | The watcher loop needs them. Same versions the spike proved on NU7 testnet | Accepted |
+| B-29 | Oct 14 | **Testnet means the NU7 chain** (`testnet.zec.rocks`, branch `77190ad9`). The public testnet split at height 4,465,026: one chain activated NU7 (25 s blocks), the other did not (about 75 s blocks, used by fauzec.com and zexplorer). TAZ is accepted only on the NU7 chain. testnet.zecblock.com follows the NU7 chain and is used as an independent explorer, not as a data source. The watcher reads the full 512 memo bytes with `MemoBytes::as_array()`, never `as_slice()`, which drops the zero padding | Move to the non-NU7 chain for fauzec's free TAZ | The non-NU7 chain has no live light-wallet server and would need the stable crates (undoing B-24). The brief and the crates follow NU7. zecblock's fork tracker shows reorgs up to 317 blocks on this testnet, so reorg handling is tested hard and `KEEP_BLOCKS` must exceed that | Accepted |
 
 ## Proposed (waiting for a yes)
 
@@ -53,10 +54,10 @@ Status values: **Accepted** (in force), **Proposed** (recommended, waiting for @
 
 | ID | Question | Needed by |
 |---|---|---|
-| O-B1 | Spike 2: does a view-only account on the pinned crates read a testnet memo from an Ironwood output? | Before any API work |
-| O-B2 | Spike 3: which wallet exports the receive-only viewing key, and its exact prefix | Before Create inbox is tested end to end |
+| O-B1 | Spike 2: does a view-only account on the pinned crates read a testnet memo from an Ironwood output? | **Answered Oct 14: yes** (see Spike findings, B-29) |
+| O-B2 | Spike 3: which wallet exports the receive-only viewing key, and its exact prefix | **Answered Oct 13:** zcash-devtool, `uviewtest1` (B-20, Spike findings) |
 | O-B3 | Spike 4: Rust build, volume and outbound gRPC work on Railway | Before deploy |
-| O-B4 | Do the pinned crates and testnet.zec.rocks already follow NU7 rules on testnet? | Spike 2 |
+| O-B4 | Do the pinned crates and testnet.zec.rocks already follow NU7 rules on testnet? | **Answered Oct 13: yes**, with the pre-release line (B-23, B-24) |
 | O-B5 | Exact submission deadline and whether judges need a live mainnet demo | Before Oct 20 |
 
 ## Spike findings
@@ -104,3 +105,16 @@ Effect: the stable line (`zcash_client_backend` 0.24.0, `zcash_protocol` 0.10.6)
 | Testnet wallets created from `testnet.zec.rocks` at birthday 4,497,089 | `sender` (test sender) and `desk` (stands in for the desk's dedicated receive-only account). Seeds age-encrypted outside the repo |
 | Viewing key export prefix (O-B2) | `uviewtest1…` (ZIP 316 Revision 0), so the frontend check in `viewingKey.ts` already matches. Incoming viewing key `uivktest1…`. A spending key is never exported by this flow |
 | Default unified address prefix | `utest1…` (Revision 0), matching `ADDRESS_PREFIX.test` in the frontend config |
+
+### Oct 14: spike 2 passed on NU7 testnet (O-B1)
+
+| Step | Result |
+|---|---|
+| Faucet TAZ to `sender` (tx `763ff8c5…862d`) | 0.125 TAZ in an Ironwood output, decrypted by the sender's viewing key in the spike, then counted by the patched zcash-devtool |
+| Test memo | Sealed by the frontend's own `sealTip` (loaded through Vite) to a throwaway test desk key (fingerprint `FD5B 3093 9891 56B2`): 511 characters, `z1:` prefix |
+| Payment (tx `a73d5e91b52c0371aa9166676b428a1a7780ceeeeccbb91d17cabe61250899b5`) | 0.001 TAZ to the `desk` address, Ironwood pool, fee 0.0001 TAZ, mined at height 4,499,964 |
+| Scan with the desk viewing key only (compact blocks, then the full transaction) | Found at 4,499,964: Ironwood output 1, 100,000 zat, Incoming |
+| Memo | The 511 sent bytes came back identical. `as_slice()` dropped the trailing zero byte, `as_array()` returns all 512 (B-29) |
+| Open with the frontend's `openMemo` and the test desk key | "Sealed spike 2 test tip" |
+| Chain split found while chasing the faucet | Hashes agree up to 4,465,025 and differ from 4,465,026 (NU7). B-29 |
+

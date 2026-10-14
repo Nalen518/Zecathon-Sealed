@@ -167,7 +167,70 @@ async fn read_memos(
                 memo.len(),
                 memo.first().copied().unwrap_or(0)
             );
+            println!("   memo hex {}", memo.iter().map(|b| format!("{b:02x}")).collect::<String>());
         }
+    }
+    Ok(())
+}
+
+/// Looks up one transaction by its explorer id and tries the given viewing keys on it.
+async fn tx(origin: &str, txid_hex: &str, ufvks_in: &[String]) -> Res<()> {
+    let mut id = [0u8; 32];
+    for (i, b) in id.iter_mut().enumerate() {
+        *b = u8::from_str_radix(&txid_hex[2 * i..2 * i + 2], 16)?;
+    }
+    if std::env::var("SPIKE_NO_REVERSE").is_err() {
+        id.reverse(); // explorer order to internal byte order
+    }
+    let mut c = connect(origin).await?;
+    let raw = c
+        .get_transaction(TxFilter { block: None, index: 0, hash: id.to_vec() })
+        .await?
+        .into_inner();
+    let height = raw.height;
+    println!("found: {} bytes, height field {height}", raw.data.len());
+    let tip = c.get_latest_block(ChainSpec {}).await?.into_inner().height;
+    let h = if height > 0 && height < u64::from(u32::MAX) { height } else { tip + 1 };
+    let bh = BlockHeight::from_u32(h as u32);
+    let t = Transaction::read(&raw.data[..], BranchId::for_height(&NET, bh))?;
+    println!(
+        "transparent outputs {}, sapling outputs {}, orchard actions {}, ironwood actions {}",
+        t.transparent_bundle().map_or(0, |b| b.vout.len()),
+        t.sapling_bundle().map_or(0, |b| b.shielded_outputs().len()),
+        t.orchard_bundle().map_or(0, |b| b.actions().len()),
+        t.ironwood_bundle().map_or(0, |b| b.actions().len()),
+    );
+    if let Some(b) = t.transparent_bundle() {
+        for (i, o) in b.vout.iter().enumerate() {
+            println!("   transparent output {i}: {} zat", o.value().into_u64());
+        }
+    }
+    let mut ufvks = HashMap::new();
+    for (i, k) in ufvks_in.iter().enumerate() {
+        ufvks.insert(i as u32, UnifiedFullViewingKey::decode(&NET, k)?);
+    }
+    let mined = (height > 0 && height < u64::from(u32::MAX)).then_some(bh);
+    let d = decrypt_transaction(&NET, mined, Some(BlockHeight::from_u32(tip as u32)), &t, &ufvks);
+    let n = d.sapling_outputs().len() + d.orchard_outputs().len() + d.ironwood_outputs().len();
+    println!("outputs decrypted by the given keys: {n}");
+    for o in d.sapling_outputs() {
+        println!("   key {} sapling output {}: {} zat, {:?}", o.account(), o.index(), o.note_value().into_u64(), o.transfer_type());
+    }
+    for o in d.orchard_outputs() {
+        println!("   key {} orchard action {}: {} zat, {:?}", o.account(), o.index(), o.note().0.value().inner(), o.transfer_type());
+    }
+    for o in d.ironwood_outputs() {
+        println!("   key {} ironwood action {}: {} zat, {:?}", o.account(), o.index(), o.note().0.value().inner(), o.transfer_type());
+    }
+    Ok(())
+}
+
+/// Prints the hash and parent hash of each given height, to compare chains between servers.
+async fn block(origin: &str, heights: &[String]) -> Res<()> {
+    let mut c = connect(origin).await?;
+    for h in heights {
+        let b = c.get_block(BlockId { height: h.parse()?, hash: vec![] }).await?.into_inner();
+        println!("{} {} parent {}", b.height, hex_rev(&b.hash), hex_rev(&b.prev_hash));
     }
     Ok(())
 }
@@ -178,6 +241,8 @@ async fn main() -> Res<()> {
     match args.first().map(String::as_str) {
         Some("info") => info(&args[1..]).await,
         Some("pools") => pools(&args[1], args[2].parse()?).await,
+        Some("block") => block(&args[1], &args[2..]).await,
+        Some("tx") => tx(&args[1], &args[2], &args[3..]).await,
         Some("scan") => scan(&args[1], &args[2], args[3].parse()?, args.get(4).map(|s| s.parse()).transpose()?).await,
         _ => {
             eprintln!("usage: scan-memo info <server>... | pools <server> <blocks> | scan <server> <ufvk> <from> [to]");
