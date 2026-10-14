@@ -1,6 +1,6 @@
 # Sealed API contract: frontend and backend
 
-Status: v1, Oct 11 2026, clarified Oct 13 2026 (C-15 to C-22, no route, field or type change). Owner: @Apa.
+Status: v1, Oct 11 2026, clarified Oct 13 and 14 2026 (C-15 to C-23, no route, field or type change). Owner: @Apa.
 This is the single source of truth for how the frontend (Vercel) and the watcher API (Railway) talk. If this file disagrees with the Architecture doc, the SRD table or any code, **this file wins** and the other one is fixed in the same change.
 
 Built from: SRD (FR-1 to FR-19, NFR-1 to NFR-11, T-1 to T-10), Architecture §3 to §5, `docs/design-screens.md` and `docs/frontend/rules.md`.
@@ -33,6 +33,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-20 | `SEALED_DB_KEY` (viewing key encryption at rest) and Railway's `PORT` were missing from §8 | Added to §8 (Oct 13) |
 | C-21 | §8 required two chain servers, but testnet may have only one live server | Two or more on main. One is allowed on test, and health then reads "1 of 1 servers" (§8) (Oct 13) |
 | C-22 | `next_seq` on an empty page and `field` on an error about no single field were undefined | `next_seq` equals the `after_seq` sent when the page is empty (§6.5, §6.10). `field` is left out when no single field is at fault (§5.5) (Oct 13) |
+| C-23 | A tip is unique by `txid` + `output_index` (FR-13), but each shielded pool numbers its outputs from 0, so a transaction that pays the desk in two pools would give two tips the same key and one would be lost | `output_index` is the output's position across every shielded output of the transaction, counted Sapling outputs first, then Orchard actions, then Ironwood actions (§5.2) (Oct 14) |
 
 ## 2. Base
 
@@ -164,6 +165,7 @@ Never contains the viewing key, token hashes or anything about senders.
 ```
 
 - `id` is unique by `txid` + `output_index` (FR-13).
+- `output_index` counts every shielded output of the transaction in one sequence: Sapling outputs first, then Orchard actions, then Ironwood actions, each in its order within its bundle (C-23). A transaction with 2 Sapling outputs and 2 Ironwood actions numbers them 0, 1, 2, 3. The frontend never parses it.
 - A tip is listed only once its transaction is in a block (C-15). In v1 `height`, `block_time_at` and `confirmations` are never `null`. Clients still accept `null` for them, kept for a later mempool view.
 - `confirmations` counts the tip's own block as 1 and stops at 10. After 10 it does not change, so it no longer bumps `seq` (C-17). The `confirmed` rule (3 or more) is unchanged.
 - `memo_b64` is `null` when the wallet sent no memo (§4.4). `format_ok` is then `false` and `display_status` is `unreadable` unless the tip is orphaned. The Inbox shows it as an empty tip.
