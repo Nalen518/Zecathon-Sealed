@@ -1,3 +1,4 @@
+import { IconCopyButton } from "../IconCopyButton/IconCopyButton";
 import "./AuditRow.css";
 
 /**
@@ -24,12 +25,14 @@ interface AuditRowProps {
   when: string;
   event: string;
   details: string;
+  /** Shown as a copy button in the Details cell when present. */
+  txid: string | null;
   by: string;
   hash: string;
   broken: boolean;
 }
 
-export function AuditRow({ seq, when, event, details, by, hash, broken }: AuditRowProps) {
+export function AuditRow({ seq, when, event, details, txid, by, hash, broken }: AuditRowProps) {
   return (
     <tr className={`audit-row${broken ? " audit-row-broken" : ""}`}>
       <td className="text-mono-label audit-seq" data-label="Seq">
@@ -42,7 +45,10 @@ export function AuditRow({ seq, when, event, details, by, hash, broken }: AuditR
         {event}
       </th>
       <td className="text-body-small audit-details" data-label="Details">
-        {details}
+        <div className="audit-details-cell">
+          <span>{details}</span>
+          {txid && <IconCopyButton value={txid} label="Copy transaction id" />}
+        </div>
       </td>
       <td className="text-mono-label audit-by" data-label="By">
         {by}
@@ -53,3 +59,4 @@ export function AuditRow({ seq, when, event, details, by, hash, broken }: AuditR
     </tr>
   );
 }
+

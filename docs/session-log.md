@@ -55,6 +55,47 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Next:** Merge PR #2 and rebase. Contract C-23. Build the `chain` crate with simulated reorg and restart tests. Send the first sealed tip once TAZ arrives.
 
 
+## 2026-10-14
+
+**Done:** Envelope design decisions written up (commit 0ab4467). Built the Envelope on `feat/web-envelope`: elevation tokens from the Figma effect styles (`gen-tokens.mjs` now emits box-shadow and drop-shadow forms), Envelope component (sealed variants as one scalable SVG with a text label, open variant as a drawing around a real HTML letter), Pay right column with "What the chain will see" envelope and caption, Sent envelope and "Marked as sent" tag, the 1 s seal moment from Write to Pay, and the desk Inbox showing each tip sealed until "Open with desk key" with the flap animation (D-78). New e2e checks: envelope facts and caption, seal moment with and without reduced motion, sealed then open with the real byte count, flap timing, axe on the sealed Inbox.
+**Findings:** The Figma open envelope shows only the flap's tip above the letter. That is the design, not a clipping bug. The seal moment needs to know whether a seal just happened, so the tip flow now counts seals (`sealCount`) and remembers which one it already played. The Inbox used to decrypt on every 30 s poll because the effect depended on the tip object. Keying the opened tip by id fixed that as a side effect.
+**Bugs found:** Open envelope fields overlapped at 360 px (fixed by wrapping, D-80, covered by the 360 px axe and screenshot check). A test assumed switching tabs reseals the tip. It does not, because the selection stays the same, so the test now chooses the other tip.
+**Decisions:** D-69 to D-78 accepted. D-79 and D-80 proposed. F-23 to F-25 done.
+**Open:** D-79, D-80 and the older proposed decisions wait for review. Figma: caption under the sender envelope (D-76) and, if accepted, Details under the desk envelope (D-79). Live check against the real watcher API once the backend `api` crate exists (T-4, T-5).
+**Next:** @Apa reviews the Envelope locally. Then push `feat/web-envelope` and open the PR into `development` when asked. Backend work continues in its own session.
+
+## 2026-10-14 (feat/web-network-links)
+
+**Done:** On `feat/web-network-links` off `development`: Network badge without the dot (D-81), testnet explorer link and a copy button per transaction id on the Audit trail (D-82), testnet faucet link in the Pay "Check in your wallet" panel (D-83), all from `outbound_links` in sealed.config.json and null on mainnet (D-84). Rules §2.7 added. New unit tests render the links with `react-dom/server` (Vitest now also runs `.test.tsx`). New e2e: faucet opens a new tab with no opener and no Referer while the sealed tip stays in the first tab, explorer and copy button on both Audit trail states, no request to either domain.
+**Findings:** The working copy at `D:\ZECathon` is shared with the backend session, which had `feat/watcher-core` checked out with uncommitted work. This branch is built in a separate git worktree at `D:\ZECathon-web-links` so neither session switches the other's branch. Figma already matched all three changes. Both sites loaded on Oct 14: the faucet showed "ONLINE" with a balance, and the explorer showed live testnet blocks. Referrer-Policy was already `no-referrer`, so the new links add `noreferrer` as a second guard. The API contract and the CSP are unchanged.
+**Bugs found:** None in shipped code. A first `git checkout -b` in the shared folder briefly moved the backend's checkout to a new branch. It was switched back at once with nothing lost, and the stray branch was deleted.
+**Decisions:** D-81 to D-84, F-26.
+**Open:** Whether the txid copy button should also be hidden on mainnet (it shows on both now, as in the Figma Audit row). `feat/web-envelope` and this branch both change Pay.tsx and the docs logs, so the second one merged needs a small conflict fix.
+**Next:** @Apa reviews the screenshots. Push and open the PR into `development` only when asked. Remove the worktree once the backend session has committed and `D:\ZECathon` can check out this branch.
+
+## 2026-10-14 (merge check before development)
+
+**Done:** Merged `development` (network links) into `feat/web-envelope` and resolved the conflicts (tests and the four doc logs, both sides kept). `.gitignore` now also covers Playwright blob reports, its cache and scratch screenshots. Bug hunt before the merge into `development`.
+**Bugs found:** (1) Opening tip A and choosing tip B before A finished let A appear already open the next time it was chosen, without "Open with desk key" (D-79). Fixed with a run counter in the Inbox that drops a stale opening. (2) Write, Pay, Sent and the Safety check had no axe and no-horizontal-scroll check, although rules §9 asks for one on every screen. Added one test covering all of them at 1280 and 360 px. It passes. (3) The merge dropped a closing brace in `sender.spec.ts`. Fixed before commit.
+**Not bugs:** Locking while a tip opens cannot keep the text, because the Locked screen unmounts the Inbox.
+**Next:** @Apa confirms, then `feat/web-envelope` goes into `development` by pull request.
+
+## 2026-10-14 (wrap-up)
+
+**Done:** PR #3 (network links) and PR #4 (Envelope, with the merge check fixes) merged into `development`. Merged branches deleted on GitHub and locally. Figma: D-76 caption on Pay — Default and Pay — Sent, grouped with the envelope at `spacing/sm`. D-79 Details rows on Inbox — Tip sealed. D-79 and D-80 accepted, D-85 taken.
+**Findings:** The code put 32 px between the Pay envelope block and the checks panel, Figma 16 px. Code now follows Figma.
+**Decisions:** D-79, D-80 accepted. D-85. F-27.
+**Open:** The older proposed decisions still wait for review: D-37 to D-39, D-43, D-44, D-48 to D-52, D-61, D-64. PR #2 (contract v1.1) is still open. The worktree `D:\ZECathon-web-links` goes once the backend session has committed its work in `D:\ZECathon`. Live check against the real watcher API once its `api` crate runs (T-4, T-5).
+**Next:** Backend: the watcher API, so the desk Inbox and Audit trail run on real data. Then the desk key setup for the tip page (sealed.config.json values) and a real testnet tip end to end.
+
+## 2026-10-14 (feat/web-desk-entry)
+
+**Done:** On `feat/web-desk-entry` off `development` (local, not pushed). Spec and critique committed first. "For desks" header link and the Two sides block with focus moved to its H2. Judge box and the Restore callout behind `demo_desk` (ships false). `/desk` with no key lands on `/desk/restore`, built from Figma Desk — Restore with the file picker. README "Run your own desk". Text link `Size=Small`, Icon button / Copy, Body/Small Medium token. `sealed-desk-backup*.json` ignored. e2e backup fixture made with the real keystore (`tests/fixtures/desk-backup.e2e.json`, test key only). 109 unit and 72 e2e checks pass.
+**Findings:** The README had no "Run your own desk" section, so the spec's link would have landed at the top. Figma moved "never uploaded" from the Restore body into the file helper (DC-01), so the code follows Figma there. The backend renumbered its C-23 row to D-86 on `integration/web-api`, so this branch starts at D-87. `feat/watcher-core` still calls that row D-81, which collides with D-81 (network badge) on `development` and needs the D-86 number before it merges.
+**Decisions:** D-87 to D-91, F-28, F-29, rules §4.10.
+**Open:** C-24 (`demo_locked`) waits for @Apa's yes and the contract merge. Judge kit export and `demo_desk: true` before Oct 20. Q-1 and Q-2 in the spec.
+**Next:** @Apa reviews the screenshots. Push and open the PR only when asked. Then C-24 on the backend side.
+
 ## 2026-10-14 (backend)
 
 **Done:** State check of the watcher branches (48 tests green, PR #2 still open). Envelope check for D-69 to D-80: the desk envelope reads `amount_zat`, `height` and `block_time_at` for the postmark, and the open envelope counts the bytes of the text decrypted in the browser from `memo_b64`. The Details rows (D-79) read `seen_at`, `height`, `confirmations`, `amount_zat`, `below_floor` and `txid`. All are in contract §5.2 and `contracts/fixtures/tip.json`, and `src/lib/api.ts` is unchanged on `feat/web-envelope`. **No backend change needed for D-69 to D-80.** C-15 makes `height` and `block_time_at` never null in v1, and the envelope already handles null.

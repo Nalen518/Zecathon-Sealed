@@ -27,10 +27,3 @@
 .icon-external { mask-image: url("./svg/external.svg"); }
 .icon-alert { mask-image: url("./svg/alert.svg"); }
 .icon-info { mask-image: url("./svg/info.svg"); }
-
-/* Network badge dot (Figma "Dot", 8 px). */
-.icon-dot {
-  width: 8px;
-  height: 8px;
-  mask-image: url("./svg/dot.svg");
-}

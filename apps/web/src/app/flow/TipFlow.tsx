@@ -18,6 +18,10 @@ interface TipFlowValue {
   /** The sender says the payment went out: wipe everything and remember only that. */
   markSent: () => void;
   sent: boolean;
+  /** Counts successful seals. The seal moment (D-70) plays once per count, never on Back or a reload. */
+  sealCount: number;
+  /** The last seal count whose seal moment has played. */
+  sealMomentShown: { current: number };
   discard: () => void;
 }
 
@@ -27,6 +31,8 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
   const [text, setTextState] = useState("");
   const [sealed, setSealed] = useState<SealedTip | null>(null);
   const [sent, setSent] = useState(false);
+  const [sealCount, setSealCount] = useState(0);
+  const sealMomentShown = useRef(0);
   const sealedRef = useRef<SealedTip | null>(null);
 
   const dropSealed = useCallback(() => {
@@ -50,6 +56,7 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
       const result = await sealTip(text, deskPublicKey);
       sealedRef.current = result;
       setSealed(result);
+      setSealCount((n) => n + 1);
     },
     [text, dropSealed],
   );
@@ -67,8 +74,8 @@ export function TipFlowProvider({ children }: { children: ReactNode }) {
   }, [dropSealed]);
 
   const value = useMemo(
-    () => ({ text, setText, sealed, seal, markSent, sent, discard }),
-    [text, setText, sealed, seal, markSent, sent, discard],
+    () => ({ text, setText, sealed, seal, markSent, sent, discard, sealCount, sealMomentShown }),
+    [text, setText, sealed, seal, markSent, sent, discard, sealCount],
   );
   return <TipFlowContext.Provider value={value}>{children}</TipFlowContext.Provider>;
 }

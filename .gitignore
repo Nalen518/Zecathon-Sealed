@@ -25,10 +25,13 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# tests
+# tests (outputs only, the tests themselves are committed)
 coverage/
 test-results/
 playwright-report/
+blob-report/
+playwright/.cache/
+apps/web/tests/shots/
 
 # OS and editors
 .DS_Store
@@ -57,6 +60,9 @@ packages/contracts/broadcast/
 *.pem
 *.key
 keystore/
+
+# desk backups, including the judge kit (docs/desk-entry-and-judge-kit.md §6)
+sealed-desk-backup*.json
 
 # tool caches
 .eslintcache

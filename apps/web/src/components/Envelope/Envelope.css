@@ -1,0 +1,246 @@
+/* Figma: Components / Envelope (55:134). Width 400. Only the envelope has elevation (D-72). */
+
+.envelope {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ---------- Sealed (one SVG, scales down in proportion below 432 px, D-75) ---------- */
+
+.envelope-sealed {
+  aspect-ratio: 400 / 250;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-envelope);
+}
+
+.env-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.env-body {
+  fill: var(--color-bg-inverse);
+  stroke: var(--color-border-inverse);
+  stroke-width: 1;
+}
+
+.env-flap {
+  fill: var(--color-bg-inverse-raised);
+  stroke: var(--color-border-inverse);
+  stroke-width: 1;
+}
+
+.env-wax {
+  fill: var(--color-accent-seal);
+  filter: var(--elevation-seal-filter);
+}
+
+.env-ring {
+  fill: none;
+  stroke: var(--color-action-on-primary);
+  stroke-width: 1.5;
+  opacity: 0.5;
+}
+
+.env-seal-label {
+  fill: var(--color-action-on-primary);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+/* Field names: Mono/Badge. Values: Mono/Label (D-74, values at 14 px). */
+.env-field-name,
+.env-postmark-label,
+.env-postmark-value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.env-field-name,
+.env-postmark-label {
+  fill: var(--color-text-inverse-secondary);
+}
+
+.env-field-value {
+  fill: var(--color-text-inverse);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.env-field-value-hidden {
+  fill: var(--color-text-inverse-secondary);
+}
+
+.env-redaction {
+  fill: var(--color-border-inverse);
+}
+
+.env-postmark-ring {
+  fill: none;
+  stroke: var(--color-text-inverse-secondary);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.env-postmark-value {
+  fill: var(--color-text-inverse);
+}
+
+/* ---------- Open (drawing around a real HTML letter, D-77) ---------- */
+
+.envelope-open {
+  display: flex;
+  flex-direction: column;
+  /* Letter starts 56 px down (Figma), and the pocket and fields take the last 88 px. */
+  padding: 56px 0 88px;
+}
+
+.env-drawing {
+  position: absolute;
+  inset: 0;
+}
+
+.env-back {
+  position: absolute;
+  top: 130px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg-inverse-raised);
+  border: var(--border-width-default) solid var(--color-border-inverse);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-envelope);
+}
+
+.env-open-flap {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 100%;
+  height: 130px;
+  overflow: visible;
+}
+
+.env-broken-seal {
+  position: absolute;
+  top: 18px;
+  left: calc(50% - 15px);
+  width: 30px;
+  height: 30px;
+}
+
+.env-broken-seal circle {
+  fill: none;
+  stroke: var(--color-accent-seal);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+/* The letter rises out of this frame when the desk opens a tip (D-78), so it clips below. */
+.env-letter-clip {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--spacing-lg);
+  overflow: hidden;
+}
+
+.env-letter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-height: 236px;
+  /* Keeps the last line clear of the pocket's V (Figma letter 236 px, pocket rises 66 px into it). */
+  padding: 18px 20px 72px;
+  background: var(--color-bg-page);
+  border-radius: var(--radius-md);
+}
+
+.env-letter-label {
+  color: var(--color-text-secondary);
+}
+
+.env-letter-text {
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.env-pocket {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 154px;
+  pointer-events: none;
+}
+
+.env-pocket path {
+  fill: var(--color-bg-inverse);
+  stroke: var(--color-border-inverse);
+  stroke-width: 1;
+}
+
+.env-open-fields {
+  position: absolute;
+  z-index: 3;
+  left: var(--spacing-lg);
+  right: var(--spacing-lg);
+  bottom: 30px;
+  /* Two columns as in Figma (x 24 and 212). Below that width the Memo field wraps under From (D-75). */
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--spacing-xl);
+  row-gap: var(--spacing-xs);
+  margin: 0;
+}
+
+.env-open-fields > div:first-child {
+  min-width: 156px;
+}
+
+.env-open-fields > div {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.env-open-fields dt {
+  color: var(--color-text-inverse-secondary);
+}
+
+.env-open-fields dd {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin: 0;
+  color: var(--color-text-inverse);
+}
+
+.env-hidden-value {
+  color: var(--color-text-inverse-secondary);
+}
+
+.env-redaction-chip {
+  display: inline-block;
+  width: 32px;
+  height: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-border-inverse);
+}
+
+/* Caption that repeats the sender envelope's facts as real text (D-76). */
+.envelope-caption {
+  max-width: 400px;
+  color: var(--color-text-secondary);
+}

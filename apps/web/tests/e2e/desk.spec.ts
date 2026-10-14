@@ -13,6 +13,8 @@ const fixture = (name: string) =>
   JSON.parse(readFileSync(new URL(`../../../../contracts/fixtures/${name}.json`, import.meta.url), "utf8"));
 
 const PASS = "a long desk passphrase for tests";
+const EXPLORER = "https://testnet.zecblock.com/";
+const OUTSIDE = ["zecblock.com", "valargroup.dev"];
 const TIP = "The tender was decided before bids closed. Ask the clerk.";
 const ADDRESS = `utest1${"q".repeat(120)}`;
 const UFVK = `uviewtest1${"q".repeat(200)}`;
@@ -77,7 +79,10 @@ async function fakeApi(page: Page, origin: string): Promise<Api> {
 }
 
 async function createDesk(page: Page): Promise<{ backup: string; privateKeyText: string }> {
+  // A browser with no key lands on Restore (D-90). Create inbox is one link away.
   await page.goto("/desk");
+  await expect(page).toHaveURL(/\/desk\/restore$/);
+  await page.getByRole("link", { name: "Create a new inbox instead" }).click();
   await expect(page).toHaveURL(/\/desk\/create$/);
   await expect(page.getByText(/^sealed-desk-key-v1 · /)).toBeVisible();
   const privateKeyText = (await page.getByText(/^sealed-desk-key-v1 · /).textContent()) ?? "";
@@ -132,6 +137,24 @@ test.describe("Audit trail (FR-20)", () => {
     expect(exported.broken_at).toBeNull();
     expect(exported.entries).toEqual(fixture("audit_chain").page.entries);
 
+    // D-82: the explorer home page as a plain new-tab link, and a copy button (never a link) per transaction.
+    const explorer = page.getByRole("link", { name: /Open the testnet explorer/ });
+    await expect(explorer).toHaveAttribute("href", EXPLORER);
+    await expect(explorer).toHaveAttribute("target", "_blank");
+    await expect(explorer).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(page.getByText("See what the chain shows.")).toBeVisible();
+    await expect(page.locator(`a[href*="zecblock"]`)).toHaveCount(1);
+    const copy = page.getByRole("button", { name: "Copy transaction id" });
+    await expect(copy).toHaveCount(1);
+    await expect(page.getByRole("row").filter({ hasText: "#3" }).getByRole("button", { name: "Copy transaction id" })).toBeVisible();
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseURL! });
+    await copy.click();
+    await expect(page.getByRole("status").filter({ hasText: "Copied" })).toHaveCount(1);
+    const txid = fixture("audit_chain").page.entries[2].details.txid;
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(txid);
+    // Nothing was fetched from the explorer or the faucet.
+    expect(watch.requests.filter((u) => OUTSIDE.some((d) => u.includes(d)))).toEqual([]);
+
     await checkScreen(page, "desk-audit-verified", info.project.name);
     expect(await collectCsp(page, watch)).toEqual([]);
   });
@@ -149,6 +172,8 @@ test.describe("Audit trail (FR-20)", () => {
     const row2 = page.getByRole("row").filter({ hasText: "#2" });
     await expect(row2).toContainText("Hash mismatch");
     await expect(page.getByRole("row").filter({ hasText: "#3" })).not.toContainText("Hash mismatch");
+    await expect(page.getByRole("link", { name: /Open the testnet explorer/ })).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(page.getByRole("button", { name: "Copy transaction id" })).toHaveCount(1);
     await checkScreen(page, "desk-audit-broken", info.project.name);
   });
 });
@@ -186,6 +211,23 @@ test.describe("Desk", () => {
     await expect(page.getByText("Watching")).toBeVisible();
     await expect(page.getByRole("tab", { name: "All tips (2)" })).toBeVisible();
     await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    // FR-15: the tip arrives sealed. The postmark and the details carry its real block, time and amount.
+    await expect(page.getByRole("img", { name: /^Sealed tip for this desk\. Postmark: block 4,201,108, \d\d:\d\d\. Amount 0\.001 ZEC\./ })).toBeVisible();
+    await expect(page.getByText("4,201,108 · 12 confirmations")).toBeVisible();
+    await expect(page.getByText(TIP)).toHaveCount(0);
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+    await expect(page.getByText(`${new TextEncoder().encode(TIP).length} BYTES`)).toBeVisible();
+    await expect(page.getByRole("article", { name: "Tip opened in this browser" })).toBeFocused();
+    // Choosing another tip and coming back seals it again.
+    await page.getByRole("tab", { name: /Below floor/ }).click();
+    await page.getByRole("button", { name: /tx 9c13…88be/ }).click();
+    await expect(page.getByRole("heading", { name: "The wallet sent no memo" })).toBeVisible();
+    await expect(page.getByText(TIP)).toHaveCount(0);
+    await page.getByRole("tab", { name: /All tips/ }).click();
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await expect(page.getByRole("button", { name: "Open with desk key" })).toBeVisible();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
     await expect(page.getByText(TIP)).toBeVisible();
     const tipsCall = api.calls.find((c) => c.path.startsWith("/inbox/desk/tips"))!;
     expect(tipsCall.headers.authorization).toMatch(/^Bearer sld_/);
@@ -223,11 +265,11 @@ test.describe("Desk", () => {
     await context.clearCookies();
     await page.evaluate(() => new Promise((r) => { const q = indexedDB.deleteDatabase("sealed"); q.onsuccess = q.onerror = q.onblocked = () => r(null); }));
     await page.goto("/desk");
-    await expect(page).toHaveURL(/\/desk\/create$/);
-    await page.getByRole("link", { name: "Restore from a backup file" }).click();
+    await expect(page).toHaveURL(/\/desk\/restore$/);
     await page.locator("#backup-file").setInputFiles({ name: "sealed-desk-backup.json", mimeType: "application/json", buffer: Buffer.from(backup) });
+    await expect(page.getByText("sealed-desk-backup.json", { exact: true })).toBeVisible();
     await page.getByLabel("Passphrase").fill(PASS);
-    await page.getByRole("button", { name: "Restore" }).click();
+    await page.getByRole("button", { name: "Restore and unlock" }).click();
     // Restored but not registered on this watcher yet: the Inbox asks to sign in with the setup secret.
     await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
   });
@@ -301,6 +343,9 @@ test.describe("Desk", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await fakeApi(page, baseURL!);
     await page.goto("/desk");
+    await expect(page.getByRole("heading", { name: "Open the desk in this browser" })).toBeVisible();
+    await checkScreen(page, "desk-restore", info.project.name);
+    await page.getByRole("link", { name: "Create a new inbox instead" }).click();
     await page.getByLabel("Passphrase", { exact: true }).fill(PASS);
     await page.getByLabel("Repeat the passphrase").fill(PASS);
     await checkScreen(page, "desk-create-1", info.project.name);
@@ -320,6 +365,9 @@ test.describe("Desk", () => {
     await checkScreen(page, "desk-create-3", info.project.name);
     await page.getByRole("link", { name: "Open the inbox" }).click();
     await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await expect(page.getByRole("button", { name: "Open with desk key" })).toBeVisible();
+    await checkScreen(page, "desk-inbox-sealed", info.project.name);
+    await page.getByRole("button", { name: "Open with desk key" }).click();
     await expect(page.getByText(TIP)).toBeVisible();
     await checkScreen(page, "desk-inbox", info.project.name);
     await page.getByRole("link", { name: "Decrypt a memo" }).click();
@@ -330,5 +378,77 @@ test.describe("Desk", () => {
     await checkScreen(page, "desk-settings", info.project.name);
     await page.getByRole("button", { name: "Lock inbox" }).click();
     await checkScreen(page, "desk-locked", info.project.name);
+  });
+
+  test("D-78: opening plays the flap once, with the tip readable from the first frame", async ({ page, baseURL }) => {
+    test.setTimeout(60_000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    const letter = page.locator(".env-letter");
+    // Mid-animation the letter is lower in its frame, yet the text is already there in full.
+    await expect(page.getByText(TIP)).toBeVisible();
+    expect(await letter.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await expect
+      .poll(() => letter.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42), { timeout: 3000 })
+      .toBe(0);
+    await expect
+      .poll(() => page.locator(".env-open-flap").evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).d))
+      .toBe(1);
+  });
+
+  test("D-78: reduced motion shows the open envelope at once", async ({ page, baseURL }) => {
+    test.setTimeout(60_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+    expect(await page.locator(".env-letter").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+    expect(await page.locator(".env-open-flap").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+  });
+});
+
+test.describe("Desk entry and judge kit (D-87 to D-90)", () => {
+  const BACKUP = readFileSync(new URL("../fixtures/desk-backup.e2e.json", import.meta.url), "utf8");
+  const KIT_PASS = "judge kit passphrase for tests only";
+  const KEY = JSON.parse(readFileSync(new URL("../fixtures/desk-key.e2e.json", import.meta.url), "utf8"));
+
+  test("a fresh browser at /desk lands on Restore, and the judge kit opens the Inbox without leaking", async ({ page, baseURL }, info) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const watch = await watchPage(page);
+    const api = await fakeApi(page, baseURL!);
+    // The demo inbox was registered with the kit's key, so its tip is sealed to that key.
+    api.deskKey = KEY.public_key;
+    const bodies: string[] = [];
+    page.on("request", (r) => bodies.push(`${r.url()} ${r.postData() ?? ""} ${JSON.stringify(r.headers())}`));
+
+    await page.goto("/desk");
+    await expect(page).toHaveURL(/\/desk\/restore$/);
+    await expect(page.getByRole("heading", { name: "Open the desk in this browser", level: 1 })).toBeVisible();
+    await expect(page.getByText("No file chosen")).toBeVisible();
+    await expect(page.getByText("Opened in this browser only. Never uploaded.")).toBeVisible();
+    // The e2e config is the testnet judging deploy, so the judge callout shows.
+    await expect(page.getByText("Judging Sealed?")).toBeVisible();
+
+    await page.locator("#backup-file").setInputFiles({ name: "sealed-desk-backup.json", mimeType: "application/json", buffer: Buffer.from(BACKUP) });
+    await expect(page.getByText("sealed-desk-backup.json", { exact: true })).toBeVisible();
+    await page.getByLabel("Passphrase").fill(KIT_PASS);
+    await page.getByRole("button", { name: "Restore and unlock" }).click();
+    await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+
+    // NFR-1: no request carried the passphrase, the private key or anything from the backup file.
+    const record = JSON.parse(BACKUP).sealed_desk_backup;
+    const secrets = [KIT_PASS, encodeURIComponent(KIT_PASS), KEY.private_key, record.ciphertext, record.salt, record.nonce];
+    for (const b of bodies) for (const s of secrets) expect(b).not.toContain(s);
+    expect(await collectCsp(page, watch)).toEqual([]);
+    await checkScreen(page, "desk-restored-inbox", info.project.name);
   });
 });

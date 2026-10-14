@@ -59,6 +59,94 @@
   gap: var(--spacing-xl);
 }
 
+/* Two sides (70:7213), anchor #for-desks: a 1 px divider and 48 px above it, after the 48 px section gap (96 in all). */
+.two-sides {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding-top: var(--spacing-2xl);
+  border-top: var(--border-width-default) solid var(--color-border-default);
+}
+
+/* Focus moves here from the "For desks" link. The heading is not a control, so it shows no ring. */
+.two-sides h2:focus {
+  outline: none;
+}
+
+.two-sides-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+/* Equal height cards with the actions at the bottom. */
+.side-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+
+.side-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-top: auto;
+}
+
+/* Judge box (70:7242). A dashed border-strong outline means testnet only (rules §4.10). */
+.judge-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.judge-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.judge-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.judge-step-number,
+.judge-note {
+  color: var(--color-text-secondary);
+}
+
+.judge-links {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--spacing-lg);
+}
+
+@media (max-width: 859px) {
+  .two-sides-cards,
+  .judge-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .side-card,
+  .judge-box {
+    padding: var(--spacing-lg);
+  }
+}
+
 /* What it protects (11:109) */
 .permission-panel {
   overflow: hidden;

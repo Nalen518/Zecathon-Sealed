@@ -57,6 +57,13 @@
   color: var(--color-text-primary);
 }
 
+.audit-details-cell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-xs);
+}
+
 .audit-row-broken th,
 .audit-row-broken td {
   background: var(--color-status-danger-bg);

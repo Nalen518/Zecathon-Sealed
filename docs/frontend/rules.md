@@ -30,6 +30,7 @@ Sources of truth, in this order: PRD, SRD, `docs/api-contract.md` (for anything 
 4. Every screen that calls the API has three designed states: loading, empty, error. The error state says what happened and what to do, with an icon and text.
 5. Network and spend checks run on real testnet before mainnet. The network comes from one config value and is shown in the header badge on every page (FR-9).
 6. There is no Privacy policy page. The footer links are "Source code", "Honest limits" and "Verify this page" (D-31).
+7. **Exception: clicked links to testnet tools.** The block explorer home page and the testnet faucet in `outbound_links` of `sealed.config.json` may appear as plain links the visitor clicks (Audit trail and Pay only, D-82 to D-84). They exist on testnet only and are null on mainnet. They always open in a new tab with `rel="noopener noreferrer"`. Nothing is fetched, prefetched, preloaded or embedded from them, no favicon or image, and they are never built from a tip, transaction id or inbox id. Any other outbound link needs a new decision.
 
 ## 3. Memo, payment and crypto constants
 
@@ -60,6 +61,7 @@ Rules:
 7. **Headers:** Site header on the landing page and Safety check, Flow header on Write, Pay and Sent, Desk header on desk screens.
 8. **Spacing:** sections 96 px on the landing page, app screens 64 px top and 32 px between blocks, content max width 1040 px.
 9. **Layout:** desktop first at 1280 px. Below 860 px columns stack to one. No horizontal scroll at 360 px (NFR-10).
+10. **A dashed border-strong outline means testnet only** (the judge box, D-91). It is never used for anything else, and everything inside it disappears on mainnet.
 
 ## 5. Copy
 

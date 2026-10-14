@@ -1,0 +1,56 @@
+/* Figma: Components / Icon button / Copy (73:7270). */
+.icon-copy {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.icon-copy-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+/* 32 px drawn, 48 px to tap (rules §6.2). */
+.icon-copy-button::before {
+  content: "";
+  position: absolute;
+  inset: calc((32px - 48px) / 2);
+}
+
+.icon-copy-button:hover {
+  background: var(--color-bg-subtle);
+}
+
+.icon-copy-button-copied {
+  color: var(--color-status-success-text);
+}
+
+/* Tooltip with the label, on hover and keyboard focus. Screen readers get the aria-label instead. */
+.icon-copy-tooltip {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + var(--spacing-2xs));
+  right: 0;
+  padding: var(--spacing-2xs) var(--spacing-xs);
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.icon-copy-button:hover + .icon-copy-tooltip,
+.icon-copy-button:focus-visible + .icon-copy-tooltip {
+  opacity: 1;
+}

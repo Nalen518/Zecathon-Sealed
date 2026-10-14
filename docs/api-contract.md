@@ -34,6 +34,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-21 | §8 required two chain servers, but testnet may have only one live server | Two or more on main. One is allowed on test, and health then reads "1 of 1 servers" (§8) (Oct 13) |
 | C-22 | `next_seq` on an empty page and `field` on an error about no single field were undefined | `next_seq` equals the `after_seq` sent when the page is empty (§6.5, §6.10). `field` is left out when no single field is at fault (§5.5) (Oct 13) |
 | C-23 | A tip is unique by `txid` + `output_index` (FR-13), but each shielded pool numbers its outputs from 0, so a transaction that pays the desk in two pools would give two tips the same key and one would be lost | `output_index` is the output's position across every shielded output of the transaction, counted Sapling outputs first, then Orchard actions, then Ironwood actions (§5.2) (Oct 14) |
+| C-24 | Judges share one testnet demo desk through a backup file that carries the desk token. The desk token alone can rotate itself and change the tip floor, so one judge could break every other judge's backup (401) or move tips below the floor | A demo inbox lock set by `SEALED_DEMO_INBOX_ID`: on that inbox, token issue and PATCH need the setup secret and otherwise return `403 demo_locked` (§5.5, §6.4, §6.7, §8). Testnet only (Oct 14) |
 
 ## 2. Base
 
@@ -217,6 +218,7 @@ The frontend picks its text by `code` from the Figma copy and never shows `messa
 | 400 | `invalid_request` | Bad JSON, missing or wrong-type field | Field error under the named `field` |
 | 401 | `unauthorized` | Missing, bad or revoked token | Inbox, Locked |
 | 403 | `forbidden` | Wrong setup secret | Create inbox 2, Settings |
+| 403 | `demo_locked` | Token issue or PATCH on the demo inbox (`SEALED_DEMO_INBOX_ID`) without a correct setup secret (C-24). Nothing is changed or logged | Settings |
 | 404 | `not_found` | Unknown inbox or tip | Full-page error |
 | 409 | `inbox_exists` | Create when an inbox exists | Create inbox 2 |
 | 422 | `spend_key_rejected` | Viewing key has spend authority | Create inbox 2 (Input error state) |
@@ -338,6 +340,8 @@ Request body: none. Response `201`:
 ```
 Issuing a token revokes every earlier token for the inbox. The token is returned only in this response. The frontend stores it at once (§7).
 
+**Demo inbox (C-24).** When `{id}` is the inbox named by `SEALED_DEMO_INBOX_ID`, the desk token alone is not enough: the request also needs a correct `X-Setup-Secret`, otherwise `403 demo_locked`. The check runs before any change, and a refused request writes no audit entry.
+
 ### 6.5 `GET /v1/inbox/{id}/tips`
 Auth: Bearer. Screen: Inbox.
 
@@ -367,6 +371,8 @@ Auth: Bearer. Returns one Tip. Used when the desk opens a link to a single tip.
 Auth: Bearer. Screen: Settings.
 Request `{ "tip_floor_zat": 150000 }`, only this field in v1. Range 10,000 to 100,000,000 (the minimum is the ZIP 317 fee for a two-action transaction, SRD BR-8). The same range applies to `tip_floor_zat` in `POST /v1/inbox`.
 Response `200` with Inbox. Tips are re-sorted, never deleted. FR-16.
+
+**Demo inbox (C-24).** On the inbox named by `SEALED_DEMO_INBOX_ID`, PATCH needs the desk token **and** a correct `X-Setup-Secret`, otherwise `403 demo_locked`, before any change and with no audit entry. `GET` routes, tips, audit and health are unchanged, and DELETE already needs the setup secret (§6.8).
 
 ### 6.8 `DELETE /v1/inbox/{id}`
 Auth: Bearer **and** `X-Setup-Secret`. Screen: Settings (typed DELETE plus setup secret, settles C-6).
@@ -427,6 +433,7 @@ Response `200`:
 | Database | | `SEALED_DB_PATH` on the Railway volume | Backend only |
 | Database key | | `SEALED_DB_KEY`: 32 random bytes, standard base64. Encrypts the viewing key at rest (C-20) | Backend only, never in the repo |
 | Listen port | | `PORT`, set by Railway (C-20) | Backend only |
+| Demo inbox | `demo_desk` (judge box, testnet only) | `SEALED_DEMO_INBOX_ID`: unset everywhere except the testnet judging deploy. The backend refuses to start if it is set on main (C-24) | Set together on the judging deploy |
 
 Both repos ship a `.env.example` listing these names with fake values. Real `.env` files are git-ignored.
 

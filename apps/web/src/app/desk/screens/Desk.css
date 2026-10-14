@@ -70,6 +70,18 @@
   gap: var(--spacing-xs);
 }
 
+/* Figma DC-01: the Secondary button with the chosen file name beside it. */
+.desk-file-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.desk-file-name {
+  overflow-wrap: anywhere;
+}
+
 .desk-link-button {
   align-self: flex-start;
   padding: 0;
@@ -137,13 +149,6 @@
 .decrypt-panel {
   gap: var(--spacing-lg);
   padding: var(--spacing-xl);
-}
-
-.decrypt-panel-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
 }
 
 /* Decrypted tip text: plain text only, never HTML (rules §1.6). */

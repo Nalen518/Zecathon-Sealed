@@ -16,6 +16,7 @@ import { formatZec } from "../../../lib/format";
 import { MAX_MESSAGE_BYTES } from "../../../lib/memo";
 import { EASE, gsap, revealOnScroll, ScrollTrigger, useMotion } from "../../../motion/gsap";
 import { useDeskStatus } from "../../useDeskStatus";
+import { TwoSides, useForDesksFocus } from "./TwoSides";
 import "./Landing.css";
 
 /**
@@ -24,6 +25,7 @@ import "./Landing.css";
  */
 export function Landing() {
   const main = useRef<HTMLElement>(null);
+  useForDesksFocus();
 
   // D-67: the landing page carries the most motion. Reduced motion skips all of it (rules §7.4).
   useMotion(main, (root) => {
@@ -63,7 +65,7 @@ export function Landing() {
       <main id="main" ref={main}>
         <Hero floor={floor} />
         <WhoItIsFor />
-        <HowItWorks floor={floor} />
+        <HowItWorks floor={floor} config={config} />
         <WhatItProtects />
         <Questions />
         <VerifyThisPage config={config} />
@@ -142,7 +144,7 @@ function WhoItIsFor() {
   );
 }
 
-function HowItWorks({ floor }: { floor: string }) {
+function HowItWorks({ floor, config }: { floor: string; config: SealedConfig }) {
   return (
     <section id="how-it-works" className="section how" aria-labelledby="how-title">
       <div className="container stack-2xl">
@@ -169,6 +171,7 @@ function HowItWorks({ floor }: { floor: string }) {
         <p className="text-body-default">
           Want a reply? Say how to reach you inside the message. The desk has no other way to find you.
         </p>
+        <TwoSides config={config} />
       </div>
     </section>
   );

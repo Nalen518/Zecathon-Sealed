@@ -1,8 +1,9 @@
-import { useMemo, useRef } from "react";
-import { EASE, gsap, QUICK, useMotion } from "../../../motion/gsap";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { EASE, gsap, motionAllowed, QUICK, useMotion } from "../../../motion/gsap";
 import { Navigate, useNavigate } from "react-router";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
+import { Envelope } from "../../../components/Envelope/Envelope";
 import { Fingerprint } from "../../../components/Fingerprint/Fingerprint";
 import { FlowHeader } from "../../../components/FlowHeader/FlowHeader";
 import { Icon } from "../../../components/Icon/Icon";
@@ -16,6 +17,7 @@ import { formatZec } from "../../../lib/format";
 import { MAX_MESSAGE_BYTES, SEALED_MEMO_BYTES, ZIP317_MIN_FEE_ZAT } from "../../../lib/memo";
 import { buildPaymentUri } from "../../../lib/zip321";
 import { useTipFlow } from "../../flow/TipFlow";
+import { FaucetLine } from "../../OutboundLinks";
 import { SENDER_STEPS } from "../Write/Write";
 import "../AppScreen.css";
 import "./Pay.css";
@@ -32,12 +34,33 @@ export function Pay() {
   const sealed = flow.sealed;
 
   const main = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  // The seal moment (D-70, storyboard frames 3 and 4) plays once per successful seal. Decided at render,
+  // so it never plays on Back, forward or a reload, and the Write sweep has already shown the sealing.
+  const playSealMoment = flow.sealCount > flow.sealMomentShown.current && motionAllowed();
+  const [ghost, setGhost] = useState(playSealMoment);
+
   // Light motion (D-67): the payment options arrive in reading order, then the checks tick in. The warning stays still.
   useMotion(main, (root) => {
     const q = (s: string) => Array.from(root.querySelectorAll(s));
     gsap.from(q(".qr-code, .pay-open, .pay-left > .card, .pay-confirm"), { opacity: 0, y: 12, duration: QUICK, ease: EASE, stagger: 0.06 });
     gsap.from(q(".pay-checks li"), { opacity: 0, x: -8, duration: QUICK, ease: EASE, stagger: 0.08, delay: 0.2 });
+
+    if (!playSealMoment) return;
+    flow.sealMomentShown.current = flow.sealCount;
+    // 350 to 1000 ms of the 1 s moment: the sealed grid shrinks into the envelope, the flap closes,
+    // the gold z1: seal drops with a short overshoot.
+    const tl = gsap.timeline({ onComplete: () => setGhost(false) });
+    tl.to(q(".pay-seal-ghost"), { scale: 0.3, opacity: 0, y: 24, duration: 0.35, ease: "power2.out" }, 0);
+    tl.from(q(".pay-envelope .env-flap"), { scaleY: -1, svgOrigin: "200 0", duration: 0.3, ease: "power2.out" }, 0.05);
+    tl.from(q(".pay-envelope .env-seal"), { y: -28, scale: 1.4, opacity: 0, transformOrigin: "50% 50%", duration: 0.3, ease: "back.out(2.2)" }, 0.33);
   });
+
+  // Focus moves to the Pay heading whether the moment plays or not (storyboard motion spec).
+  useEffect(() => {
+    heading.current?.focus();
+  }, []);
 
   // Set only by the "I've sent it" click on this visit. A later visit (browser Back) goes to Write instead.
   const justSent = useRef(false);
@@ -72,7 +95,9 @@ export function Pay() {
         <div className="container app-stack">
           <StepIndicator steps={SENDER_STEPS} current={2} />
           <div className="app-heading">
-            <h1 className="text-heading-h2">Pay from your wallet</h1>
+            <h1 ref={heading} tabIndex={-1} className="text-heading-h2">
+              Pay from your wallet
+            </h1>
             <p className="text-body-lead lead">
               Your wallet sends {amount} ZEC to the desk with the sealed tip as the memo. This page cannot see or touch
               your wallet.
@@ -114,17 +139,34 @@ export function Pay() {
               </section>
             </div>
 
+            <div className="pay-right">
+              <section className="pay-chain" aria-labelledby="pay-chain-title">
+                <p id="pay-chain-title" className="text-mono-eyebrow muted">
+                  What the chain will see
+                </p>
+                <div className="pay-envelope">
+                  <Envelope context="sender" state="sealed" />
+                  {ghost && (
+                    <div className="pay-seal-ghost" aria-hidden="true">
+                      <MemoGrid
+                        mode="static"
+                        size="compact"
+                        bytes={MAX_MESSAGE_BYTES}
+                        sealed
+                        label="The sealed memo."
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="text-body-small envelope-caption">
+                  The chain sees a shielded payment with a {SEALED_MEMO_BYTES} byte memo. Sender, recipient and amount
+                  stay hidden.
+                </p>
+              </section>
             <aside className="ink-panel pay-confirm" aria-labelledby="pay-confirm-title">
               <p id="pay-confirm-title" className="text-mono-eyebrow eyebrow">
                 Check in your wallet before you confirm
               </p>
-              <MemoGrid
-                mode="static"
-                size="compact"
-                bytes={MAX_MESSAGE_BYTES}
-                sealed
-                label="The sealed memo fills 511 of the 512 squares of the Zcash memo."
-              />
               <ul className="pay-checks">
                 <li>
                   <Icon name="check" />
@@ -143,7 +185,9 @@ export function Pay() {
                 Cost: {amount} ZEC to the desk, plus the network fee your wallet adds (at least{" "}
                 {formatZec(ZIP317_MIN_FEE_ZAT)} ZEC).
               </p>
+              <FaucetLine url={config.faucetUrl} />
             </aside>
+            </div>
           </div>
 
           <Callout tone="warning" title="Keep this tab open until your wallet confirms" className="pay-callout">

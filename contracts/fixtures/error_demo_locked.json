@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "demo_locked",
+    "message": "This is the shared demo desk, so its settings are locked during judging."
+  }
+}

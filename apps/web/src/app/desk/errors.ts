@@ -16,6 +16,9 @@ export function errorText(e: unknown): ErrorText {
     return { title: "Something went wrong", body: "Reload the page and try again. Nothing was sent." };
   }
   switch (e.code) {
+    // TODO(C-24): once contract change C-24 is merged into api-contract.md, map its `demo_locked` code here with
+    // "This is the shared demo desk, so its settings are locked during judging." Until then the code is not in
+    // the contract, so it is not read (rules §1.1) and falls through to the default text.
     case "spend_key_rejected":
       return {
         title: "This key can spend funds",
