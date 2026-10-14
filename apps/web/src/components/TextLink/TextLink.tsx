@@ -10,16 +10,29 @@ interface TextLinkProps {
   to?: string;
   /** Same-page anchor or external URL. */
   href?: string;
+  /**
+   * Outbound link (D-84): opens in a new tab so the page and anything held in memory stay put,
+   * with noopener and noreferrer so the other site gets no handle on this tab and no Referer.
+   */
+  external?: boolean;
   className?: string;
 }
 
-export function TextLink({ tone = "default", children, to, href, className }: TextLinkProps) {
+export function TextLink({ tone = "default", children, to, href, external = false, className }: TextLinkProps) {
   const cls = `text-link text-link-${tone} text-body-default-medium${className ? ` ${className}` : ""}`;
   if (to !== undefined) {
     return (
       <Link to={to} className={cls}>
         {children}
       </Link>
+    );
+  }
+  if (external) {
+    return (
+      <a href={href} className={cls} target="_blank" rel="noopener noreferrer">
+        {children}
+        <span className="visually-hidden"> (opens in a new tab)</span>
+      </a>
     );
   }
   return (

@@ -13,6 +13,8 @@ const fixture = (name: string) =>
   JSON.parse(readFileSync(new URL(`../../../../contracts/fixtures/${name}.json`, import.meta.url), "utf8"));
 
 const PASS = "a long desk passphrase for tests";
+const EXPLORER = "https://testnet.zecblock.com/";
+const OUTSIDE = ["zecblock.com", "valargroup.dev"];
 const TIP = "The tender was decided before bids closed. Ask the clerk.";
 const ADDRESS = `utest1${"q".repeat(120)}`;
 const UFVK = `uviewtest1${"q".repeat(200)}`;
@@ -132,6 +134,24 @@ test.describe("Audit trail (FR-20)", () => {
     expect(exported.broken_at).toBeNull();
     expect(exported.entries).toEqual(fixture("audit_chain").page.entries);
 
+    // D-82: the explorer home page as a plain new-tab link, and a copy button (never a link) per transaction.
+    const explorer = page.getByRole("link", { name: /Open the testnet explorer/ });
+    await expect(explorer).toHaveAttribute("href", EXPLORER);
+    await expect(explorer).toHaveAttribute("target", "_blank");
+    await expect(explorer).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(page.getByText("See what the chain shows.")).toBeVisible();
+    await expect(page.locator(`a[href*="zecblock"]`)).toHaveCount(1);
+    const copy = page.getByRole("button", { name: "Copy transaction id" });
+    await expect(copy).toHaveCount(1);
+    await expect(page.getByRole("row").filter({ hasText: "#3" }).getByRole("button", { name: "Copy transaction id" })).toBeVisible();
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseURL! });
+    await copy.click();
+    await expect(page.getByRole("status").filter({ hasText: "Copied" })).toHaveCount(1);
+    const txid = fixture("audit_chain").page.entries[2].details.txid;
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(txid);
+    // Nothing was fetched from the explorer or the faucet.
+    expect(watch.requests.filter((u) => OUTSIDE.some((d) => u.includes(d)))).toEqual([]);
+
     await checkScreen(page, "desk-audit-verified", info.project.name);
     expect(await collectCsp(page, watch)).toEqual([]);
   });
@@ -149,6 +169,8 @@ test.describe("Audit trail (FR-20)", () => {
     const row2 = page.getByRole("row").filter({ hasText: "#2" });
     await expect(row2).toContainText("Hash mismatch");
     await expect(page.getByRole("row").filter({ hasText: "#3" })).not.toContainText("Hash mismatch");
+    await expect(page.getByRole("link", { name: /Open the testnet explorer/ })).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(page.getByRole("button", { name: "Copy transaction id" })).toHaveCount(1);
     await checkScreen(page, "desk-audit-broken", info.project.name);
   });
 });

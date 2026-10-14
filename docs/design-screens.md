@@ -26,7 +26,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 | Write — Default | Tip box with UTF-8 byte counter, memo grid at 127 bytes, desk key fingerprint to compare, Seal and continue | FR-1, FR-2, FR-6 |
 | Write — Empty | Button disabled, placeholder, hint | FR-1 |
 | Write — At limit | 331 / 331 bytes in red with icon + message, grid full | FR-1 |
-| Pay — Default | QR code (320 px), Open in wallet, copy fallback (address, amount, memo), checklist, keep-tab-open warning, cost | FR-4, FR-5 |
+| Pay — Default | QR code (320 px), Open in wallet, copy fallback (address, amount, memo), checklist, keep-tab-open warning, cost, testnet faucet link under the cost line (new tab, D-83) | FR-4, FR-5 |
 | Pay — Sent | Done step, what happens next, nothing stored | S2 |
 | Safety check — Question | 1 of 3, radio options, "runs offline", answers never sent | FR-10 |
 | Safety check — Result | Two warnings + one OK, honest note on research age | FR-10 |
@@ -41,8 +41,8 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 | Settings — Delete inbox | Tip floor, network (read-only), rotate token, "Export the audit log first" link to the Audit trail page, delete with setup secret and typed confirmation | FR-16, FR-17, FR-9 |
 | Inbox — Tip sealed | Selected tip as a sealed envelope with the real block and time, "Open with desk key" | FR-15 |
 | Seal moment — storyboard (Sender page) | Four frames and a motion spec for the 1 second seal animation from Write to Pay | FR-2 (presentation only) |
-| Audit trail — Verified | Chain verified tag, latest entry hash with copy, what is logged, entries newest first, export JSON | FR-20 |
-| Audit trail — Chain broken | Danger tag, warning with next steps, broken row marked "Hash mismatch" | FR-20 |
+| Audit trail — Verified | Chain verified tag, latest entry hash with copy, what is logged, testnet explorer link, entries newest first with a copy button per transaction id, export JSON | FR-20 |
+| Audit trail — Chain broken | Danger tag, warning with next steps, broken row marked "Hash mismatch", same explorer link and copy buttons | FR-20 |
 
 Not drawn as separate frames, because they come from component states: focus rings (Input Focus, Button Focus), copied state (Fingerprint Copied), pending/orphaned rows (Tip row + Status badge).
 
@@ -70,7 +70,7 @@ Nothing in the shipped UI is hard-coded sample data. Each value comes from one o
 |---|---|---|
 | Landing | Desk address, public key, fingerprint, tip floor, network badge | Build config `sealed.config.json` (bundled, so a hacked API cannot swap the key). Optional check against `GET /v1/inbox/{id}` |
 | Write | UTF-8 byte count, memo grid, sealing with `crypto_box_seal` | Browser only. The plaintext never leaves the tab (FR-2, NFR-1) |
-| Pay | ZIP 321 link, QR code, copy buttons for address / amount / memo | Built in the browser from config + sealed memo. QR drawn by a self-hosted library |
+| Pay | ZIP 321 link, QR code, copy buttons for address / amount / memo | Built in the browser from config + sealed memo. QR drawn by a self-hosted library. Faucet link from `outbound_links` (testnet only, a link, never fetched) |
 | Pay, Sent | "I've sent it" only changes the screen | Browser only. The page never learns whether you paid, by design |
 | Safety check | Questions, scoring, result | Browser only, works with the network off (T-10) |
 | Create inbox 1 | Key pair, passphrase wrap (Argon2id via `crypto_pwhash`), IndexedDB, backup file | Browser only |
@@ -80,7 +80,7 @@ Nothing in the shipped UI is hard-coded sample data. Each value comes from one o
 | Inbox, Locked | Unlock the wrapped key | Browser only |
 | Decrypt a memo | Paste and open a memo | Browser only, no server (FR-8) |
 | Settings | Change tip floor, rotate token, delete inbox | `PATCH /v1/inbox/{id}` (new), `POST /v1/inbox/{id}/tokens`, `DELETE /v1/inbox/{id}` (new) |
-| Audit trail | Entries, chain check in the browser, latest hash, export file | `GET /v1/inbox/{id}/audit` (api-contract §6.10). Verification and export run in the browser |
+| Audit trail | Entries, chain check in the browser, latest hash, export file | `GET /v1/inbox/{id}/audit` (api-contract §6.10). Verification and export run in the browser. Explorer link from `outbound_links` (testnet only, home page, never per transaction) |
 
 **Two endpoints to add to the architecture API contract.** The Settings screen needs them and they are not in the current table:
 

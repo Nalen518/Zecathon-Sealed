@@ -17,6 +17,7 @@ import { formatZec } from "../../../lib/format";
 import { MAX_MESSAGE_BYTES, SEALED_MEMO_BYTES, ZIP317_MIN_FEE_ZAT } from "../../../lib/memo";
 import { buildPaymentUri } from "../../../lib/zip321";
 import { useTipFlow } from "../../flow/TipFlow";
+import { FaucetLine } from "../../OutboundLinks";
 import { SENDER_STEPS } from "../Write/Write";
 import "../AppScreen.css";
 import "./Pay.css";
@@ -184,6 +185,7 @@ export function Pay() {
                 Cost: {amount} ZEC to the desk, plus the network fee your wallet adds (at least{" "}
                 {formatZec(ZIP317_MIN_FEE_ZAT)} ZEC).
               </p>
+              <FaucetLine url={config.faucetUrl} />
             </aside>
             </div>
           </div>

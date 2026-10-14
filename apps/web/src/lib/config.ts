@@ -31,6 +31,10 @@ export interface SealedConfig {
   sourceUrl: string;
   /** Second place where the desk publishes its fingerprint, besides the README. */
   fingerprintAlsoOn: PublishedPlace | null;
+  /** Block explorer home page for this network. Testnet only, null on mainnet. A plain link, never fetched. */
+  explorerUrl: string | null;
+  /** Testnet faucet. Testnet only, null on mainnet. A plain link, never fetched. */
+  faucetUrl: string | null;
 }
 
 /** Which desk fields are still empty. When none are, senders can write a tip. */
@@ -116,6 +120,8 @@ export function parseConfig(input: unknown): ConfigResult {
     }
   }
 
+  const links = parseOutboundLinks(input.outbound_links, network, errors);
+
   if (errors.length > 0) return { ok: false, errors };
 
   const missing: DeskField[] = [];
@@ -137,8 +143,63 @@ export function parseConfig(input: unknown): ConfigResult {
       tipFloorZat: tipFloorZat as number,
       sourceUrl,
       fingerprintAlsoOn,
+      explorerUrl: links.explorerUrl,
+      faucetUrl: links.faucetUrl,
     },
   };
+}
+
+const LINK_KEYS = ["explorer_url", "faucet_url"] as const;
+
+/**
+ * `outbound_links` holds the explorer and faucet links per network (D-84). Each value is an https URL or null.
+ * Mainnet must stay null: the links exist only to help on testnet (rules §2.7). Missing means none.
+ */
+function parseOutboundLinks(
+  input: unknown,
+  network: unknown,
+  errors: string[],
+): { explorerUrl: string | null; faucetUrl: string | null } {
+  const none = { explorerUrl: null, faucetUrl: null };
+  if (input === undefined || input === null) return none;
+  if (!isRecord(input)) {
+    errors.push("outbound_links must be an object keyed by network");
+    return none;
+  }
+  const parsed: Record<string, { explorerUrl: string | null; faucetUrl: string | null }> = {};
+  for (const net of ["test", "main"] as const) {
+    const entry = input[net];
+    if (entry === undefined || entry === null) {
+      parsed[net] = none;
+      continue;
+    }
+    if (!isRecord(entry)) {
+      errors.push(`outbound_links.${net} must be an object`);
+      parsed[net] = none;
+      continue;
+    }
+    const urls: (string | null)[] = LINK_KEYS.map((k) => {
+      const v = entry[k];
+      if (v === null || v === undefined) return null;
+      if (typeof v !== "string" || !isHttpsUrl(v)) {
+        errors.push(`outbound_links.${net}.${k} must be null or an https URL`);
+        return null;
+      }
+      if (net === "main") errors.push(`outbound_links.main.${k} must be null. Outbound links are testnet only`);
+      return v;
+    });
+    parsed[net] = { explorerUrl: urls[0] ?? null, faucetUrl: urls[1] ?? null };
+  }
+  return network === "test" || network === "main" ? parsed[network]! : none;
+}
+
+function isHttpsUrl(v: string): boolean {
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" && u.username === "" && u.password === "";
+  } catch {
+    return false;
+  }
 }
 
 /** The config shipped with this build. */

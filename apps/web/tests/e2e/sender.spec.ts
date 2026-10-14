@@ -114,6 +114,44 @@ test.describe("Sender flow", () => {
     await expect(page.locator(".pay-seal-ghost")).toHaveCount(0);
   });
 
+  test("D-83: the faucet opens in a new tab with no Referer, and the sealed tip stays in this tab", async ({ page, context, baseURL }) => {
+    const watch = await watchPage(page);
+    // The new tab is answered here, so the test never reaches the real faucet.
+    const faucetRequests: { url: string; referer: string | undefined }[] = [];
+    await context.route("https://faucet.testnet.valargroup.dev/**", (route) => {
+      faucetRequests.push({ url: route.request().url(), referer: route.request().headers()["referer"] });
+      return route.fulfill({ status: 200, contentType: "text/html", body: "<title>Faucet</title>" });
+    });
+
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip about the tender");
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await expect(page).toHaveURL(/\/pay$/);
+    const memoBefore = await page.getByRole("link", { name: "Open in wallet" }).getAttribute("href");
+
+    await expect(page.getByText("Need testnet ZEC?")).toBeVisible();
+    const faucet = page.getByRole("link", { name: /Get free TAZ from the faucet/ });
+    await expect(faucet).toHaveAttribute("href", "https://faucet.testnet.valargroup.dev/");
+    await expect(faucet).toHaveAttribute("target", "_blank");
+    await expect(faucet).toHaveAttribute("rel", "noopener noreferrer");
+    // Loading Pay made no request to the faucet or the explorer.
+    expect(watch.requests.filter((u) => /valargroup\.dev|zecblock\.com/.test(u))).toEqual([]);
+
+    const [tab] = await Promise.all([context.waitForEvent("page"), faucet.click()]);
+    await tab.waitForLoadState();
+    expect(tab.url()).toBe("https://faucet.testnet.valargroup.dev/");
+    // noopener: the faucet tab cannot reach back into this one. noreferrer: no Referer header.
+    expect(await tab.evaluate(() => window.opener)).toBeNull();
+    expect(faucetRequests).toHaveLength(1);
+    expect(faucetRequests[0]!.referer).toBeUndefined();
+
+    // The original tab still holds the same sealed tip.
+    await expect(page).toHaveURL(/\/pay$/);
+    expect(await page.getByRole("link", { name: "Open in wallet" }).getAttribute("href")).toBe(memoBefore);
+    expect(memoBefore).toContain("memo=");
+    expect(watch.requests.filter((u) => /valargroup\.dev|zecblock\.com/.test(u))).toEqual([]);
+  });
+
   test("Pay without a sealed tip goes back to Write", async ({ page }) => {
     await page.goto("/pay");
     await expect(page).toHaveURL(/\/write$/);
