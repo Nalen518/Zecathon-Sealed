@@ -431,6 +431,12 @@ test.describe("Desk entry and judge kit (D-87 to D-90)", () => {
     await expect(page).toHaveURL(/\/desk\/restore$/);
     await expect(page.getByRole("heading", { name: "Open the desk in this browser", level: 1 })).toBeVisible();
     await expect(page.getByText("No file chosen")).toBeVisible();
+    // D-92: the desk links show on Restore as in Figma. The lock button needs an unlocked desk.
+    const deskNav = page.getByRole("navigation", { name: "Desk" });
+    for (const name of ["Inbox", "Decrypt a memo", "Audit trail", "Settings"]) {
+      await expect(deskNav.getByRole("link", { name })).toBeAttached();
+    }
+    await expect(page.getByRole("button", { name: "Lock inbox" })).toHaveCount(0);
     await expect(page.getByText("Opened in this browser only. Never uploaded.")).toBeVisible();
     // The e2e config is the testnet judging deploy, so the judge callout shows.
     await expect(page.getByText("Judging Sealed?")).toBeVisible();
