@@ -1,14 +1,16 @@
 //! Sealed store: SQLite on the Railway volume (rules §5, B-02, B-14).
 //!
 //! - Versioned migrations, each in one transaction, run at open. Never edit a released one.
-//! - Every change and its audit entry are written in the same transaction (§5.6).
+//! - Every change and its audit entry are written in the same transaction (§5.6). Write
+//!   transactions are IMMEDIATE, so the API and the watcher, each with its own connection, queue
+//!   for the write lock instead of failing halfway (busy timeout 5 s).
 //! - `seq` bumps on every tip insert and every change to `confirmations`, `chain_state` or
 //!   `below_floor` (contract §6.5).
 
 pub mod seal;
 
 use blake2::{Blake2b, Digest, digest::consts::U32};
-use rusqlite::{Connection, OptionalExtension, Transaction, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
 use sealed_core::audit::{self, Actor, AuditError, Entry, Event};
 use sealed_core::memo::{self, MEMO_BYTES};
 use sealed_core::status::{self, ChainState};
@@ -147,7 +149,9 @@ impl Store {
     /// Creates the inbox and its `inbox_created` entry. Single tenant: a second one is refused.
     pub fn create_inbox(&mut self, new: &NewInbox) -> Result<Inbox> {
         let sealed = seal::seal_ufvk(&self.key, new.id, new.ufvk)?;
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let exists: bool = tx.query_row("SELECT EXISTS (SELECT 1 FROM inbox)", [], |r| r.get(0))?;
         if exists {
             return Err(StoreError::InboxExists);
@@ -205,7 +209,9 @@ impl Store {
     /// Changes the tip floor, bumps `seq` of every tip whose `below_floor` flips, and writes
     /// `floor_changed` (contract §6.5, §6.7).
     pub fn set_floor(&mut self, id: &str, to_zat: u64, at: &str) -> Result<Inbox> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let from_zat: u64 = tx
             .query_row("SELECT tip_floor_zat FROM inbox WHERE id = ?1", [id], |r| {
                 r.get(0)
@@ -244,7 +250,9 @@ impl Store {
     /// Removes the inbox, viewing key, token hashes, tips and audit entries in one transaction
     /// (FR-17, T-9, C-13). Chain data (`chain_block`, `sync_state`) is public and not per inbox.
     pub fn delete_inbox(&mut self, id: &str) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         if tx.execute("DELETE FROM inbox WHERE id = ?1", [id])? == 0 {
             return Err(StoreError::NotFound);
         }
@@ -265,7 +273,9 @@ impl Store {
         actor: Actor,
         at: &str,
     ) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let known: bool = tx.query_row(
             "SELECT EXISTS (SELECT 1 FROM inbox WHERE id = ?1)",
             [id],
@@ -316,7 +326,9 @@ impl Store {
 
     /// Inserts a tip once (FR-13). Returns its id if it was new, `None` if it was already stored.
     pub fn insert_tip(&mut self, id: &str, t: &NewTip) -> Result<Option<String>> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let tip = tip_id(id, t.txid, t.output_index);
         let state_now: Option<String> = tx
             .query_row("SELECT chain_state FROM tip WHERE id = ?1", [&tip], |r| {
@@ -417,7 +429,9 @@ impl Store {
     /// Updates confirmations of every non-orphaned tip against the chain tip. Bumps `seq` only on
     /// a real change, and writes `tip_confirmed` when a tip reaches 3 (FR-14, C-17).
     pub fn refresh_confirmations(&mut self, id: &str, chain_tip: u32, at: &str) -> Result<usize> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let rows: Vec<(String, String, u32, u32, String)> = {
             let mut stmt = tx.prepare(
                 "SELECT id, txid, height, confirmations, chain_state FROM tip
@@ -461,7 +475,9 @@ impl Store {
 
     /// Marks every tip above `fork_height` orphaned after a reorg. Never deletes them (FR-14).
     pub fn orphan_above(&mut self, id: &str, fork_height: u32, at: &str) -> Result<Vec<String>> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let rows: Vec<(String, String, u32)> = {
             let mut stmt = tx.prepare(
                 "SELECT id, txid, height FROM tip
@@ -623,7 +639,9 @@ impl Store {
         if !audit::is_origin_only(origin) {
             return Err(StoreError::Audit(AuditError::Origin));
         }
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let was: Option<bool> = tx
             .query_row(
                 "SELECT ok FROM sync_state WHERE origin = ?1",
@@ -683,7 +701,9 @@ impl Store {
 
     /// Saves a scanned block's hash and moves the inbox's scan position (one transaction).
     pub fn put_scanned_block(&mut self, id: &str, height: u32, hash: &[u8; 32]) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         tx.execute(
             "INSERT INTO chain_block (height, hash) VALUES (?1, ?2)
              ON CONFLICT (height) DO UPDATE SET hash = ?2",
@@ -722,7 +742,9 @@ impl Store {
 
     /// Rewinds after a reorg: drops block hashes above the fork and moves the scan position back.
     pub fn rewind_to(&mut self, id: &str, fork_height: u32) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
         tx.execute("DELETE FROM chain_block WHERE height > ?1", [fork_height])?;
         tx.execute(
             "UPDATE inbox SET scanned_height = MIN(scanned_height, ?2) WHERE id = ?1",
