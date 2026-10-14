@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { Icon } from "../Icon/Icon";
+import { IconCopyButton } from "../IconCopyButton/IconCopyButton";
 import "./AuditRow.css";
 
 /**
@@ -48,7 +47,7 @@ export function AuditRow({ seq, when, event, details, txid, by, hash, broken }: 
       <td className="text-body-small audit-details" data-label="Details">
         <div className="audit-details-cell">
           <span>{details}</span>
-          {txid && <CopyTxid txid={txid} />}
+          {txid && <IconCopyButton value={txid} label="Copy transaction id" />}
         </div>
       </td>
       <td className="text-mono-label audit-by" data-label="By">
@@ -61,36 +60,3 @@ export function AuditRow({ seq, when, event, details, txid, by, hash, broken }: 
   );
 }
 
-const COPIED_MS = 2000;
-
-/**
- * 32 px copy button with a 16 px icon (Figma: Audit row, Details cell), with a 44 px hit area (rules §6.2).
- * Copied state as on the Fingerprint copy field. The clipboard is written only in the click handler (rules §1.10).
- */
-function CopyTxid({ txid }: { txid: string }) {
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-
-  async function onCopy() {
-    try {
-      await navigator.clipboard.writeText(txid);
-      setCopied(true);
-      window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setCopied(false), COPIED_MS);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <>
-      <button type="button" className="audit-copy" aria-label="Copy transaction id" onClick={onCopy}>
-        <Icon name={copied ? "check" : "copy"} size={16} />
-      </button>
-      <span className="visually-hidden" role="status" aria-live="polite">
-        {copied ? "Copied" : ""}
-      </span>
-    </>
-  );
-}
