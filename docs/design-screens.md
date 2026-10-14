@@ -12,7 +12,7 @@ Look: palette A (ink + Zcash gold), Albert Sans / JetBrains Mono at 400 and 500 
 | Components | Button (Primary, Secondary, Inverse, Nav, Danger), Icons (incl. info), Network badge, Site header (landing, Safety check), Flow header (Write and Pay: no section links, "Leave" asks to confirm), Desk header (lock button hidden on setup and Locked), Site footer (dot wordmark), Step, List item, Permission row, Callout (Info, Warning, Success), FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed × Default, Compact), Input, Textarea (Empty, Typing, At limit, Error), Checkbox, Radio option, Status badge (tip states only), Tag (free-text screen state), Text link (48 px hit area), Step indicator, Tip row, QR code, Audit header row, Audit row (Default, Broken), Envelope (Sender, Desk × Sealed, Open) |
 | Landing page | Landing — Desktop 1280 |
 | Sender screens | Write ×3, Pay ×2, Safety check ×2 |
-| Desk screens | Create inbox ×3, Inbox ×4, Decrypt ×2, Settings, Audit trail ×2 |
+| Desk screens | Create inbox ×3, Inbox ×4, Decrypt ×2, Settings, Audit trail ×2, Desk — Restore |
 
 Rules from the Oct 11 critique: one voice ("the desk" receives, "Sealed" is the tool, never "us/our/we"), app screens use 64 top padding and 32 between blocks, never scale a component instance (use its Size variant), and never relabel a Status badge (use Tag).
 
@@ -22,7 +22,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 
 | Frame | Shows | SRD |
 |---|---|---|
-| Landing — Desktop 1280 | Hero + memo grid, who it is for, three steps, who can see what, questions, verify this page, footer | FR-6, FR-9, NFR-11 |
+| Landing — Desktop 1280 | Hero + memo grid, who it is for, three steps, Two sides block (#for-desks, "For desks" in the header) with the judge box on the testnet judging deploy, who can see what, questions, verify this page, footer | FR-6, FR-9, NFR-11 |
 | Write — Default | Tip box with UTF-8 byte counter, memo grid at 127 bytes, desk key fingerprint to compare, Seal and continue | FR-1, FR-2, FR-6 |
 | Write — Empty | Button disabled, placeholder, hint | FR-1 |
 | Write — At limit | 331 / 331 bytes in red with icon + message, grid full | FR-1 |
@@ -36,6 +36,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 | Inbox — Default | Health (2 of 2 servers, lag), filter All / Below floor hidden, tip rows with every status, decrypt panel with tx id, block, confirmations, amount, honest limits | FR-12 to FR-16, FR-18, FR-19, NFR-11 |
 | Inbox — Empty, watcher behind | Lag warning (1 server down, 14 blocks), empty state with tip page + fingerprint | FR-18, NFR-7 |
 | Inbox — Locked | Unlock the passphrase-wrapped key, restore from backup | FR-7 |
+| Desk — Restore | `/desk/restore`, where a browser with no desk key lands. Backup file picker, passphrase, "Restore and unlock", "Create a new inbox instead", "Judging Sealed?" callout on the judging deploy | FR-7 |
 | Decrypt — Opened | Paste a memo, open it with no server | FR-8 |
 | Decrypt — Unreadable | Non-Sealed memo is not rendered | FR-19 |
 | Settings — Delete inbox | Tip floor, network (read-only), rotate token, "Export the audit log first" link to the Audit trail page, delete with setup secret and typed confirmation | FR-16, FR-17, FR-9 |
@@ -68,7 +69,7 @@ Nothing in the shipped UI is hard-coded sample data. Each value comes from one o
 
 | Screen | Real data and actions | Source |
 |---|---|---|
-| Landing | Desk address, public key, fingerprint, tip floor, network badge | Build config `sealed.config.json` (bundled, so a hacked API cannot swap the key). Optional check against `GET /v1/inbox/{id}` |
+| Landing | Desk address, public key, fingerprint, tip floor, network badge, judge box from `demo_desk` and `outbound_links` | Build config `sealed.config.json` (bundled, so a hacked API cannot swap the key). Optional check against `GET /v1/inbox/{id}` |
 | Write | UTF-8 byte count, memo grid, sealing with `crypto_box_seal` | Browser only. The plaintext never leaves the tab (FR-2, NFR-1) |
 | Pay | ZIP 321 link, QR code, copy buttons for address / amount / memo | Built in the browser from config + sealed memo. QR drawn by a self-hosted library. Faucet link from `outbound_links` (testnet only, a link, never fetched) |
 | Pay, Sent | "I've sent it" only changes the screen | Browser only. The page never learns whether you paid, by design |
@@ -78,6 +79,7 @@ Nothing in the shipped UI is hard-coded sample data. Each value comes from one o
 | Create inbox 3 | Issue desk token, show fingerprint + tip page link | `POST /v1/inbox/{id}/tokens` |
 | Inbox | Tip list with status, polled every 30 s, decrypt in the browser, health line | `GET /v1/inbox/{id}/tips?after_seq=`, `GET /v1/health` |
 | Inbox, Locked | Unlock the wrapped key | Browser only |
+| Desk — Restore | Read the backup file, unwrap it with the passphrase (Argon2id), keep it in IndexedDB. Judge callout from `demo_desk` | Browser only. The file is never uploaded |
 | Decrypt a memo | Paste and open a memo | Browser only, no server (FR-8) |
 | Settings | Change tip floor, rotate token, delete inbox | `PATCH /v1/inbox/{id}` (new), `POST /v1/inbox/{id}/tokens`, `DELETE /v1/inbox/{id}` (new) |
 | Audit trail | Entries, chain check in the browser, latest hash, export file | `GET /v1/inbox/{id}/audit` (api-contract §6.10). Verification and export run in the browser. Explorer link from `outbound_links` (testnet only, home page, never per transaction) |
