@@ -6,8 +6,9 @@ import "../SiteHeader/SiteHeader.css";
 import "./DeskHeader.css";
 
 /**
- * Figma: Desk header, property "Show lock button". The lock button and the nav are hidden on
- * Create inbox (no inbox yet) and on the Locked screen. Nav: Inbox, Decrypt a memo, Audit trail, Settings.
+ * Figma: Desk header, property "Show lock button". The nav (Inbox, Decrypt a memo, Audit trail, Settings)
+ * shows on every desk screen, including Create inbox, Locked and Restore (D-92). The lock button shows
+ * only while the desk is unlocked. Without a key, each link leads back to Restore.
  */
 export function DeskHeader({ network, onLock }: { network: Network; onLock?: () => void }) {
   return (
@@ -19,16 +20,14 @@ export function DeskHeader({ network, onLock }: { network: Network; onLock?: () 
           <span className="text-mono-eyebrow site-header-tag">Desk</span>
         </span>
         <div className="site-header-right desk-header-right">
-          {onLock && (
-            <nav aria-label="Desk" className="site-header-nav desk-header-nav text-body-small">
-              <NavLink to="/desk" end>
-                Inbox
-              </NavLink>
-              <NavLink to="/desk/decrypt">Decrypt a memo</NavLink>
-              <NavLink to="/desk/audit">Audit trail</NavLink>
-              <NavLink to="/desk/settings">Settings</NavLink>
-            </nav>
-          )}
+          <nav aria-label="Desk" className="site-header-nav desk-header-nav text-body-small">
+            <NavLink to="/desk" end>
+              Inbox
+            </NavLink>
+            <NavLink to="/desk/decrypt">Decrypt a memo</NavLink>
+            <NavLink to="/desk/audit">Audit trail</NavLink>
+            <NavLink to="/desk/settings">Settings</NavLink>
+          </nav>
           <NetworkBadge network={network} />
           {onLock && (
             <Button variant="nav" showIcon={false} onClick={onLock}>

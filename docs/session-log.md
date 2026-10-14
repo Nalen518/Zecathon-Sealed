@@ -96,6 +96,16 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** C-24 (`demo_locked`) waits for @Apa's yes and the contract merge. Judge kit export and `demo_desk: true` before Oct 20. Q-1 and Q-2 in the spec.
 **Next:** @Apa reviews the screenshots. Push and open the PR only when asked. Then C-24 on the backend side.
 
+## 2026-10-14 (open items)
+
+**Done:** PR #6 (desk entry and judge kit) merged into `development`. On `feat/web-desk-header`: the desk header shows its four links on Create inbox, Locked and Restore (D-92). The backend session renumbered its C-23 row to D-86 on `feat/watcher-core` and committed C-24 on `feat/contract-c24`. The untracked spec and critique copies in `D:\ZECathon` no longer block a checkout, because `development` tracks identical files.
+**Findings:** The backend session needs @Apa's yes typed in its own session before it pushes or merges. A yes relayed by this session does not count there.
+**Decisions:** D-92, F-30.
+**Open:** Push of `feat/watcher-core` with the D-86 renumber (backend session). Judge kit export once the watcher runs on testnet, then `demo_desk: true`. Q-1 and Q-2 in the spec.
+**Later the same day:** C-24 merged into `development` (PR #7). `demo_locked` mapped in `api.ts` and `desk/errors.ts` with a unit test on the fixture and an e2e check on Settings (D-93). One full e2e run timed out on 7 desktop tests while the machine was busy. All 7 passed alone and the next full run was green (74 passed).
+**After the backend merge:** `development` (PR #8, backend and C-15 to C-23) merged into `feat/web-desk-header`. Only the session log conflicted. 111 unit tests pass. With the machine near 77% CPU from apps outside the project (the EA app), parallel e2e runs failed a different test each time, always on a timeout, and every one passed alone. Three slow tests now have more time: T-9 and FR-11 (90 s), the sender axe test (90 s), and the wait for the new desk key (20 s). A single-worker run was green: 74 passed, 2 skipped.
+**Next:** Push `feat/web-desk-header` when @Apa asks.
+
 ## 2026-10-14 (backend)
 
 **Done:** State check of the watcher branches (48 tests green, PR #2 still open). Envelope check for D-69 to D-80: the desk envelope reads `amount_zat`, `height` and `block_time_at` for the postmark, and the open envelope counts the bytes of the text decrypted in the browser from `memo_b64`. The Details rows (D-79) read `seen_at`, `height`, `confirmations`, `amount_zat`, `below_floor` and `txid`. All are in contract §5.2 and `contracts/fixtures/tip.json`, and `src/lib/api.ts` is unchanged on `feat/web-envelope`. **No backend change needed for D-69 to D-80.** C-15 makes `height` and `block_time_at` never null in v1, and the envelope already handles null.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import auditChain from "../../../../contracts/fixtures/audit_chain.json";
+import errorDemoLocked from "../../../../contracts/fixtures/error_demo_locked.json";
 import errorSpendKey from "../../../../contracts/fixtures/error_spend_key.json";
 import health from "../../../../contracts/fixtures/health.json";
 import inbox from "../../../../contracts/fixtures/inbox.json";
@@ -48,6 +49,11 @@ describe("contract fixtures parse", () => {
     const e = parseError(errorSpendKey, 422, null);
     expect(e.code).toBe("spend_key_rejected");
     expect(e.field).toBe("ufvk");
+  });
+  it("error_demo_locked.json (C-24)", () => {
+    const e = parseError(errorDemoLocked, 403, null);
+    expect(e.code).toBe("demo_locked");
+    expect(e.field).toBeUndefined();
   });
 });
 
