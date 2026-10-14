@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { Icon } from "../Icon/Icon";
 import "./AuditRow.css";
 
 /**
@@ -24,12 +26,14 @@ interface AuditRowProps {
   when: string;
   event: string;
   details: string;
+  /** Shown as a copy button in the Details cell when present. */
+  txid: string | null;
   by: string;
   hash: string;
   broken: boolean;
 }
 
-export function AuditRow({ seq, when, event, details, by, hash, broken }: AuditRowProps) {
+export function AuditRow({ seq, when, event, details, txid, by, hash, broken }: AuditRowProps) {
   return (
     <tr className={`audit-row${broken ? " audit-row-broken" : ""}`}>
       <td className="text-mono-label audit-seq" data-label="Seq">
@@ -42,7 +46,10 @@ export function AuditRow({ seq, when, event, details, by, hash, broken }: AuditR
         {event}
       </th>
       <td className="text-body-small audit-details" data-label="Details">
-        {details}
+        <div className="audit-details-cell">
+          <span>{details}</span>
+          {txid && <CopyTxid txid={txid} />}
+        </div>
       </td>
       <td className="text-mono-label audit-by" data-label="By">
         {by}
@@ -51,5 +58,39 @@ export function AuditRow({ seq, when, event, details, by, hash, broken }: AuditR
         {broken ? "Hash mismatch" : hash}
       </td>
     </tr>
+  );
+}
+
+const COPIED_MS = 2000;
+
+/**
+ * 32 px copy button with a 16 px icon (Figma: Audit row, Details cell), with a 44 px hit area (rules §6.2).
+ * Copied state as on the Fingerprint copy field. The clipboard is written only in the click handler (rules §1.10).
+ */
+function CopyTxid({ txid }: { txid: string }) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(txid);
+      setCopied(true);
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setCopied(false), COPIED_MS);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className="audit-copy" aria-label="Copy transaction id" onClick={onCopy}>
+        <Icon name={copied ? "check" : "copy"} size={16} />
+      </button>
+      <span className="visually-hidden" role="status" aria-live="polite">
+        {copied ? "Copied" : ""}
+      </span>
+    </>
   );
 }

@@ -1,0 +1,13 @@
+/* Prompt text and link on one line, wrapping on narrow screens (Figma: Audit trail). */
+.outbound-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--spacing-xs);
+}
+
+/* Inside the ink panel the prompt and the link sit on two lines (Figma: Pay — Default). */
+.outbound-line-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+}

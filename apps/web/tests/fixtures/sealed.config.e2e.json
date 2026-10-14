@@ -8,5 +8,15 @@
   "address": "utest1e2etestaddressnotrealqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
   "tip_floor_zat": 100000,
   "source_url": "https://github.com/Nalen518/Zecathon-Sealed",
-  "fingerprint_also_on": null
+  "fingerprint_also_on": null,
+  "outbound_links": {
+    "test": {
+      "explorer_url": "https://testnet.zecblock.com/",
+      "faucet_url": "https://faucet.testnet.valargroup.dev/"
+    },
+    "main": {
+      "explorer_url": null,
+      "faucet_url": null
+    }
+  }
 }

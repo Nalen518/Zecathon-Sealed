@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AuditHeaderRow, AuditRow } from "../../../components/AuditRow/AuditRow";
+import { ExplorerLine } from "../../OutboundLinks";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
 import { DeskHeader } from "../../../components/DeskHeader/DeskHeader";
@@ -177,6 +178,8 @@ export function AuditTrail() {
                   decrypting happen in your browser, so they are never logged.
                 </Callout>
               </div>
+
+              <ExplorerLine url={config.explorerUrl} />
 
               {newestFirst.length > 0 && (
                 <div className="audit-table-wrap">
