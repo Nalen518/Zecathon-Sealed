@@ -150,6 +150,13 @@
       "lineHeight": 24,
       "letterSpacingPercent": 0
     },
+    "body-small-medium": {
+      "family": "sans",
+      "weight": 500,
+      "size": 15,
+      "lineHeight": 24,
+      "letterSpacingPercent": 0
+    },
     "button-label": {
       "family": "sans",
       "weight": 500,
