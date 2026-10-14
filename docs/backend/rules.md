@@ -57,7 +57,7 @@ Sources of truth, in this order: `docs/api-contract.md`, the SRD, the PRD, the A
 
 ## 5. Storage
 
-1. SQLite on the Railway volume at `SEALED_DB_PATH`, WAL mode, one writer.
+1. SQLite on the Railway volume at `SEALED_DB_PATH`, WAL mode. The API and the watcher each hold one connection, and every write is an IMMEDIATE transaction, so only one write runs at a time (decision B-32).
 2. Versioned migrations, each in one transaction, run at startup. Never edit a released migration.
 3. **Audit entries** are written in the same transaction as the change they record, hash-chained per contract §5.6, and never updated or deleted, except when the whole inbox is deleted (contract C-12).
 4. `DELETE /v1/inbox/{id}` removes the inbox, viewing key, token hashes, tips and audit entries in one transaction (FR-17, T-9).
