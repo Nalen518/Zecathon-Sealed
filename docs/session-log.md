@@ -43,3 +43,12 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** D-37 to D-39, D-43, D-44, D-48 to D-52, D-61, D-64 wait for review. Spikes 2 to 4 before the watcher. Rust toolchain not installed.
 **Status:** Frontend declared done by @Apa. Previews stopped. `feat/web-scaffold` holds 24 local commits, not pushed.
 **Next:** Push `feat/web-scaffold` and open the PR into `development` when @Apa asks. Then the backend: install the Rust toolchain, run spike 2 (view-only scan of a testnet memo under Ironwood), spike 3 (viewing key export) and spike 4 (Railway fit) before any watcher code.
+
+## 2026-10-14 (feat/web-network-links)
+
+**Done:** On `feat/web-network-links` off `development`: Network badge without the dot (D-81), testnet explorer link and a copy button per transaction id on the Audit trail (D-82), testnet faucet link in the Pay "Check in your wallet" panel (D-83), all from `outbound_links` in sealed.config.json and null on mainnet (D-84). Rules §2.7 added. New unit tests render the links with `react-dom/server` (Vitest now also runs `.test.tsx`). New e2e: faucet opens a new tab with no opener and no Referer while the sealed tip stays in the first tab, explorer and copy button on both Audit trail states, no request to either domain.
+**Findings:** The working copy at `D:\ZECathon` is shared with the backend session, which had `feat/watcher-core` checked out with uncommitted work. This branch is built in a separate git worktree at `D:\ZECathon-web-links` so neither session switches the other's branch. Figma already matched all three changes. Both sites loaded on Oct 14: the faucet showed "ONLINE" with a balance, and the explorer showed live testnet blocks. Referrer-Policy was already `no-referrer`, so the new links add `noreferrer` as a second guard. The API contract and the CSP are unchanged.
+**Bugs found:** None in shipped code. A first `git checkout -b` in the shared folder briefly moved the backend's checkout to a new branch. It was switched back at once with nothing lost, and the stray branch was deleted.
+**Decisions:** D-81 to D-84, F-26.
+**Open:** Whether the txid copy button should also be hidden on mainnet (it shows on both now, as in the Figma Audit row). `feat/web-envelope` and this branch both change Pay.tsx and the docs logs, so the second one merged needs a small conflict fix.
+**Next:** @Apa reviews the screenshots. Push and open the PR into `development` only when asked. Remove the worktree once the backend session has committed and `D:\ZECathon` can check out this branch.
