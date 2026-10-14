@@ -38,17 +38,18 @@ One point I would not trade: the sender page is a trust point. If an attacker al
 
 ## 3. Data model
 
-One SQLite file beside the librustzcash wallet database; the app tables below hold no plaintext and no sender data.
+One SQLite file on the Railway volume, with no librustzcash wallet database (backend B-08). The app tables below hold no plaintext and no sender data. The schema is `apps/watcher/crates/store/migrations/0001_init.sql` (backend B-26, updated Oct 14).
 
 | Table | Columns | Purpose |
 | --- | --- | --- |
-| inbox | id, name, desk\_pubkey, fingerprint, tip\_floor\_zat (default 100000 = 0.001 ZEC), created\_at | One row per tip line; the public key is what the sender page seals to |
-| tip | id, inbox\_id, txid, output\_index, height, block\_time, amount\_zat, memo\_ct (512 bytes as received), status, seen\_at | One row per received shielded output carrying a memo |
-| desk\_token | inbox\_id, token\_hash, created\_at, revoked\_at | Bearer tokens for the desk page, stored hashed |
-| sync\_state | server\_url, last\_height, last\_checked\_at, ok | Health of each lightwalletd source |
-| audit\_log | inbox\_id, seq, at, type, actor, details\_json, prev\_hash, hash | Tamper-evident desk activity log (FR-20, api-contract §5.6). Each entry is written in the same transaction as the change it records and is never updated. Rows go only when the whole inbox is deleted (C-13) |
+| inbox | id, name, network, address, desk\_public\_key, fingerprint, ufvk\_sealed, tip\_floor\_zat (default 100000 = 0.001 ZEC), birthday\_height, scanned\_height, last\_seq, created\_at | One row per tip line. The viewing key is stored only encrypted with `SEALED_DB_KEY` (XChaCha20-Poly1305, B-07) |
+| tip | id, inbox\_id, seq, txid, output\_index, height, block\_time\_at, seen\_at, amount\_zat, confirmations, chain\_state, format\_ok, memo (512 bytes as received, NULL for no memo) | One row per received shielded output. Unique by inbox, txid and output index (FR-13). `below_floor` is computed against the current floor when read |
+| desk\_token | token\_hash, inbox\_id, created\_at, revoked\_at | Bearer tokens for the desk page, stored only as BLAKE2b-256 hashes |
+| sync\_state | origin, ok, tip\_height, last\_checked\_at | Health of each lightwalletd source, named by origin only (C-14) |
+| chain\_block | height, hash | The last 1,000 block hashes, to find the fork height on a reorg (B-08, B-29) |
+| audit\_log | inbox\_id, seq, at, type, actor, details\_json, prev\_hash, hash | Tamper-evident desk activity log (FR-20, api-contract §5.6). Each entry is written in the same transaction as the change it records and is never updated (enforced by triggers). Rows go only when the whole inbox is deleted (C-13) |
 
-Tip status is stored as three fields (chain_state, below_floor, format_ok) plus a seq column, and the API derives one display_status with a fixed precedence. See api-contract.md §5.3. The display values are: pending (seen, fewer than the confirmation depth), confirmed, orphaned (dropped by a reorg), below\_floor (amount under the inbox floor, kept but hidden by default), unreadable (memo is not in our format).
+Tip status is stored as chain_state, format_ok and a seq column. below_floor is computed at read time, and the API derives one display_status with a fixed precedence. See api-contract.md §5.3. The display values are: pending (mined, fewer than the confirmation depth), confirmed, orphaned (dropped by a reorg), below\_floor (amount under the inbox floor, kept but hidden by default), unreadable (memo is not in our format, or no memo).
 
 The 0.001 ZEC floor is 100,000 zatoshis; the network's own minimum fee under ZIP 317 is 10,000 zatoshis (2 logical actions at 5,000), so the floor is 10 times the fee and mainly screens bulk spam.
 

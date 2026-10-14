@@ -89,7 +89,7 @@ Real ZEC needs four pieces: ZIP 321 links, a Rust watcher on librustzcash, a pub
 | [Zallet](https://github.com/zcash/zallet/releases) | Alpha wallet with JSON-RPC that now scans full blocks, so it needs a node | Skip |
 | [zcash-walletd](https://github.com/hhanh00/zcash-walletd) | View-only REST watcher, Sapling only, built for BTCPay | Fallback only |
 | [WebZjs](https://github.com/ChainSafe/WebZjs) | Browser wallet library needing a gRPC-web proxy; the README pins a 2024 toolchain and does not mention Ironwood | Skip: no browser wallet needed |
-| [Zodl repositories](https://github.com/zodl-inc) | Wallet SDKs; the Android SDK is AGPL-3.0 | Skip; use the Zodl app only as a test sender wallet |
+| [Zodl repositories](https://github.com/zodl-inc) | Wallet SDKs; the Android SDK is AGPL-3.0 | Skip entirely; zcash-devtool on the laptop is the test sender wallet (backend B-20, Oct 13) |
 | [NEAR Intents](https://docs.near-intents.org/) | Cross-chain swaps with transparent ZEC only | Skip |
 
 ## 7. Threat model and privacy requirements

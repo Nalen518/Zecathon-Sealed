@@ -9,7 +9,7 @@
       "block_time_at": "2026-10-11T09:41:00Z",
       "seen_at": "2026-10-11T09:41:30Z",
       "amount_zat": 100000,
-      "confirmations": 12,
+      "confirmations": 10,
       "chain_state": "confirmed",
       "below_floor": false,
       "format_ok": true,
@@ -21,22 +21,38 @@
       "seq": 1043,
       "txid": "9c13f511111111111111111111111111111111111111111111111111111188be",
       "output_index": 0,
-      "height": null,
-      "block_time_at": null,
-      "seen_at": "2026-10-11T09:41:30Z",
+      "height": 4201118,
+      "block_time_at": "2026-10-11T09:45:10Z",
+      "seen_at": "2026-10-11T09:45:30Z",
       "amount_zat": 50000,
-      "confirmations": null,
+      "confirmations": 2,
       "chain_state": "pending",
       "below_floor": true,
       "format_ok": true,
       "display_status": "below_floor",
+      "memo_b64": "ejE6QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQA="
+    },
+    {
+      "id": "tip_01HF0000000000000000000002",
+      "seq": 1044,
+      "txid": "ad24a622222222222222222222222222222222222222222222222222222299cf",
+      "output_index": 1,
+      "height": 4201119,
+      "block_time_at": "2026-10-11T09:45:35Z",
+      "seen_at": "2026-10-11T09:46:00Z",
+      "amount_zat": 100000,
+      "confirmations": 1,
+      "chain_state": "pending",
+      "below_floor": false,
+      "format_ok": false,
+      "display_status": "unreadable",
       "memo_b64": null
     }
   ],
-  "next_seq": 1043,
+  "next_seq": 1044,
   "has_more": false,
   "counts": {
-    "visible": 1,
+    "visible": 2,
     "below_floor": 1
   }
 }
