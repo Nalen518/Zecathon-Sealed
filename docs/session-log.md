@@ -68,3 +68,11 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Bugs found:** (1) Opening tip A and choosing tip B before A finished let A appear already open the next time it was chosen, without "Open with desk key" (D-79). Fixed with a run counter in the Inbox that drops a stale opening. (2) Write, Pay, Sent and the Safety check had no axe and no-horizontal-scroll check, although rules §9 asks for one on every screen. Added one test covering all of them at 1280 and 360 px. It passes. (3) The merge dropped a closing brace in `sender.spec.ts`. Fixed before commit.
 **Not bugs:** Locking while a tip opens cannot keep the text, because the Locked screen unmounts the Inbox.
 **Next:** @Apa confirms, then `feat/web-envelope` goes into `development` by pull request.
+
+## 2026-10-14 (wrap-up)
+
+**Done:** PR #3 (network links) and PR #4 (Envelope, with the merge check fixes) merged into `development`. Merged branches deleted on GitHub and locally. Figma: D-76 caption on Pay — Default and Pay — Sent, grouped with the envelope at `spacing/sm`. D-79 Details rows on Inbox — Tip sealed. D-79 and D-80 accepted, D-85 taken.
+**Findings:** The code put 32 px between the Pay envelope block and the checks panel, Figma 16 px. Code now follows Figma.
+**Decisions:** D-79, D-80 accepted. D-85. F-27.
+**Open:** The older proposed decisions still wait for review: D-37 to D-39, D-43, D-44, D-48 to D-52, D-61, D-64. PR #2 (contract v1.1) is still open. The worktree `D:\ZECathon-web-links` goes once the backend session has committed its work in `D:\ZECathon`. Live check against the real watcher API once its `api` crate runs (T-4, T-5).
+**Next:** Backend: the watcher API, so the desk Inbox and Audit trail run on real data. Then the desk key setup for the tip page (sealed.config.json values) and a real testnet tip end to end.
