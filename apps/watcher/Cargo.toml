@@ -2,7 +2,7 @@
 # Exact versions only (NFR-9, rules §7.3). The spikes under spikes/ are not members.
 [workspace]
 resolver = "3"
-members = ["crates/core", "crates/store", "crates/chain"]
+members = ["crates/core", "crates/store", "crates/chain", "crates/api"]
 exclude = ["spikes"]
 
 [workspace.package]
