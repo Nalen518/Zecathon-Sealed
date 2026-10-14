@@ -46,6 +46,11 @@ async fn serve() {
         Err(e) => {
             // Names the variable, never its value.
             tracing::error!(error = %e, "configuration");
+            if e.0 == "SEALED_DEMO_INBOX_ID" {
+                tracing::error!(
+                    "a demo inbox is allowed on testnet only and must be a valid inbox id (C-24)"
+                );
+            }
             std::process::exit(1);
         }
     };

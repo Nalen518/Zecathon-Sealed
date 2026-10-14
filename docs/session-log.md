@@ -110,3 +110,11 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** C-24 (yes needed). `cargo deny` (tool install needed). Dockerfile, `.env.example` and Railway (step D, ask first). PR #2 merge and rebase. Testnet T-6 and T-8 tips (below floor, plain memo) need two more small sends.
 **Next:** C-24 answer, then step D.
 
+## 2026-10-14 (backend, demo inbox lock)
+
+**Done:** Contract C-24 drafted from the judge kit spec §8, committed on `feat/contract-c24` from `development` and opened as PR #7. `feat/watcher-core` pushed, with the C-23 frontend row renumbered D-81 to D-86. Demo lock built on `feat/watcher-demo-lock` (from `feat/watcher-core`, with `feat/contract-c24` merged in): `SEALED_DEMO_INBOX_ID` in config, refused on main with a clear log line, `demo_locked` on token issue and PATCH without a correct setup secret, checked before any change. 6 new tests, 108 Rust tests green, clippy and log grep green. The real binary exits 1 on main with the variable set and creates no database.
+**Findings:** `development` has no `apps/watcher` yet, so backend work cannot branch from it until PR #2 and the watcher branch land. The duplicate spec and critique files in `D:\ZECathon\docs` were identical to `development` and were deleted.
+**Decisions:** B-33, BF-19. The earlier storage-failure contract note is now C-25.
+**Open:** PR #7 merge (then tell the frontend session, which maps `demo_locked`). PR #2. A PR for the watcher branches. C-25, `cargo deny`, Dockerfile, Railway.
+**Next:** @Apa merges PR #7. Then push `feat/watcher-demo-lock` when asked.
+

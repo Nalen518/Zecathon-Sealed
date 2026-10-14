@@ -19,6 +19,8 @@ pub struct Config {
     pub db_path: String,
     pub db_key: [u8; 32],
     pub port: u16,
+    /// The shared testnet demo inbox of the judge kit (C-24). Never set on main.
+    pub demo_inbox_id: Option<String>,
 }
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -118,6 +120,13 @@ impl Config {
             .ok()
             .and_then(|k| k.try_into().ok())
             .ok_or(ConfigError("SEALED_DB_KEY"))?;
+        // C-24: a shared demo desk must be impossible on mainnet.
+        let demo_inbox_id = match get("SEALED_DEMO_INBOX_ID").map(|v| v.trim().to_owned()) {
+            None => None,
+            Some(v) if v.is_empty() => None,
+            Some(v) if valid_inbox_id(&v) && network == Network::Test => Some(v),
+            Some(_) => return Err(ConfigError("SEALED_DEMO_INBOX_ID")),
+        };
         let port = match get("PORT") {
             None => 8080,
             Some(v) => v.trim().parse().map_err(|_| ConfigError("PORT"))?,
@@ -132,6 +141,7 @@ impl Config {
             db_path,
             db_key,
             port,
+            demo_inbox_id,
         })
     }
 

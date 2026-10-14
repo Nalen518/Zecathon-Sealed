@@ -82,13 +82,25 @@ fn config() -> Config {
 
 /// A fresh API. `with_tip` records a chain tip as the watcher would, so a default birthday exists.
 fn app(with_tip: bool) -> (Router, Arc<AppState>) {
+    app_with(with_tip, config())
+}
+
+/// The testnet judging deploy: inbox "desk" is the shared demo inbox (C-24).
+fn demo_app() -> (Router, Arc<AppState>) {
+    app_with(
+        true,
+        Config::from_vars(vars(&[("SEALED_DEMO_INBOX_ID", "desk")])).unwrap(),
+    )
+}
+
+fn app_with(with_tip: bool, config: Config) -> (Router, Arc<AppState>) {
     let mut store = Store::open_in_memory(DbKey::new([3; 32])).unwrap();
     if with_tip {
         store
             .record_source(SOURCE_A, true, Some(TIP_HEIGHT), NOW)
             .unwrap();
     }
-    let mut state = AppState::new(store, config());
+    let mut state = AppState::new(store, config);
     state.clock = Box::new(|| NOW.to_owned());
     let state = Arc::new(state);
     (router(state.clone()), state)
@@ -785,4 +797,229 @@ fn configuration_refuses_unsafe_values_and_names_only_the_variable() {
     let message = ConfigError("SEALED_DB_KEY").to_string();
     assert!(!message.contains("AwMD"), "never the value");
     assert!(Config::from_vars(vars(&[])).is_ok());
+}
+
+// ---------- C-24: the demo inbox lock ----------
+
+async fn audit_len(app: &Router, token: &str) -> usize {
+    get_with(app, "/v1/inbox/desk/audit", token).await.body["entries"]
+        .as_array()
+        .unwrap()
+        .len()
+}
+
+#[tokio::test]
+async fn demo_rotation_with_the_desk_token_alone_is_locked_and_changes_nothing() {
+    let (app, _) = demo_app();
+    let token = register(&app).await; // the setup secret still issues the first token
+    let before = audit_len(&app, &token).await;
+    let (k, v) = bearer(&token);
+    let r = call(
+        &app,
+        Method::POST,
+        "/v1/inbox/desk/tokens",
+        &[(&k, &v)],
+        None,
+    )
+    .await;
+    assert_eq!(r.status, StatusCode::FORBIDDEN);
+    assert_eq!(
+        r.body,
+        fixture("error_demo_locked"),
+        "byte for byte the fixture's JSON"
+    );
+    assert_eq!(
+        get_with(&app, "/v1/inbox/desk/tips", &token).await.status,
+        StatusCode::OK,
+        "token unchanged"
+    );
+    assert_eq!(
+        audit_len(&app, &token).await,
+        before,
+        "a refused request writes no audit entry"
+    );
+
+    let wrong = call(
+        &app,
+        Method::POST,
+        "/v1/inbox/desk/tokens",
+        &[(&k, &v), ("x-setup-secret", "wrong")],
+        None,
+    )
+    .await;
+    assert_eq!(code(&wrong), "demo_locked", "a wrong secret is locked too");
+    assert_eq!(audit_len(&app, &token).await, before);
+}
+
+#[tokio::test]
+async fn demo_rotation_with_the_setup_secret_still_works() {
+    let (app, _) = demo_app();
+    let first = register(&app).await;
+    let (k, v) = bearer(&first);
+    let r = call(
+        &app,
+        Method::POST,
+        "/v1/inbox/desk/tokens",
+        &[(&k, &v), S],
+        None,
+    )
+    .await;
+    assert_eq!(r.status, StatusCode::CREATED);
+    let second = r.body["token"].as_str().unwrap().to_owned();
+    assert_eq!(
+        get_with(&app, "/v1/inbox/desk/tips", &first).await.status,
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        get_with(&app, "/v1/inbox/desk/tips", &second).await.status,
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
+async fn demo_floor_change_needs_the_setup_secret_too() {
+    let (app, _) = demo_app();
+    let token = register(&app).await;
+    let before = audit_len(&app, &token).await;
+    let (k, v) = bearer(&token);
+    let body = json!({"tip_floor_zat": 150_000});
+    let r = call(
+        &app,
+        Method::PATCH,
+        "/v1/inbox/desk",
+        &[(&k, &v)],
+        Some(body.clone()),
+    )
+    .await;
+    assert_eq!((r.status.as_u16(), code(&r)), (403, "demo_locked"));
+    assert_eq!(
+        call(&app, Method::GET, "/v1/inbox/desk", &[], None)
+            .await
+            .body["tip_floor_zat"],
+        100_000
+    );
+    assert_eq!(
+        audit_len(&app, &token).await,
+        before,
+        "nothing changed, nothing logged"
+    );
+
+    let r = call(
+        &app,
+        Method::PATCH,
+        "/v1/inbox/desk",
+        &[(&k, &v), S],
+        Some(body),
+    )
+    .await;
+    assert_eq!(r.status, StatusCode::OK);
+    assert_eq!(r.body["tip_floor_zat"], 150_000);
+    assert_eq!(audit_len(&app, &token).await, before + 1);
+}
+
+#[tokio::test]
+async fn demo_reads_are_unchanged() {
+    let (app, state) = demo_app();
+    let token = register(&app).await;
+    add_tip(&state, &"0a".repeat(32), 100_000);
+    assert_eq!(
+        call(&app, Method::GET, "/v1/health", &[], None)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    assert_eq!(
+        call(&app, Method::GET, "/v1/inbox/desk", &[], None)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    let tips = get_with(&app, "/v1/inbox/desk/tips?filter=all", &token).await;
+    assert_eq!(tips.body["tips"].as_array().unwrap().len(), 1);
+    let id = tips.body["tips"][0]["id"].as_str().unwrap().to_owned();
+    assert_eq!(
+        get_with(&app, &format!("/v1/inbox/desk/tips/{id}"), &token)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    assert_eq!(
+        get_with(&app, "/v1/inbox/desk/audit", &token).await.status,
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
+async fn a_non_demo_inbox_keeps_its_rules() {
+    let (app, _) = app(true);
+    let token = register(&app).await;
+    let (k, v) = bearer(&token);
+    let r = call(
+        &app,
+        Method::POST,
+        "/v1/inbox/desk/tokens",
+        &[(&k, &v), ("x-setup-secret", "wrong")],
+        None,
+    )
+    .await;
+    assert_eq!(
+        code(&r),
+        "forbidden",
+        "outside the demo inbox a wrong secret stays forbidden"
+    );
+    let r = call(
+        &app,
+        Method::PATCH,
+        "/v1/inbox/desk",
+        &[(&k, &v)],
+        Some(json!({"tip_floor_zat": 150_000})),
+    )
+    .await;
+    assert_eq!(
+        r.status,
+        StatusCode::OK,
+        "the desk token alone changes the floor"
+    );
+    let r = call(
+        &app,
+        Method::POST,
+        "/v1/inbox/desk/tokens",
+        &[(&k, &v)],
+        None,
+    )
+    .await;
+    assert_eq!(
+        r.status,
+        StatusCode::CREATED,
+        "the desk token alone rotates"
+    );
+}
+
+#[test]
+fn the_demo_inbox_is_refused_on_main_and_must_be_a_valid_id() {
+    let bad = |extra: &[(&str, &str)]| Config::from_vars(vars(extra)).err();
+    assert_eq!(
+        bad(&[
+            ("SEALED_NETWORK", "main"),
+            (
+                "SEALED_LIGHTWALLETD_URLS",
+                "https://a.example:443,https://b.example:443"
+            ),
+            ("SEALED_DEMO_INBOX_ID", "desk"),
+        ]),
+        Some(ConfigError("SEALED_DEMO_INBOX_ID"))
+    );
+    assert_eq!(
+        bad(&[("SEALED_DEMO_INBOX_ID", "Not Valid")]),
+        Some(ConfigError("SEALED_DEMO_INBOX_ID"))
+    );
+    let ok = Config::from_vars(vars(&[("SEALED_DEMO_INBOX_ID", "desk")])).unwrap();
+    assert_eq!(ok.demo_inbox_id.as_deref(), Some("desk"));
+    assert_eq!(
+        Config::from_vars(vars(&[("SEALED_DEMO_INBOX_ID", "")]))
+            .unwrap()
+            .demo_inbox_id,
+        None
+    );
+    assert_eq!(Config::from_vars(vars(&[])).unwrap().demo_inbox_id, None);
 }

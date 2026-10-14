@@ -49,6 +49,11 @@ pub fn token_hash(token: &str) -> [u8; 32] {
     Blake2b::<U32>::digest(token.as_bytes()).into()
 }
 
+/// Whether `id` is the shared testnet demo inbox of the judge kit (C-24).
+fn is_demo(state: &AppState, id: &str) -> bool {
+    state.config.demo_inbox_id.as_deref() == Some(id)
+}
+
 fn lock(state: &AppState) -> std::sync::MutexGuard<'_, Store> {
     state
         .store
@@ -293,14 +298,24 @@ pub async fn issue_token(
     if lock(&state).inbox(&id)?.is_none() {
         return Err(ApiError::new(ErrorCode::NotFound));
     }
-    // The setup secret or the current desk token (C-5).
+    // The setup secret or the current desk token (C-5). On the demo inbox only the setup secret
+    // can issue a token (C-24), so a judge cannot revoke every other judge's backup.
+    let demo = is_demo(&state, &id);
     let actor = if headers.contains_key("x-setup-secret") {
         if !setup_secret_ok(&state, &headers).await {
-            return Err(ApiError::new(ErrorCode::Forbidden));
+            let code = if demo {
+                ErrorCode::DemoLocked
+            } else {
+                ErrorCode::Forbidden
+            };
+            return Err(ApiError::new(code));
         }
         Actor::Setup
     } else {
         require_desk(&state, &id, &headers)?;
+        if demo {
+            return Err(ApiError::new(ErrorCode::DemoLocked));
+        }
         Actor::Desk
     };
     let mut raw = [0u8; 32];
@@ -360,6 +375,11 @@ pub async fn patch_inbox(
     body: Body,
 ) -> ApiResult {
     require_desk(&state, &id, &headers)?;
+    // C-24: on the demo inbox the floor changes only with the setup secret as well, checked before
+    // the body is read, so a refused request changes and logs nothing.
+    if is_demo(&state, &id) && !setup_secret_ok(&state, &headers).await {
+        return Err(ApiError::new(ErrorCode::DemoLocked));
+    }
     let map = object(body, &["tip_floor_zat"]).await?;
     let floor = int(&map, "tip_floor_zat")?;
     if !(FLOOR_MIN..=FLOOR_MAX).contains(&floor) {

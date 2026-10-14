@@ -163,6 +163,8 @@ pub enum ErrorCode {
     FloorOutOfRange,
     RateLimited,
     WatcherUnavailable,
+    /// Token issue or PATCH on the demo inbox without a correct setup secret (C-24).
+    DemoLocked,
 }
 
 impl ErrorCode {
@@ -171,7 +173,7 @@ impl ErrorCode {
         match self {
             Self::InvalidRequest => 400,
             Self::Unauthorized => 401,
-            Self::Forbidden => 403,
+            Self::Forbidden | Self::DemoLocked => 403,
             Self::NotFound => 404,
             Self::InboxExists => 409,
             Self::SpendKeyRejected
@@ -229,6 +231,9 @@ mod tests {
         round_trip::<IssuedToken>(include_str!("../../../../../contracts/fixtures/token.json"));
         round_trip::<ErrorBody>(include_str!(
             "../../../../../contracts/fixtures/error_spend_key.json"
+        ));
+        round_trip::<ErrorBody>(include_str!(
+            "../../../../../contracts/fixtures/error_demo_locked.json"
         ));
     }
 
@@ -299,6 +304,7 @@ mod tests {
             (FloorOutOfRange, 422, "floor_out_of_range"),
             (RateLimited, 429, "rate_limited"),
             (WatcherUnavailable, 503, "watcher_unavailable"),
+            (DemoLocked, 403, "demo_locked"),
         ];
         for (code, status, name) in table {
             assert_eq!(code.status(), status);

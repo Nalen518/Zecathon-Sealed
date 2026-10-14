@@ -55,6 +55,9 @@ fn message(code: ErrorCode) -> &'static str {
         ErrorCode::FloorOutOfRange => "The tip floor must be from 10000 to 100000000 zatoshis.",
         ErrorCode::RateLimited => "Too many requests.",
         ErrorCode::WatcherUnavailable => "The watcher cannot reach the chain right now.",
+        ErrorCode::DemoLocked => {
+            "This is the shared demo desk, so its settings are locked during judging."
+        }
     }
 }
 
