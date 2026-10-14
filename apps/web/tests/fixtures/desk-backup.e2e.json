@@ -1,0 +1,14 @@
+{
+  "sealed_desk_backup": {
+    "v": 1,
+    "kdf": "argon2id13",
+    "opslimit": 3,
+    "memlimit": 67108864,
+    "salt": "m/bmr8kOY0mKbSYJDlN5eQ==",
+    "nonce": "Jt6VClxOarB+hgg6N3qRau+4OEGZHg1o",
+    "ciphertext": "yRSj7hclRTFrkYUi17R+ncSKbpaIa1JLqfhTVlAQO2xvHAB5S0Mw5Rie/F+D+iEiAEKwrjhg+jdpzN3XHvOt61tV7MgIwkOio/lx6ZodLOh+bNpGS/AmZZurRpyxZQxbv57AyvZiyIq/l/wJ4rW++mnWwoQtCuWoHAWTEQ==",
+    "public_key": "3jazu77JO13IbnGa1fP4Dka2zOaHpaWtM0EQpwfeZRc=",
+    "fingerprint": "C9D6AF3B94A72C34",
+    "created_at": "2026-10-14T09:00:00.000Z"
+  }
+}

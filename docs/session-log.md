@@ -76,3 +76,11 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Decisions:** D-79, D-80 accepted. D-85. F-27.
 **Open:** The older proposed decisions still wait for review: D-37 to D-39, D-43, D-44, D-48 to D-52, D-61, D-64. PR #2 (contract v1.1) is still open. The worktree `D:\ZECathon-web-links` goes once the backend session has committed its work in `D:\ZECathon`. Live check against the real watcher API once its `api` crate runs (T-4, T-5).
 **Next:** Backend: the watcher API, so the desk Inbox and Audit trail run on real data. Then the desk key setup for the tip page (sealed.config.json values) and a real testnet tip end to end.
+
+## 2026-10-14 (feat/web-desk-entry)
+
+**Done:** On `feat/web-desk-entry` off `development` (local, not pushed). Spec and critique committed first. "For desks" header link and the Two sides block with focus moved to its H2. Judge box and the Restore callout behind `demo_desk` (ships false). `/desk` with no key lands on `/desk/restore`, built from Figma Desk — Restore with the file picker. README "Run your own desk". Text link `Size=Small`, Icon button / Copy, Body/Small Medium token. `sealed-desk-backup*.json` ignored. e2e backup fixture made with the real keystore (`tests/fixtures/desk-backup.e2e.json`, test key only). 109 unit and 72 e2e checks pass.
+**Findings:** The README had no "Run your own desk" section, so the spec's link would have landed at the top. Figma moved "never uploaded" from the Restore body into the file helper (DC-01), so the code follows Figma there. The backend renumbered its C-23 row to D-86 on `integration/web-api`, so this branch starts at D-87. `feat/watcher-core` still calls that row D-81, which collides with D-81 (network badge) on `development` and needs the D-86 number before it merges.
+**Decisions:** D-87 to D-91, F-28, F-29, rules §4.10.
+**Open:** C-24 (`demo_locked`) waits for @Apa's yes and the contract merge. Judge kit export and `demo_desk: true` before Oct 20. Q-1 and Q-2 in the spec.
+**Next:** @Apa reviews the screenshots. Push and open the PR only when asked. Then C-24 on the backend side.

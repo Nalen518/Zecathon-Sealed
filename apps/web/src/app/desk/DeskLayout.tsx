@@ -35,7 +35,8 @@ function DeskGate() {
     );
   }
   if (creating || restoring) return <Outlet />;
-  if (record === null) return <Navigate to="/desk/create" replace />;
+  // No key in this browser: open the desk from a backup first. Create inbox is one link away (D-90).
+  if (record === null) return <Navigate to="/desk/restore" replace />;
   if (!unlocked) return <Locked />;
   return <Outlet />;
 }

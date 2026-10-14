@@ -61,6 +61,7 @@ Rules:
 7. **Headers:** Site header on the landing page and Safety check, Flow header on Write, Pay and Sent, Desk header on desk screens.
 8. **Spacing:** sections 96 px on the landing page, app screens 64 px top and 32 px between blocks, content max width 1040 px.
 9. **Layout:** desktop first at 1280 px. Below 860 px columns stack to one. No horizontal scroll at 360 px (NFR-10).
+10. **A dashed border-strong outline means testnet only** (the judge box, D-91). It is never used for anything else, and everything inside it disappears on mainnet.
 
 ## 5. Copy
 

@@ -64,33 +64,6 @@
   gap: var(--spacing-xs);
 }
 
-.audit-copy {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  cursor: pointer;
-}
-
-/* 32 px drawn, 44 px to tap (rules §6.2). */
-.audit-copy::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
-}
-
-.audit-copy:hover {
-  background: var(--color-bg-subtle);
-}
-
 .audit-row-broken th,
 .audit-row-broken td {
   background: var(--color-status-danger-bg);

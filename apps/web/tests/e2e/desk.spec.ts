@@ -79,7 +79,10 @@ async function fakeApi(page: Page, origin: string): Promise<Api> {
 }
 
 async function createDesk(page: Page): Promise<{ backup: string; privateKeyText: string }> {
+  // A browser with no key lands on Restore (D-90). Create inbox is one link away.
   await page.goto("/desk");
+  await expect(page).toHaveURL(/\/desk\/restore$/);
+  await page.getByRole("link", { name: "Create a new inbox instead" }).click();
   await expect(page).toHaveURL(/\/desk\/create$/);
   await expect(page.getByText(/^sealed-desk-key-v1 · /)).toBeVisible();
   const privateKeyText = (await page.getByText(/^sealed-desk-key-v1 · /).textContent()) ?? "";
@@ -262,11 +265,11 @@ test.describe("Desk", () => {
     await context.clearCookies();
     await page.evaluate(() => new Promise((r) => { const q = indexedDB.deleteDatabase("sealed"); q.onsuccess = q.onerror = q.onblocked = () => r(null); }));
     await page.goto("/desk");
-    await expect(page).toHaveURL(/\/desk\/create$/);
-    await page.getByRole("link", { name: "Restore from a backup file" }).click();
+    await expect(page).toHaveURL(/\/desk\/restore$/);
     await page.locator("#backup-file").setInputFiles({ name: "sealed-desk-backup.json", mimeType: "application/json", buffer: Buffer.from(backup) });
+    await expect(page.getByText("sealed-desk-backup.json", { exact: true })).toBeVisible();
     await page.getByLabel("Passphrase").fill(PASS);
-    await page.getByRole("button", { name: "Restore" }).click();
+    await page.getByRole("button", { name: "Restore and unlock" }).click();
     // Restored but not registered on this watcher yet: the Inbox asks to sign in with the setup secret.
     await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
   });
@@ -340,6 +343,9 @@ test.describe("Desk", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await fakeApi(page, baseURL!);
     await page.goto("/desk");
+    await expect(page.getByRole("heading", { name: "Open the desk in this browser" })).toBeVisible();
+    await checkScreen(page, "desk-restore", info.project.name);
+    await page.getByRole("link", { name: "Create a new inbox instead" }).click();
     await page.getByLabel("Passphrase", { exact: true }).fill(PASS);
     await page.getByLabel("Repeat the passphrase").fill(PASS);
     await checkScreen(page, "desk-create-1", info.project.name);
@@ -403,5 +409,46 @@ test.describe("Desk", () => {
     await expect(page.getByText(TIP)).toBeVisible();
     expect(await page.locator(".env-letter").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
     expect(await page.locator(".env-open-flap").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+  });
+});
+
+test.describe("Desk entry and judge kit (D-87 to D-90)", () => {
+  const BACKUP = readFileSync(new URL("../fixtures/desk-backup.e2e.json", import.meta.url), "utf8");
+  const KIT_PASS = "judge kit passphrase for tests only";
+  const KEY = JSON.parse(readFileSync(new URL("../fixtures/desk-key.e2e.json", import.meta.url), "utf8"));
+
+  test("a fresh browser at /desk lands on Restore, and the judge kit opens the Inbox without leaking", async ({ page, baseURL }, info) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const watch = await watchPage(page);
+    const api = await fakeApi(page, baseURL!);
+    // The demo inbox was registered with the kit's key, so its tip is sealed to that key.
+    api.deskKey = KEY.public_key;
+    const bodies: string[] = [];
+    page.on("request", (r) => bodies.push(`${r.url()} ${r.postData() ?? ""} ${JSON.stringify(r.headers())}`));
+
+    await page.goto("/desk");
+    await expect(page).toHaveURL(/\/desk\/restore$/);
+    await expect(page.getByRole("heading", { name: "Open the desk in this browser", level: 1 })).toBeVisible();
+    await expect(page.getByText("No file chosen")).toBeVisible();
+    await expect(page.getByText("Opened in this browser only. Never uploaded.")).toBeVisible();
+    // The e2e config is the testnet judging deploy, so the judge callout shows.
+    await expect(page.getByText("Judging Sealed?")).toBeVisible();
+
+    await page.locator("#backup-file").setInputFiles({ name: "sealed-desk-backup.json", mimeType: "application/json", buffer: Buffer.from(BACKUP) });
+    await expect(page.getByText("sealed-desk-backup.json", { exact: true })).toBeVisible();
+    await page.getByLabel("Passphrase").fill(KIT_PASS);
+    await page.getByRole("button", { name: "Restore and unlock" }).click();
+    await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+
+    // NFR-1: no request carried the passphrase, the private key or anything from the backup file.
+    const record = JSON.parse(BACKUP).sealed_desk_backup;
+    const secrets = [KIT_PASS, encodeURIComponent(KIT_PASS), KEY.private_key, record.ciphertext, record.salt, record.nonce];
+    for (const b of bodies) for (const s of secrets) expect(b).not.toContain(s);
+    expect(await collectCsp(page, watch)).toEqual([]);
+    await checkScreen(page, "desk-restored-inbox", info.project.name);
   });
 });

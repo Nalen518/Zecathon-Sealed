@@ -22,6 +22,7 @@ export function SiteHeader({ network }: { network: Network }) {
             <a href="/#how-it-works">How it works</a>
             <a href="/#what-it-protects">What it protects</a>
             <a href="/#questions">Questions</a>
+            <a href="/#for-desks">For desks</a>
           </nav>
           <NetworkBadge network={network} />
           <Button variant="nav" href="/#verify" showIcon={false} className="site-header-verify">

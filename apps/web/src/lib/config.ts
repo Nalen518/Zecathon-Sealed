@@ -35,6 +35,11 @@ export interface SealedConfig {
   explorerUrl: string | null;
   /** Testnet faucet. Testnet only, null on mainnet. A plain link, never fetched. */
   faucetUrl: string | null;
+  /**
+   * True only on the testnet judging deploy (D-89). Shows the judge box on the landing page and the
+   * judge callout on Desk Restore. Refused on mainnet, so a shared demo key can never take real tips.
+   */
+  demoDesk: boolean;
 }
 
 /** Which desk fields are still empty. When none are, senders can write a tip. */
@@ -122,6 +127,14 @@ export function parseConfig(input: unknown): ConfigResult {
 
   const links = parseOutboundLinks(input.outbound_links, network, errors);
 
+  // Missing means off. Anything other than a boolean is an error, and true is refused on mainnet.
+  let demoDesk = false;
+  if (input.demo_desk !== undefined) {
+    if (typeof input.demo_desk !== "boolean") errors.push("demo_desk must be true or false");
+    else demoDesk = input.demo_desk;
+  }
+  if (demoDesk && network === "main") errors.push("demo_desk must be false on main. The shared demo desk is testnet only");
+
   if (errors.length > 0) return { ok: false, errors };
 
   const missing: DeskField[] = [];
@@ -145,6 +158,7 @@ export function parseConfig(input: unknown): ConfigResult {
       fingerprintAlsoOn,
       explorerUrl: links.explorerUrl,
       faucetUrl: links.faucetUrl,
+      demoDesk,
     },
   };
 }

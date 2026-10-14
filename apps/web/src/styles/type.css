@@ -62,6 +62,13 @@
   line-height: 24px;
   letter-spacing: 0;
 }
+.text-body-small-medium {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 24px;
+  letter-spacing: 0;
+}
 .text-button-label {
   font-family: var(--font-sans);
   font-weight: 500;

@@ -95,3 +95,53 @@ test.describe("Landing", () => {
     await page.screenshot({ path: `test-results/landing-${info.project.name}.png`, fullPage: true });
   });
 });
+
+test.describe("For desks and the judge box (D-87, D-88)", () => {
+  test("For desks scrolls to the Two sides block and moves focus to its heading", async ({ page }, info) => {
+    test.skip(info.project.name === "narrow", "The section links are hidden below 860 px (Figma Site header, Mobile).");
+    await page.goto("/");
+    await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "For desks" }).click();
+    const heading = page.getByRole("heading", { name: "One page for sources. One desk that holds the key.", level: 2 });
+    await expect(heading).toBeFocused();
+    await expect(heading).toBeInViewport();
+    await expect(page).toHaveURL(/\/#for-desks$/);
+  });
+
+  test("from another page, For desks opens the landing page at the block", async ({ page }, info) => {
+    test.skip(info.project.name === "narrow", "The section links are hidden below 860 px (Figma Site header, Mobile).");
+    await page.goto("/safety-check");
+    await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "For desks" }).click();
+    await expect(page).toHaveURL(/\/#for-desks$/);
+    const heading = page.getByRole("heading", { name: "One page for sources. One desk that holds the key.", level: 2 });
+    await expect(heading).toBeFocused();
+    await expect(heading).toBeInViewport();
+  });
+
+  test("both sides link to their place, and the judge kit faucet opens a new page", async ({ page, context }) => {
+    const watch = await watchPage(page);
+    await context.route("https://faucet.testnet.valargroup.dev/**", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html", body: "<title>Faucet</title>" }),
+    );
+    await page.goto("/#for-desks");
+    const block = page.locator("#for-desks");
+    await expect(block.getByRole("link", { name: "Write a tip" })).toHaveAttribute("href", "/write");
+    await expect(block.getByRole("link", { name: "Open the desk" })).toHaveAttribute("href", "/desk");
+    await expect(block.getByRole("link", { name: "Run your own desk" })).toHaveAttribute(
+      "href",
+      "https://github.com/Nalen518/Zecathon-Sealed#run-your-own-desk",
+    );
+
+    const judge = page.getByRole("region", { name: "Judging Sealed? Try both sides." });
+    await expect(judge).toBeVisible();
+    await expect(judge.getByText("Testnet only")).toBeVisible();
+    await expect(judge.getByRole("link", { name: "Restore the demo desk" })).toHaveAttribute("href", "/desk/restore");
+    const faucet = judge.getByRole("link", { name: /Get free TAZ from the faucet/ });
+    await expect(faucet).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(faucet).toHaveAttribute("target", "_blank");
+    expect(watch.requests.filter((u) => /valargroup\.dev|zecblock\.com/.test(u))).toEqual([]);
+    const [tab] = await Promise.all([context.waitForEvent("page"), faucet.click()]);
+    await tab.waitForLoadState();
+    expect(tab.url()).toBe("https://faucet.testnet.valargroup.dev/");
+    await expect(page).toHaveURL(/\/#for-desks$/);
+  });
+});
