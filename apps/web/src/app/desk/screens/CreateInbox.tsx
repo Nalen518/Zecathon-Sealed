@@ -16,7 +16,8 @@ import { toBase64, wipe } from "../../../lib/bytes";
 import { ADDRESS_PREFIX } from "../../../lib/config";
 import { fingerprintOf, formatFingerprint } from "../../../lib/fingerprint";
 import { formatZec } from "../../../lib/format";
-import { backupJson, BACKUP_FILENAME, wrapDesk, type WrappedDesk } from "../../../lib/keystore";
+import { BACKUP_FILENAME, wrapDesk, type WrappedDesk } from "../../../lib/keystore";
+import { downloadBackup } from "../backup";
 import { DEFAULT_TIP_FLOOR_ZAT, ZIP317_MIN_FEE_ZAT } from "../../../lib/memo";
 import { sodiumReady } from "../../../lib/sodium";
 import { checkViewingKey, UFVK_HINT_PREFIX } from "../../../lib/viewingKey";
@@ -111,12 +112,7 @@ function DeskKeyStep({ onDone }: { onDone: () => void }) {
     const record = await wrapDesk({ ...keypair, token: null }, fp, pass);
     setBusy(false);
     setWrapped(record);
-    const url = URL.createObjectURL(new Blob([backupJson(record)], { type: "application/json" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = BACKUP_FILENAME;
-    a.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBackup(record);
   }
 
   async function onContinue() {

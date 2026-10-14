@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page, type Route } from "@playwright/test";
 import { fromBase64, toBase64 } from "../../src/lib/bytes";
+import { parseBackup, unwrapDesk } from "../../src/lib/keystore";
 import { sealTip } from "../../src/lib/seal";
 import { checkScreen, collectCsp, watchPage } from "./helpers";
 
@@ -478,5 +479,39 @@ test.describe("Desk entry and judge kit (D-87 to D-90)", () => {
     // The desk is still signed in with the same token.
     await page.getByRole("link", { name: "Inbox" }).click();
     await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
+  });
+
+  test("D-94: the backup from Settings carries the desk token, so a restore signs straight in", async ({ page, context, baseURL }) => {
+    test.setTimeout(120_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const api = await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("link", { name: "Settings" }).click();
+    await expect(page.getByRole("heading", { name: "Backup file" })).toBeVisible();
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Download backup file" }).click();
+    const file = await download;
+    expect(file.suggestedFilename()).toBe("sealed-desk-backup.json");
+    const text = readFileSync(await file.path(), "utf8");
+
+    // The token is inside, but only in encrypted form. The passphrase opens it.
+    const token = JSON.parse(readFileSync(new URL("../../../../contracts/fixtures/token.json", import.meta.url), "utf8")).token;
+    expect(text).not.toContain(token);
+    expect(text).not.toContain(PASS);
+    const record = parseBackup(text)!;
+    expect((await unwrapDesk(record, PASS))?.token).toBe(token);
+
+    // A fresh browser restores it and lands in the Inbox with tips, not on "sign in again".
+    await context.clearCookies();
+    await page.evaluate(() => new Promise((r) => { const q = indexedDB.deleteDatabase("sealed"); q.onsuccess = q.onerror = q.onblocked = () => r(null); }));
+    await page.goto("/desk");
+    await expect(page).toHaveURL(/\/desk\/restore$/);
+    await page.locator("#backup-file").setInputFiles({ name: "sealed-desk-backup.json", mimeType: "application/json", buffer: Buffer.from(text) });
+    await page.getByLabel("Passphrase").fill(PASS);
+    await page.getByRole("button", { name: "Restore and unlock" }).click();
+    await expect(page.getByRole("heading", { name: "Inbox", level: 1 })).toBeVisible();
+    await expect(page.getByRole("button", { name: /tx 8b02…77ad/ })).toBeVisible({ timeout: 20_000 });
+    const tipsCalls = api.calls.filter((c) => c.path.startsWith("/inbox/desk/tips"));
+    expect(tipsCalls.at(-1)!.headers.authorization).toBe(`Bearer ${token}`);
   });
 });
