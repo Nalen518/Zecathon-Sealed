@@ -61,3 +61,10 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Decisions:** D-81 to D-84, F-26.
 **Open:** Whether the txid copy button should also be hidden on mainnet (it shows on both now, as in the Figma Audit row). `feat/web-envelope` and this branch both change Pay.tsx and the docs logs, so the second one merged needs a small conflict fix.
 **Next:** @Apa reviews the screenshots. Push and open the PR into `development` only when asked. Remove the worktree once the backend session has committed and `D:\ZECathon` can check out this branch.
+
+## 2026-10-14 (merge check before development)
+
+**Done:** Merged `development` (network links) into `feat/web-envelope` and resolved the conflicts (tests and the four doc logs, both sides kept). `.gitignore` now also covers Playwright blob reports, its cache and scratch screenshots. Bug hunt before the merge into `development`.
+**Bugs found:** (1) Opening tip A and choosing tip B before A finished let A appear already open the next time it was chosen, without "Open with desk key" (D-79). Fixed with a run counter in the Inbox that drops a stale opening. (2) Write, Pay, Sent and the Safety check had no axe and no-horizontal-scroll check, although rules §9 asks for one on every screen. Added one test covering all of them at 1280 and 360 px. It passes. (3) The merge dropped a closing brace in `sender.spec.ts`. Fixed before commit.
+**Not bugs:** Locking while a tip opens cannot keep the text, because the Locked screen unmounts the Inbox.
+**Next:** @Apa confirms, then `feat/web-envelope` goes into `development` by pull request.
