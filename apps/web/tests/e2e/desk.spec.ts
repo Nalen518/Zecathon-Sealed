@@ -186,6 +186,23 @@ test.describe("Desk", () => {
     await expect(page.getByText("Watching")).toBeVisible();
     await expect(page.getByRole("tab", { name: "All tips (1)" })).toBeVisible();
     await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    // FR-15: the tip arrives sealed. The postmark and the details carry its real block, time and amount.
+    await expect(page.getByRole("img", { name: /^Sealed tip for this desk\. Postmark: block 4,201,108, \d\d:\d\d\. Amount 0\.001 ZEC\./ })).toBeVisible();
+    await expect(page.getByText("4,201,108 · 12 confirmations")).toBeVisible();
+    await expect(page.getByText(TIP)).toHaveCount(0);
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+    await expect(page.getByText(`${new TextEncoder().encode(TIP).length} BYTES`)).toBeVisible();
+    await expect(page.getByRole("article", { name: "Tip opened in this browser" })).toBeFocused();
+    // Choosing another tip and coming back seals it again.
+    await page.getByRole("tab", { name: /Below floor/ }).click();
+    await page.getByRole("button", { name: /tx 9c13…88be/ }).click();
+    await expect(page.getByRole("heading", { name: "The wallet sent no memo" })).toBeVisible();
+    await expect(page.getByText(TIP)).toHaveCount(0);
+    await page.getByRole("tab", { name: /All tips/ }).click();
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await expect(page.getByRole("button", { name: "Open with desk key" })).toBeVisible();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
     await expect(page.getByText(TIP)).toBeVisible();
     const tipsCall = api.calls.find((c) => c.path.startsWith("/inbox/desk/tips"))!;
     expect(tipsCall.headers.authorization).toMatch(/^Bearer sld_/);
@@ -320,6 +337,9 @@ test.describe("Desk", () => {
     await checkScreen(page, "desk-create-3", info.project.name);
     await page.getByRole("link", { name: "Open the inbox" }).click();
     await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await expect(page.getByRole("button", { name: "Open with desk key" })).toBeVisible();
+    await checkScreen(page, "desk-inbox-sealed", info.project.name);
+    await page.getByRole("button", { name: "Open with desk key" }).click();
     await expect(page.getByText(TIP)).toBeVisible();
     await checkScreen(page, "desk-inbox", info.project.name);
     await page.getByRole("link", { name: "Decrypt a memo" }).click();
@@ -330,5 +350,36 @@ test.describe("Desk", () => {
     await checkScreen(page, "desk-settings", info.project.name);
     await page.getByRole("button", { name: "Lock inbox" }).click();
     await checkScreen(page, "desk-locked", info.project.name);
+  });
+
+  test("D-78: opening plays the flap once, with the tip readable from the first frame", async ({ page, baseURL }) => {
+    test.setTimeout(60_000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    const letter = page.locator(".env-letter");
+    // Mid-animation the letter is lower in its frame, yet the text is already there in full.
+    await expect(page.getByText(TIP)).toBeVisible();
+    expect(await letter.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await expect
+      .poll(() => letter.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42), { timeout: 3000 })
+      .toBe(0);
+    await expect
+      .poll(() => page.locator(".env-open-flap").evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).d))
+      .toBe(1);
+  });
+
+  test("D-78: reduced motion shows the open envelope at once", async ({ page, baseURL }) => {
+    test.setTimeout(60_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await fakeApi(page, baseURL!);
+    await registerDesk(page);
+    await page.getByRole("button", { name: /tx 8b02…77ad/ }).click();
+    await page.getByRole("button", { name: "Open with desk key" }).click();
+    await expect(page.getByText(TIP)).toBeVisible();
+    expect(await page.locator(".env-letter").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
+    expect(await page.locator(".env-open-flap").evaluate((el) => getComputedStyle(el).transform)).toBe("none");
   });
 });
