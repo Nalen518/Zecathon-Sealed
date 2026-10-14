@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fromBase64, fromBase64Url } from "../../src/lib/bytes";
 import { openMemo } from "../../src/lib/seal";
 import { parsePaymentUri } from "../../src/lib/zip321";
-import { collectCsp, watchPage } from "./helpers";
+import { checkScreen, collectCsp, watchPage } from "./helpers";
 
 const deskKey = JSON.parse(readFileSync(new URL("../fixtures/desk-key.e2e.json", import.meta.url), "utf8")) as {
   public_key: string;
@@ -168,6 +168,32 @@ test.describe("Sender flow", () => {
     await page.getByRole("button", { name: "Leave" }).click();
     await page.getByRole("button", { name: "Leave and discard" }).click();
     await expect(page).toHaveURL(/\/$/);
+  });
+});
+
+test.describe("Sender screens", () => {
+  test("Write, Pay, Sent and the Safety check pass axe and have no horizontal scroll", async ({ page }, info) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const watch = await watchPage(page);
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip about the tender");
+    await checkScreen(page, "sender-write", info.project.name);
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await expect(page.getByRole("heading", { name: "Pay from your wallet" })).toBeVisible();
+    await checkScreen(page, "sender-pay", info.project.name);
+    await page.getByRole("button", { name: "I’ve sent it" }).click();
+    await expect(page.getByText("Marked as sent")).toBeVisible();
+    await checkScreen(page, "sender-sent", info.project.name);
+    await page.goto("/safety-check");
+    await checkScreen(page, "safety-question", info.project.name);
+    await page.getByText("I bought it on an exchange with my ID").click();
+    await page.getByRole("button", { name: "Next question" }).click();
+    await page.getByText("A few days ago or more").click();
+    await page.getByRole("button", { name: "Next question" }).click();
+    await page.getByText("A work, school or shared network").click();
+    await page.getByRole("button", { name: "See the result" }).click();
+    await checkScreen(page, "safety-result", info.project.name);
+    expect(await collectCsp(page, watch)).toEqual([]);
   });
 });
 
