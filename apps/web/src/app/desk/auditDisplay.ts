@@ -11,6 +11,8 @@ export interface AuditView {
   when: string;
   event: string;
   details: string;
+  /** Full transaction id when the entry has one (tip events, §5.6), for the copy button. Never a link (D-82). */
+  txid: string | null;
   by: string;
   hash: string;
 }
@@ -79,6 +81,7 @@ export function auditView(raw: Record<string, unknown>): AuditView {
     when: at ? formatWhen(at) : "",
     event,
     details,
+    txid: /^[0-9a-f]{64}$/.test(str(d.txid)) ? str(d.txid) : null,
     by: ACTOR[str(raw.actor)] ?? str(raw.actor),
     hash: hash.length > 8 ? `${hash.slice(0, 4)}…${hash.slice(-4)}` : hash,
   };
