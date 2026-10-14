@@ -149,3 +149,9 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Done:** On `feat/web-desk-leave` (on top of `feat/web-backup-export`): Leave in the Figma Desk header, then in code (D-96). 34 desk e2e checks pass.
 **Decisions:** D-96, F-32.
 **Next:** Push `feat/web-backup-export` and `feat/web-desk-leave` when @Apa asks. Then the real testnet payment path with the backend session.
+
+## 2026-10-14 (end of day)
+
+**Done:** Settings backup export, larger QR and desk Leave pushed and merged with this PR. Whole day summarised in `docs/session-summary-2026-10-14.md` (findings, done, not done, frontend and backend).
+**Open:** See §3 of that file.
+**Next:** Real testnet desk for the live page, then the judge kit.
