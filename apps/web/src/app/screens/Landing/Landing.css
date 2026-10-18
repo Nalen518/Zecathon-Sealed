@@ -6,26 +6,38 @@
   gap: var(--spacing-2xl);
 }
 
-/* Hero (11:24): ink background, text column and the 477 px memo grid. */
+/* Hero (11:24): centered 760 px text stack, then the memo grid band across the content width (docs/hero-centered.md). */
 .hero {
   background: var(--color-bg-inverse);
   color: var(--color-text-inverse);
-  padding-block: var(--layout-section-pad-desktop);
+  padding-top: var(--spacing-3xl);
+  padding-bottom: var(--spacing-4xl);
 }
 
-.hero-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 477px);
+.hero-stack {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--spacing-3xl);
+  gap: var(--spacing-2xl);
 }
 
 .hero-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 760px;
   min-width: 0;
+  text-align: center;
+}
+
+.hero-text h1 {
+  text-wrap: balance;
+}
+
+.hero-lead {
+  max-width: 600px;
 }
 
 .hero-eyebrow,
@@ -37,6 +49,7 @@
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: var(--spacing-lg);
 }
@@ -208,15 +221,11 @@
   .hero {
     padding-block: var(--layout-section-pad-mobile);
   }
-  .hero-columns,
   .two-columns,
   .steps,
   .questions-columns,
   .verify-columns {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .hero-columns {
-    gap: var(--spacing-2xl);
   }
   .questions-columns,
   .verify-columns {

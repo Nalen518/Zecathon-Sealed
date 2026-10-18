@@ -78,7 +78,7 @@ export function Landing() {
 function Hero({ floor }: { floor: string }) {
   return (
     <section className="hero" aria-labelledby="hero-title">
-      <div className="container hero-columns">
+      <div className="container hero-stack">
         <div className="hero-text">
           <p className="text-mono-eyebrow hero-eyebrow">Sealed · Shielded tip line</p>
           <h1 id="hero-title" className="text-display">
@@ -102,6 +102,7 @@ function Hero({ floor }: { floor: string }) {
         </div>
         <MemoGrid
           mode="loop"
+          size="band"
           label="512 squares stand for the 512-byte Zcash memo. A sample tip fills them, then the whole memo turns into sealed text."
         />
       </div>
