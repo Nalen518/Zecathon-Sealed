@@ -174,6 +174,13 @@ test.describe("Hero, centered (docs/hero-centered.md, D-98)", () => {
       // 32 × 16 cells, so the grid is about half as tall as it is wide (the band is about one eighth).
       expect(box.height / box.width).toBeGreaterThan(0.45);
     }
+    // D-99: the hero facts are three chips, the floor from the config. At desktop they sit on one line.
+    const chips = page.getByRole("list", { name: "At a glance" }).getByRole("listitem");
+    await expect(chips).toHaveText(["Sealed in your browser", "Tip floor 0.001 ZEC plus network fee", "Your words never reach the server"]);
+    if (info.project.name === "desktop") {
+      const ys = await chips.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().y)));
+      expect(new Set(ys).size).toBe(1);
+    }
     // Reduced motion: the static sealed band is drawn at once.
     await expect(block.locator(".memo-grid-label")).toHaveText(/SEALED · 511 \/ 512 BYTES/);
   });

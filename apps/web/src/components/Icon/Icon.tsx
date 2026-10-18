@@ -11,7 +11,10 @@ export type IconName =
   | "copy"
   | "external"
   | "alert"
-  | "info";
+  | "info"
+  | "lock"
+  | "coin"
+  | "eye-off";
 
 interface IconProps {
   name: IconName;

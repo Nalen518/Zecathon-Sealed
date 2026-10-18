@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon/coin">
+<circle cx="10" cy="10" r="6.7" stroke="#141414" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 7.6H12L8 12.4H12" stroke="#141414" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10 6V7.6" stroke="#141414" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10 12.4V14" stroke="#141414" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

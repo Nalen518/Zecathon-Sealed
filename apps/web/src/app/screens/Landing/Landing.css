@@ -21,19 +21,30 @@
   gap: var(--spacing-2xl);
 }
 
+/* The text is 760 px wide and centered. The chip row may run wider, up to the content width, so it stays on one line. */
 .hero-text {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-lg);
   width: 100%;
-  max-width: 760px;
   min-width: 0;
   text-align: center;
 }
 
 .hero-text h1 {
+  max-width: 760px;
   text-wrap: balance;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .hero-lead {
@@ -41,8 +52,7 @@
 }
 
 .hero-eyebrow,
-.hero-lead,
-.hero-meta {
+.hero-lead {
   color: var(--color-text-inverse-secondary);
 }
 

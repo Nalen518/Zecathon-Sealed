@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Button } from "../../../components/Button/Button";
 import { Callout } from "../../../components/Callout/Callout";
+import { Chip } from "../../../components/Chip/Chip";
 import { FaqItem } from "../../../components/FaqItem/FaqItem";
 import { Fingerprint } from "../../../components/Fingerprint/Fingerprint";
 import { ListItem } from "../../../components/ListItem/ListItem";
@@ -96,9 +97,18 @@ function Hero({ floor }: { floor: string }) {
               Run the safety check
             </TextLink>
           </div>
-          <p className="text-mono-label hero-meta">
-            Tip floor {floor} ZEC plus network fee. Your words never reach the server.
-          </p>
+          {/* D-99: the hero facts as chips (Figma Chips row in 11:24). */}
+          <ul className="hero-chips" aria-label="At a glance">
+            <li>
+              <Chip icon="lock">Sealed in your browser</Chip>
+            </li>
+            <li>
+              <Chip icon="coin">{`Tip floor ${floor} ZEC plus network fee`}</Chip>
+            </li>
+            <li>
+              <Chip icon="eye-off">Your words never reach the server</Chip>
+            </li>
+          </ul>
         </div>
         <MemoGrid
           mode="loop"
