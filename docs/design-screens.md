@@ -22,7 +22,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 
 | Frame | Shows | SRD |
 |---|---|---|
-| Landing — Desktop 1280 | Hero + memo grid, who it is for, three steps, Two sides block (#for-desks, "For desks" in the header) with the judge box on the testnet judging deploy, who can see what, questions, verify this page, footer | FR-6, FR-9, NFR-11 |
+| Landing — Desktop 1280 | Centered hero with the memo grid band (64 columns, 32 below 860 px, D-98), who it is for, three steps, Two sides block (#for-desks, "For desks" in the header) with the judge box on the testnet judging deploy, who can see what, questions, verify this page, footer | FR-6, FR-9, NFR-11 |
 | Write — Default | Tip box with UTF-8 byte counter, memo grid at 127 bytes, desk key fingerprint to compare, Seal and continue | FR-1, FR-2, FR-6 |
 | Write — Empty | Button disabled, placeholder, hint | FR-1 |
 | Write — At limit | 331 / 331 bytes in red with icon + message, grid full | FR-1 |

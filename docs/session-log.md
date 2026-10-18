@@ -155,3 +155,11 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Done:** Settings backup export, larger QR and desk Leave pushed and merged with this PR. Whole day summarised in `docs/session-summary-2026-10-14.md` (findings, done, not done, frontend and backend).
 **Open:** See §3 of that file.
 **Next:** Real testnet desk for the live page, then the judge kit.
+
+## 2026-10-18
+
+**Done:** On `feat/web-hero-centered` off `development` (worktree `D:\ZECathon-web-links`): centered hero and the memo grid band from docs/hero-centered.md (D-98, F-33). The spec is committed with the work. e2e: band 1040 × 127 px at 1280 with the caption row above, Default shape at 360, label unchanged, reduced motion shows the sealed band, the loop still types on the band.
+**Findings:** The canvas had a fixed 477 px max width in `motion.css`, so the first band render was 64 tiny columns in 477 px. The band now lifts that cap. The spec's acceptance list still says 1020 px, but critique HC-01 widened the band to 1040 px, which Figma shows, so the code follows 1040. The repo has no pixel baseline tests (no `toHaveScreenshot`), so there were no baselines to update. Write grids are pixel-identical before and after. The backend took D-97 on its local `feat/contract-c25`, so this work uses D-98.
+**Decisions:** D-98, F-33.
+**Open:** Everything in §3 of docs/session-summary-2026-10-14.md. `D:\ZECathon\docs\hero-centered.md` is an untracked copy in the backend checkout and blocks checking out `development` there once this merges.
+**Next:** Push and merge when @Apa asks.
