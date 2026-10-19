@@ -145,3 +145,57 @@ test.describe("For desks and the judge box (D-87, D-88)", () => {
     await expect(page).toHaveURL(/\/#for-desks$/);
   });
 });
+
+test.describe("Hero, centered (docs/hero-centered.md, D-98)", () => {
+  const LABEL = "512 squares stand for the 512-byte Zcash memo. A sample tip fills them, then the whole memo turns into sealed text.";
+
+  test("the memo grid is a 64 column band at desktop and the Default shape below 860 px", async ({ page }, info) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const block = page.locator(".hero .memo-grid-block");
+    const canvas = page.getByRole("img", { name: LABEL });
+    await expect(canvas).toBeVisible();
+    const box = (await canvas.boundingBox())!;
+    if (info.project.name === "desktop") {
+      await expect(block).toHaveClass(/memo-grid-band/);
+      // 1040 px wide, 8 rows of about 12.3 px cells with 4 px gaps.
+      expect(Math.round(box.width)).toBe(1040);
+      expect(Math.round(box.height)).toBe(127);
+      // Label and legend share one caption row above the band.
+      const label = (await block.locator(".memo-grid-label").boundingBox())!;
+      const legend = (await block.locator(".memo-grid-legend").boundingBox())!;
+      expect(Math.abs(label.y - legend.y)).toBeLessThan(8);
+      expect(legend.y).toBeLessThan(box.y);
+      // The text column is centered.
+      const h1 = (await page.getByRole("heading", { level: 1 }).boundingBox())!;
+      expect(Math.abs(h1.x + h1.width / 2 - 640)).toBeLessThan(2);
+    } else {
+      await expect(block).toHaveClass(/memo-grid-default/);
+      // 32 × 16 cells, so the grid is about half as tall as it is wide (the band is about one eighth).
+      expect(box.height / box.width).toBeGreaterThan(0.45);
+    }
+    // D-99: the hero facts are three chips, the floor from the config. At desktop they sit on one line.
+    const chips = page.getByRole("list", { name: "At a glance" }).getByRole("listitem");
+    await expect(chips).toHaveText(["Sealed in your browser", "Tip floor 0.001 ZEC plus network fee", "Your words never reach the server"]);
+    if (info.project.name === "desktop") {
+      const ys = await chips.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().y)));
+      expect(new Set(ys).size).toBe(1);
+    }
+    // Reduced motion: the static sealed band is drawn at once.
+    await expect(block.locator(".memo-grid-label")).toHaveText(/SEALED · 511 \/ 512 BYTES/);
+  });
+
+  test("the loop still types and seals on the band when motion is allowed", async ({ page }, info) => {
+    test.skip(info.project.name === "narrow", "Same loop at 32 columns. The desktop band is the new shape.");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/");
+    const label = page.locator(".hero .memo-grid-label");
+    const seen = new Set<string>();
+    for (let i = 0; i < 12; i++) {
+      seen.add((await label.textContent()) ?? "");
+      await page.waitForTimeout(250);
+    }
+    // The caption counts bytes as the sample tip is typed, so it changes while the loop runs.
+    expect(seen.size).toBeGreaterThan(2);
+  });
+});

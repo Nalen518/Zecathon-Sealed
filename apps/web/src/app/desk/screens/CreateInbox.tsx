@@ -16,7 +16,8 @@ import { toBase64, wipe } from "../../../lib/bytes";
 import { ADDRESS_PREFIX } from "../../../lib/config";
 import { fingerprintOf, formatFingerprint } from "../../../lib/fingerprint";
 import { formatZec } from "../../../lib/format";
-import { backupJson, BACKUP_FILENAME, wrapDesk, type WrappedDesk } from "../../../lib/keystore";
+import { BACKUP_FILENAME, wrapDesk, type WrappedDesk } from "../../../lib/keystore";
+import { downloadBackup } from "../backup";
 import { DEFAULT_TIP_FLOOR_ZAT, ZIP317_MIN_FEE_ZAT } from "../../../lib/memo";
 import { sodiumReady } from "../../../lib/sodium";
 import { checkViewingKey, UFVK_HINT_PREFIX } from "../../../lib/viewingKey";
@@ -42,7 +43,8 @@ export function CreateInbox() {
 
   return (
     <div className="app-page">
-      <DeskHeader network={config.network} />
+      {/* D-96: before the new key is saved in this browser, Leave asks first. */}
+      <DeskHeader network={config.network} confirmLeave={step === 1 && record === null} />
       <main id="main" className="app-main">
         <div className="container app-stack">
           <StepIndicator steps={DESK_STEPS} current={step} />
@@ -111,12 +113,7 @@ function DeskKeyStep({ onDone }: { onDone: () => void }) {
     const record = await wrapDesk({ ...keypair, token: null }, fp, pass);
     setBusy(false);
     setWrapped(record);
-    const url = URL.createObjectURL(new Blob([backupJson(record)], { type: "application/json" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = BACKUP_FILENAME;
-    a.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBackup(record);
   }
 
   async function onContinue() {

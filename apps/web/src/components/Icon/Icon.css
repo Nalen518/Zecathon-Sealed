@@ -27,3 +27,6 @@
 .icon-external { mask-image: url("./svg/external.svg"); }
 .icon-alert { mask-image: url("./svg/alert.svg"); }
 .icon-info { mask-image: url("./svg/info.svg"); }
+.icon-lock { mask-image: url("./svg/lock.svg"); }
+.icon-coin { mask-image: url("./svg/coin.svg"); }
+.icon-eye-off { mask-image: url("./svg/eye-off.svg"); }

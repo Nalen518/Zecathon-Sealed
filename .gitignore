@@ -5,6 +5,7 @@ node_modules/
 # build output and caches
 dist/
 dist-e2e/
+dist-local/
 build/
 out/
 .next/
