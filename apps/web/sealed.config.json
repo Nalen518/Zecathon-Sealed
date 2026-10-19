@@ -2,7 +2,7 @@
   "network": "test",
   "inbox_id": "desk",
   "name": "Sealed",
-  "api_base_url": "",
+  "api_base_url": "https://zecathon-sealed-production.up.railway.app/v1",
   "desk_public_key": "",
   "fingerprint": "",
   "address": "",
