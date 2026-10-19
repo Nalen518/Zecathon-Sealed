@@ -78,7 +78,10 @@ export function JudgeBox({ config }: { config: SealedConfig }) {
       <ol className="judge-steps">
         <li>
           <span className="text-mono-label judge-step-number">01</span>
-          <span className="text-body-default">Write a tip on this page. Pay with testnet ZEC from the faucet.</span>
+          <span className="text-body-default">
+            Write and seal a tip on this page. Paying on testnet needs a testnet wallet, so tips are already waiting in
+            the demo desk.
+          </span>
         </li>
         <li>
           <span className="text-mono-label judge-step-number">02</span>
@@ -89,7 +92,7 @@ export function JudgeBox({ config }: { config: SealedConfig }) {
         <li>
           <span className="text-mono-label judge-step-number">03</span>
           <span className="text-body-default">
-            Watch your tip arrive and open it. Then check its entry in the audit trail.
+            Open the waiting tips in your browser. Then check their entries in the audit trail.
           </span>
         </li>
       </ol>

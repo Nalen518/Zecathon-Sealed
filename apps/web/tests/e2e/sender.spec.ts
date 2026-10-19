@@ -172,6 +172,32 @@ test.describe("Sender flow", () => {
 });
 
 test.describe("Sender screens", () => {
+  test("D-95: Show a larger code opens the same payment code at a scannable size and Escape closes it", async ({ page }, info) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/write");
+    await page.getByLabel("Your tip", { exact: true }).fill("A tip");
+    await page.getByRole("button", { name: "Seal and continue" }).click();
+    await expect(page.getByRole("heading", { name: "Pay from your wallet" })).toBeVisible();
+    const small = page.getByRole("img", { name: /^Payment request: .*memo$/ });
+    const smallPath = await small.locator("path").getAttribute("d");
+
+    await page.getByRole("button", { name: "Show a larger code" }).click();
+    const dialog = page.getByRole("dialog", { name: "Scan with your Zcash wallet" });
+    await expect(dialog).toBeVisible();
+    const large = dialog.getByRole("img", { name: /, larger$/ });
+    // The same code, only drawn bigger.
+    expect(await large.locator("path").getAttribute("d")).toBe(smallPath);
+    const width = await large.evaluate((el) => el.getBoundingClientRect().width);
+    if (info.project.name === "desktop") expect(width).toBeGreaterThanOrEqual(480);
+    await checkScreen(page, "sender-pay-larger-code", info.project.name);
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/pay$/);
+    await expect(page.getByRole("button", { name: "Show a larger code" })).toBeFocused();
+  });
+
   test("Write, Pay, Sent and the Safety check pass axe and have no horizontal scroll", async ({ page }, info) => {
     // Five axe scans in one test: slow when the suite runs in parallel.
     test.setTimeout(90_000);

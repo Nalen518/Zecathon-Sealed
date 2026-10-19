@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon/lock">
+<path d="M14 9H6C5.17157 9 4.5 9.67157 4.5 10.5V15C4.5 15.8284 5.17157 16.5 6 16.5H14C14.8284 16.5 15.5 15.8284 15.5 15V10.5C15.5 9.67157 14.8284 9 14 9Z" stroke="#141414" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 9V6.5C7 4.84315 8.34315 3.5 10 3.5C11.6569 3.5 13 4.84315 13 6.5V9" stroke="#141414" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

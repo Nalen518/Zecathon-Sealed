@@ -1,0 +1,11 @@
+/* Figma: Components / Chip (87:96). Fully rounded, 1 px border-inverse, padding 8 and 16, 8 px icon gap. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: var(--border-width-default) solid var(--color-border-inverse);
+  border-radius: var(--radius-full);
+  color: var(--color-text-inverse-secondary);
+  text-align: left;
+}
