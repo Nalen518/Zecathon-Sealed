@@ -65,6 +65,14 @@ keystore/
 # desk backups, including the judge kit (docs/desk-entry-and-judge-kit.md §6)
 sealed-desk-backup*.json
 
+# Sealed databases: the encrypted viewing key, tips and audit log never go in git
+*.db
+*.db-shm
+*.db-wal
+
+# age-encrypted wallet keys from the test tools
+*.age
+
 # tool caches
 .eslintcache
 

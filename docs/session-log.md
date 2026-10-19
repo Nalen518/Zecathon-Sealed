@@ -156,6 +156,13 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** See §3 of that file.
 **Next:** Real testnet desk for the live page, then the judge kit.
 
+## 2026-10-14 (backend, items 1, 2, 7, 8)
+
+**Done:** Contract C-25 written on `feat/contract-c25` (B-34, frontend D-94). On `feat/watcher-build`: `cargo deny` added (B-36), `rustls` 0.23.45 to 0.23.46 for RUSTSEC-2026-0346 to 0349, `.env.example` with every contract §8 variable and testnet on one server (B-35). Dockerfile, `.dockerignore` and `railway.json` written, not committed. T-6, T-8, T-9 and T-11 passed on NU7 testnet against a local `sealed`.
+**Findings:** `cargo deny` caught four `rustls` advisories on its first run, fixed by a release from the same day. Docker Desktop is installed but its engine was not running, so the image is not built yet. With only `testnet.zec.rocks` configured, health reads 1 of 1 and the WATCHER BEHIND warning is gone.
+**Decisions:** B-34, B-35, B-36, BF-20.
+**Open:** @Apa's call on the Dockerfile (keep and test locally, keep untested, or drop for Railway auto-detect). Push and merge `feat/contract-c25` and `feat/watcher-build`. Railway and Vercel near the deadline.
+
 ## 2026-10-18
 
 **Done:** On `feat/web-hero-centered` off `development` (worktree `D:\ZECathon-web-links`): centered hero and the memo grid band from docs/hero-centered.md (D-98, F-33). The spec is committed with the work. e2e: band 1040 × 127 px at 1280 with the caption row above, Default shape at 360, label unchanged, reduced motion shows the sealed band, the loop still types on the band.
