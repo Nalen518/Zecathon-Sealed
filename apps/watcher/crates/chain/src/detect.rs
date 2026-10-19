@@ -46,6 +46,20 @@ pub trait Detector: Send {
     fn received(&self, raw_tx: &[u8], height: u32) -> Result<Vec<Received>, DetectError>;
 }
 
+/// Used while no inbox exists, or its viewing key cannot be opened. A step without an inbox
+/// stops before scanning, so this only runs when an inbox exists: it fails the step there, so the
+/// scan position never moves past blocks nobody checked for tips.
+pub struct NoKey;
+
+impl Detector for NoKey {
+    fn matches(&self, _: &CompactBlock) -> Result<Vec<[u8; 32]>, DetectError> {
+        Err(DetectError::Key)
+    }
+    fn received(&self, _: &[u8], _: u32) -> Result<Vec<Received>, DetectError> {
+        Err(DetectError::Key)
+    }
+}
+
 /// The real detector, built from the inbox's decrypted viewing key.
 pub struct ViewingKeyDetector {
     network: Network,
