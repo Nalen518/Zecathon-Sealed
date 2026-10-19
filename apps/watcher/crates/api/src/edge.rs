@@ -46,6 +46,8 @@ const SETUP: Bucket = Bucket {
     per_second: 1.0 / 6.0,
 };
 
+const MAX_BUCKETS: usize = 50_000;
+
 #[derive(Default)]
 pub struct Limiter {
     buckets: HashMap<String, (f64, Instant)>,
@@ -54,9 +56,13 @@ pub struct Limiter {
 impl Limiter {
     /// Takes one request from `key`'s bucket, or returns the seconds until one is free.
     fn take(&mut self, key: String, b: Bucket, now: Instant) -> Result<(), u64> {
-        if self.buckets.len() > 50_000 {
+        if self.buckets.len() > MAX_BUCKETS {
             self.buckets
                 .retain(|_, (_, at)| now.duration_since(*at) < Duration::from_secs(600));
+            // Still full means a flood of fresh keys: start over rather than scan this on every request.
+            if self.buckets.len() > MAX_BUCKETS {
+                self.buckets.clear();
+            }
         }
         let (tokens, at) = self.buckets.entry(key).or_insert((b.capacity, now));
         *tokens = (*tokens + now.duration_since(*at).as_secs_f64() * b.per_second).min(b.capacity);
@@ -84,17 +90,19 @@ fn client_key(headers: &HeaderMap, peer: Option<SocketAddr>) -> String {
         .unwrap_or_else(|| "unknown".to_owned())
 }
 
-fn limit_key(headers: &HeaderMap, peer: Option<SocketAddr>) -> (String, Bucket) {
+/// The buckets a request takes from, in order. A request with a token is counted by token and
+/// by address (C-26), address first, so made-up tokens neither escape the limit nor fill memory.
+fn limit_keys(headers: &HeaderMap, peer: Option<SocketAddr>) -> Vec<(String, Bucket)> {
     let client = client_key(headers, peer);
     if headers.contains_key("x-setup-secret") {
-        return (format!("s:{client}"), SETUP);
+        return vec![(format!("s:{client}"), SETUP)];
     }
     if let Some(token) = crate::routes::bearer(headers) {
         let hash = crate::routes::token_hash(token);
         let id: String = hash[..8].iter().map(|b| format!("{b:02x}")).collect();
-        return (format!("d:{id}"), DESK);
+        return vec![(format!("a:{client}"), DESK), (format!("d:{id}"), DESK)];
     }
-    (format!("p:{client}"), PUBLIC)
+    vec![(format!("p:{client}"), PUBLIC)]
 }
 
 // ---------- Headers ----------
@@ -172,12 +180,16 @@ pub async fn edge(State(state): State<Arc<AppState>>, request: Request, next: Ne
         .extensions()
         .get::<ConnectInfo<SocketAddr>>()
         .map(|c| c.0);
-    let (key, bucket) = limit_key(request.headers(), peer);
-    let limited = state
-        .limiter
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .take(key, bucket, Instant::now());
+    let limited = {
+        let mut limiter = state
+            .limiter
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let now = Instant::now();
+        limit_keys(request.headers(), peer)
+            .into_iter()
+            .try_for_each(|(key, bucket)| limiter.take(key, bucket, now))
+    };
     let response = if let Err(seconds) = limited {
         ApiError::rate_limited(seconds).into_response()
     } else if request
@@ -227,6 +239,16 @@ mod tests {
             l.take("s:other".into(), SETUP, t0).is_ok(),
             "buckets are per key"
         );
+    }
+
+    #[test]
+    fn a_flood_of_fresh_keys_never_grows_the_limiter_past_its_cap() {
+        let mut l = Limiter::default();
+        let t0 = Instant::now();
+        for i in 0..=MAX_BUCKETS + 1 {
+            let _ = l.take(format!("d:{i}"), DESK, t0);
+        }
+        assert!(l.buckets.len() <= MAX_BUCKETS);
     }
 
     #[test]

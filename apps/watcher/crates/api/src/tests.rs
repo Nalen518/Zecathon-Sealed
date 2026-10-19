@@ -520,6 +520,26 @@ async fn rate_limited_with_retry_after() {
 }
 
 #[tokio::test]
+async fn made_up_tokens_from_one_address_are_still_rate_limited() {
+    let (app, _) = app(true);
+    let mut statuses = Vec::new();
+    for i in 0..121 {
+        let auth = format!("Bearer sld_madeup{i}");
+        let r = call(
+            &app,
+            Method::GET,
+            "/v1/inbox/desk/tips",
+            &[("authorization", auth.as_str())],
+            None,
+        )
+        .await;
+        statuses.push(r.status.as_u16());
+    }
+    assert!(statuses[..120].iter().all(|s| *s != 429));
+    assert_eq!(statuses[120], 429, "the address bucket (C-26) ran out");
+}
+
+#[tokio::test]
 async fn watcher_unavailable_when_no_tip_is_known_for_a_default_birthday() {
     let (app, _) = app(false);
     let r = call(&app, Method::POST, "/v1/inbox", &[S], Some(create_body())).await;
