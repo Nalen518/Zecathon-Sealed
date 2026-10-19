@@ -1,4 +1,5 @@
-/* Figma: Components / Memo grid (14:1238). Default 477 px wide (12 px cells), Compact 350 px (9 px cells). */
+/* Figma: Components / Memo grid (14:1238). Default 477 px wide (12 px cells), Compact 350 px (9 px cells),
+   Band 1040 px (64 columns, about 12.3 px cells, landing hero only). */
 .memo-grid-block {
   display: flex;
   flex-direction: column;
@@ -21,4 +22,18 @@
 
 .memo-grid-label {
   min-height: 20px;
+}
+
+.memo-grid-band,
+.memo-grid-band .memo-grid {
+  max-width: 1040px;
+}
+
+/* Band: label left and legend right on one caption row above the grid (critique HC-02). */
+.memo-grid-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-xs) var(--spacing-lg);
 }

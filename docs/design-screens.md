@@ -9,7 +9,7 @@ Look: palette A (ink + Zcash gold), Albert Sans / JetBrains Mono at 400 and 500 
 | Page | What is on it |
 |---|---|
 | Foundations | Color, type, spacing and layout tokens (variables), with code syntax `var(--…)` |
-| Components | Button (Primary, Secondary, Inverse, Nav, Danger), Icons (incl. info), Network badge, Site header (landing, Safety check), Flow header (Write and Pay: no section links, "Leave" asks to confirm), Desk header (lock button hidden on setup and Locked), Site footer (dot wordmark), Step, List item, Permission row, Callout (Info, Warning, Success), FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed × Default, Compact), Input, Textarea (Empty, Typing, At limit, Error), Checkbox, Radio option, Status badge (tip states only), Tag (free-text screen state), Text link (48 px hit area), Step indicator, Tip row, QR code, Audit header row, Audit row (Default, Broken), Envelope (Sender, Desk × Sealed, Open) |
+| Components | Button (Primary, Secondary, Inverse, Nav, Danger), Icons (incl. info), Network badge, Site header (landing, Safety check), Flow header (Write and Pay: no section links, "Leave" asks to confirm), Desk header (lock button hidden on setup and Locked), Site footer (dot wordmark), Step, List item, Permission row, Callout (Info, Warning, Success), FAQ item, Fingerprint (copy field), Memo grid (Empty, Writing, Full, Sealed × Default, Compact, Band), Chip (outline pill with an icon, D-99), Input, Textarea (Empty, Typing, At limit, Error), Checkbox, Radio option, Status badge (tip states only), Tag (free-text screen state), Text link (48 px hit area), Step indicator, Tip row, QR code, Audit header row, Audit row (Default, Broken), Envelope (Sender, Desk × Sealed, Open) |
 | Landing page | Landing — Desktop 1280 |
 | Sender screens | Write ×3, Pay ×2, Safety check ×2 |
 | Desk screens | Create inbox ×3, Inbox ×4, Decrypt ×2, Settings, Audit trail ×2, Desk — Restore |
@@ -22,7 +22,7 @@ Envelope (added Oct 14): component "Envelope" with Context=Sender/Desk and State
 
 | Frame | Shows | SRD |
 |---|---|---|
-| Landing — Desktop 1280 | Hero + memo grid, who it is for, three steps, Two sides block (#for-desks, "For desks" in the header) with the judge box on the testnet judging deploy, who can see what, questions, verify this page, footer | FR-6, FR-9, NFR-11 |
+| Landing — Desktop 1280 | Centered hero with three fact chips (D-99) and the memo grid band (64 columns, 32 below 860 px, D-98), who it is for, three steps, Two sides block (#for-desks, "For desks" in the header) with the judge box on the testnet judging deploy, who can see what, questions, verify this page, footer | FR-6, FR-9, NFR-11 |
 | Write — Default | Tip box with UTF-8 byte counter, memo grid at 127 bytes, desk key fingerprint to compare, Seal and continue | FR-1, FR-2, FR-6 |
 | Write — Empty | Button disabled, placeholder, hint | FR-1 |
 | Write — At limit | 331 / 331 bytes in red with icon + message, grid full | FR-1 |
