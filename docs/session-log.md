@@ -158,7 +158,7 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 
 ## 2026-10-14 (backend, items 1, 2, 7, 8)
 
-**Done:** Contract C-25 written on `feat/contract-c25` (B-34, frontend D-94). On `feat/watcher-build`: `cargo deny` added (B-36), `rustls` 0.23.45 to 0.23.46 for RUSTSEC-2026-0346 to 0349, `.env.example` with every contract §8 variable and testnet on one server (B-35). Dockerfile, `.dockerignore` and `railway.json` written, not committed. T-6, T-8, T-9 and T-11 passed on NU7 testnet against a local `sealed`.
+**Done:** Contract C-25 written on `feat/contract-c25` (B-34, frontend D-97). On `feat/watcher-build`: `cargo deny` added (B-36), `rustls` 0.23.45 to 0.23.46 for RUSTSEC-2026-0346 to 0349, `.env.example` with every contract §8 variable and testnet on one server (B-35). Dockerfile, `.dockerignore` and `railway.json` written, not committed. T-6, T-8, T-9 and T-11 passed on NU7 testnet against a local `sealed`.
 **Findings:** `cargo deny` caught four `rustls` advisories on its first run, fixed by a release from the same day. Docker Desktop is installed but its engine was not running, so the image is not built yet. With only `testnet.zec.rocks` configured, health reads 1 of 1 and the WATCHER BEHIND warning is gone.
 **Decisions:** B-34, B-35, B-36, BF-20.
 **Open:** @Apa's call on the Dockerfile (keep and test locally, keep untested, or drop for Railway auto-detect). Push and merge `feat/contract-c25` and `feat/watcher-build`. Railway and Vercel near the deadline.
@@ -186,3 +186,12 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** The ladder test in `zcash-devtool` (@Apa). Whether the demo uses mainnet so a phone wallet can scan the QR.
 **Judging plan:** testnet with 3 to 5 seeded tips (D-102). Judge box steps 01 and 03 updated, Figma first.
 **Next:** @Apa deploys the watcher (Railway, testnet, `SEALED_DEMO_INBOX_ID=desk`) and the frontend (Vercel), sends the seed tips with `zcash-devtool wallet pay`, rotates the token last, downloads the backup from Settings, then sets `demo_desk: true` and redeploys.
+
+## 2026-10-19 (backend, audit fixes, Docker, merges)
+
+**Done:** A full audit of the watcher found four issues, fixed on `fix/watcher-audit`: the keyless watcher no longer moves the scan position (B-37), token requests are also counted by address and the limiter is capped (B-38, contract C-26), a tip revived already confirmed logs `tip_confirmed` again (B-39), and `Retry-After` is exposed to the tip page (B-40, contract C-27). Dockerfile tested locally (option A, B-41). `.gitignore` now covers `*.db`, `*.db-shm`, `*.db-wal` and `*.age`. PR #14 (C-25) and PR #15 (build files) merged into development.
+**Findings:** The Docker test caught a fake `SEALED_DB_KEY` in `.env.example` that decoded to 31 bytes, so a copied example refused to start. A leak scan of every branch and the full git history found none of the 13 real local secrets (setup secret, DB key, passphrase, desk tokens, viewing keys, wallet keys), no private key and no email. The only IPs are test and localhost values. Before this, a database written inside the repo was not git-ignored.
+**Bugs and causes:** Lost tips when the viewing key could not be opened: the keyless detector matched nothing and the step still saved the scan position. Rate limits bypassed with made-up tokens: buckets were keyed by token only. Missing `tip_confirmed` on revival: two copies of the audit tail in `insert_tip`. Desk always told to wait 60 s: browsers hide `Retry-After` cross-origin unless exposed.
+**Decisions:** B-37 to B-41, contract C-26 and C-27.
+**Open:** Audit nice-to-haves: a huge `after_seq` gives 503 instead of 400, and the default birthday can read a server no longer configured. Railway and Vercel deploys (@Apa), including a check that the Railway edge puts the client address last in `X-Forwarded-For`. Judge kit after the deploys. O-B5.
+**Next:** Deploy the watcher on Railway with the merged Dockerfile and `.env.example`, then seed the demo desk (D-102).
