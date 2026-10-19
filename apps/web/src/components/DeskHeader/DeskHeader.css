@@ -1,0 +1,21 @@
+/* Figma: Components / Desk header (31:254). */
+.desk-header-nav a[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-position: from-font;
+}
+
+/* The desk needs its nav on narrow screens too: it wraps under the brand instead of hiding. */
+@media (max-width: 859px) {
+  .site-header-inner:has(.desk-header-right) {
+    flex-wrap: wrap;
+    padding-block: var(--spacing-xs);
+  }
+  .desk-header-right {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm) var(--spacing-md);
+  }
+  .site-header-nav.desk-header-nav {
+    display: flex;
+    gap: var(--spacing-md);
+  }
+}

@@ -1,0 +1,82 @@
+/* App screens (Write, Pay, Sent, Safety check, desk screens): subtle page, 64 px top, 96 px bottom,
+   32 px between blocks, 1040 content width (rules §4.8, Figma "Main" frames). */
+.app-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-bg-subtle);
+}
+
+.app-main {
+  flex: 1 0 auto;
+  padding-block: var(--spacing-3xl) var(--spacing-4xl);
+}
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-xl);
+}
+
+.app-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-width: 720px;
+}
+
+.app-heading .lead,
+.app-heading .eyebrow {
+  color: var(--color-text-secondary);
+}
+
+/* White card with a border (Key check, Copy fallback, Done card, Why we ask). */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+
+/* Ink panel (Memo panel, Before you confirm). */
+.ink-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+
+.ink-panel .eyebrow,
+.ink-panel .note {
+  color: var(--color-text-inverse-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}
+
+.desk-key-checking {
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 859px) {
+  .app-main {
+    padding-block: var(--spacing-2xl) var(--layout-section-pad-mobile);
+  }
+}

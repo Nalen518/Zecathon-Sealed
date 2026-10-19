@@ -1,0 +1,86 @@
+/* Figma: Components / Button (5:105). Height 48, Nav 44 (rules §6.2). */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 48px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: var(--border-width-default) solid transparent;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}
+
+/* Primary: main action on light */
+.button-primary {
+  background: var(--color-action-primary);
+  color: var(--color-action-on-primary);
+}
+.button-primary:hover:not(:disabled) {
+  background: var(--color-action-primary-hover);
+}
+
+/* Secondary: outlined alternative action */
+.button-secondary {
+  background: transparent;
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+}
+.button-secondary:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+}
+.button-secondary:disabled {
+  border-color: var(--color-border-default);
+  color: var(--color-action-on-disabled);
+}
+
+/* Inverse: main action on ink */
+.button-inverse {
+  background: var(--color-action-inverse);
+  color: var(--color-action-on-inverse);
+}
+.button-inverse:hover:not(:disabled) {
+  background: var(--color-action-inverse-hover);
+}
+.button-inverse:disabled {
+  background: var(--color-bg-inverse-raised);
+  color: var(--color-text-inverse-secondary);
+}
+
+/* Nav: JetBrains Mono outlined button in the ink header */
+.button-nav {
+  min-height: 44px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border-color: var(--color-text-inverse-secondary);
+  color: var(--color-text-inverse);
+}
+.button-nav:hover:not(:disabled) {
+  background: var(--color-bg-inverse-raised);
+}
+.button-nav:disabled {
+  background: var(--color-bg-inverse-raised);
+  border-color: var(--color-border-inverse);
+  color: var(--color-text-inverse-secondary);
+}
+
+/* Danger: destructive action, only after a typed confirmation (D-14) */
+.button-danger {
+  background: var(--color-action-danger);
+  color: var(--color-action-on-danger);
+}
+.button-danger:hover:not(:disabled) {
+  background: var(--color-action-danger-hover);
+}
+
+.button-primary:disabled,
+.button-danger:disabled {
+  background: var(--color-action-disabled);
+  color: var(--color-action-on-disabled);
+}

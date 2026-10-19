@@ -1,0 +1,27 @@
+/* Figma: Components / Step (10:26). */
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-lg);
+  min-width: 0;
+}
+
+/* The Figma top rule, drawn as a line so the landing motion can scale it in (D-67). Full width by default. */
+.step::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--border-width-default);
+  background: var(--color-border-strong);
+  transform: scaleX(var(--rule-scale, 1));
+  transform-origin: left center;
+}
+
+.step-number,
+.step-body {
+  color: var(--color-text-secondary);
+}

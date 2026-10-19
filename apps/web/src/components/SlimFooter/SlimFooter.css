@@ -1,0 +1,5 @@
+.slim-footer {
+  padding-block: var(--spacing-lg);
+  background: var(--color-bg-inverse-deep);
+  color: var(--color-text-inverse-secondary);
+}

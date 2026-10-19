@@ -4,6 +4,8 @@ node_modules/
 
 # build output and caches
 dist/
+dist-e2e/
+dist-local/
 build/
 out/
 .next/
@@ -24,10 +26,13 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# tests
+# tests (outputs only, the tests themselves are committed)
 coverage/
 test-results/
 playwright-report/
+blob-report/
+playwright/.cache/
+apps/web/tests/shots/
 
 # OS and editors
 .DS_Store
@@ -57,5 +62,19 @@ packages/contracts/broadcast/
 *.key
 keystore/
 
+# desk backups, including the judge kit (docs/desk-entry-and-judge-kit.md §6)
+sealed-desk-backup*.json
+
+# Sealed databases: the encrypted viewing key, tips and audit log never go in git
+*.db
+*.db-shm
+*.db-wal
+
+# age-encrypted wallet keys from the test tools
+*.age
+
 # tool caches
 .eslintcache
+
+# rust build output
+target/

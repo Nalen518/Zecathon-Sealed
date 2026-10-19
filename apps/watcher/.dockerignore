@@ -1,0 +1,7 @@
+target
+spikes
+.env
+.env.*
+!.env.example
+*.db
+*.db-*

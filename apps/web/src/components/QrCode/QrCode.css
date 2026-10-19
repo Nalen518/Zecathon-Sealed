@@ -1,0 +1,76 @@
+/* Figma: Components / QR code (19:64). 320 px code inside a 16 px padded white card. */
+.qr-code {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  width: 100%;
+  max-width: calc(320px + 2 * var(--spacing-md) + 2 * var(--border-width-default));
+  padding: var(--spacing-md);
+  margin: 0;
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+.qr-code-image {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+/* The code is always dark on white, whatever the page around it. */
+.qr-code-light {
+  fill: var(--neutral-0);
+}
+
+.qr-code-dark {
+  fill: var(--neutral-900);
+}
+
+/* Caption and the larger-code link are centered under the code (Figma QR code 19:64). */
+.qr-code-caption {
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* "Show a larger code" (D-95): a text-link styled button under the caption. */
+.qr-code-zoom {
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* The same code up to 560 px on a white dialog, for scanning off a laptop screen. Escape closes it. */
+.qr-code-dialog {
+  width: min(560px + 2 * var(--spacing-lg), calc(100% - 2 * var(--layout-page-margin-mobile)));
+  max-height: calc(100% - 2 * var(--layout-page-margin-mobile));
+  padding: var(--spacing-lg);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--neutral-0);
+  color: var(--color-text-primary);
+}
+
+.qr-code-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.qr-code-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-bg-inverse-deep) 60%, transparent);
+}
+
+.qr-code-large {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 220px);
+  height: auto;
+  aspect-ratio: 1;
+  margin-inline: auto;
+}

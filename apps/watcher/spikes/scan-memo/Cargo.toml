@@ -1,0 +1,19 @@
+# Spike 2 (PRD section 8): throwaway. Kept out of the watcher workspace and the Docker image.
+# Proves that the pinned librustzcash crates read a testnet memo from an Ironwood output with a
+# view-only key and no wallet database (backend decision B-08).
+[package]
+name = "scan-memo"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Standalone: not part of any workspace.
+[workspace]
+
+[dependencies]
+tokio = { version = "=1.53.2", features = ["macros", "rt-multi-thread"] }
+tonic = { version = "=0.14.6", features = ["tls-ring", "tls-webpki-roots", "transport"] }
+zcash_client_backend = { version = "=0.25.0-pre.1", features = ["lightwalletd-tonic", "lightwalletd-tonic-tls-webpki-roots", "lightwalletd-tonic-transport", "orchard"] }
+zcash_keys = { version = "=0.17.0-pre.1", features = ["orchard", "sapling"] }
+zcash_primitives = "=0.31.0-pre.1"
+zcash_protocol = "=0.11.0-pre.0"

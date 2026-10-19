@@ -1,0 +1,7 @@
+/* Prompt and link on one line at Body/Small (Figma Text link Size=Small, critique DC-03), wrapping only on narrow screens. */
+.outbound-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--spacing-xs);
+}

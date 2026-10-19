@@ -1,0 +1,244 @@
+/* Figma: Landing page / "Landing — Desktop 1280" (11:2). Sections 96 px apart (rules §4.8). */
+
+.stack-2xl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xl);
+}
+
+/* Hero (11:24): centered 760 px text stack, then the memo grid band across the content width (docs/hero-centered.md). */
+.hero {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+  padding-top: var(--spacing-3xl);
+  padding-bottom: var(--spacing-4xl);
+}
+
+.hero-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2xl);
+}
+
+/* The text is 760 px wide and centered. The chip row may run wider, up to the content width, so it stays on one line. */
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.hero-text h1 {
+  max-width: 760px;
+  text-wrap: balance;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-lead {
+  max-width: 600px;
+}
+
+.hero-eyebrow,
+.hero-lead {
+  color: var(--color-text-inverse-secondary);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+/* Who it is for (11:50) */
+.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-2xl);
+}
+
+/* How it works (11:91) */
+.how {
+  background: var(--color-bg-subtle);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+/* Two sides (70:7213), anchor #for-desks: a 1 px divider and 48 px above it, after the 48 px section gap (96 in all). */
+.two-sides {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding-top: var(--spacing-2xl);
+  border-top: var(--border-width-default) solid var(--color-border-default);
+}
+
+/* Focus moves here from the "For desks" link. The heading is not a control, so it shows no ring. */
+.two-sides h2:focus {
+  outline: none;
+}
+
+.two-sides-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+/* Equal height cards with the actions at the bottom. */
+.side-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+
+.side-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-top: auto;
+}
+
+/* Judge box (70:7242). A dashed border-strong outline means testnet only (rules §4.10). */
+.judge-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: var(--color-bg-page);
+  border: var(--border-width-default) dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.judge-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.judge-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.judge-step-number,
+.judge-note {
+  color: var(--color-text-secondary);
+}
+
+.judge-links {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--spacing-lg);
+}
+
+@media (max-width: 859px) {
+  .two-sides-cards,
+  .judge-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .side-card,
+  .judge-box {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* What it protects (11:109) */
+.permission-panel {
+  overflow: hidden;
+  background: var(--color-bg-inverse);
+  border-radius: var(--radius-lg);
+}
+
+.permission-panel-header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: var(--border-width-default) solid var(--color-border-inverse);
+  color: var(--color-text-inverse-secondary);
+}
+
+/* Questions (11:165) */
+.questions {
+  background: var(--color-bg-subtle);
+}
+
+.questions-columns {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+/* Verify this page (11:210) */
+.verify-columns {
+  display: grid;
+  grid-template-columns: 480px minmax(0, 1fr);
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+.verify-heading .lead a {
+  color: var(--color-text-primary);
+}
+
+.verify-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.verify-checking {
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* Below 860 px every column stacks to one (rules §4.9). */
+@media (max-width: 859px) {
+  .hero {
+    padding-block: var(--layout-section-pad-mobile);
+  }
+  .two-columns,
+  .steps,
+  .questions-columns,
+  .verify-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .questions-columns,
+  .verify-columns {
+    gap: var(--spacing-2xl);
+  }
+}

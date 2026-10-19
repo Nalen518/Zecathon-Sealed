@@ -1,0 +1,16 @@
+{
+  "name": "sealed",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @sealed/web dev",
+    "build": "pnpm --filter @sealed/web build",
+    "preview": "pnpm --filter @sealed/web preview",
+    "typecheck": "pnpm --filter @sealed/web typecheck",
+    "test": "pnpm --filter @sealed/web test",
+    "test:e2e": "pnpm --filter @sealed/web test:e2e"
+  }
+}

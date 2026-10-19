@@ -1,0 +1,35 @@
+/* Figma: Sender screens / Pay — Sent, "Done card" (22:2412): 720 wide, 32 px padding, 24 px gap. */
+.sent-card {
+  max-width: 720px;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.sent-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin: 0;
+}
+
+.sent-items > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+}
+
+.sent-items dd {
+  margin: 0;
+}
+
+@media (max-width: 859px) {
+  .sent-card {
+    padding: var(--spacing-lg);
+  }
+}
+
+.sent-envelope {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}

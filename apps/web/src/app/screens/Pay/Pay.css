@@ -1,0 +1,96 @@
+/* Figma: Sender screens / Pay — Default (22:1732). Left 592, panel 400, gap 48. */
+.pay-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--spacing-2xl);
+  align-items: start;
+}
+
+.pay-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.pay-qr-and-link {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: flex-start;
+}
+
+.pay-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.pay-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.pay-checks li {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+}
+
+.pay-checks .icon {
+  margin-top: var(--spacing-2xs);
+}
+
+.pay-callout {
+  max-width: 720px;
+}
+
+@media (max-width: 1080px) {
+  .pay-qr-and-link {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 859px) {
+  .pay-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Figma: Pay — Default right column (400): "What the chain will see", the envelope, then the checks. */
+.pay-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.pay-chain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.pay-envelope {
+  position: relative;
+}
+
+/* The sealed grid from Write, shrinking into the envelope during the seal moment (D-70). */
+.pay-seal-ghost {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pay-seal-ghost .memo-grid-label,
+.pay-seal-ghost .memo-grid-legend {
+  display: none;
+}
+
+.app-heading h1:focus {
+  outline: none;
+}

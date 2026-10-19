@@ -1,0 +1,21 @@
+{
+  "algorithm": "upper_hex(BLAKE2b-256(desk_public_key_bytes))[0..16]",
+  "source": "api-contract.md section 4.3, computed with Python hashlib.blake2b(digest_size=32), independent of the app code",
+  "vectors": [
+    {
+      "desk_public_key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "fingerprint": "CB2F5160FC1F7E05",
+      "display": "CB2F 5160 FC1F 7E05"
+    },
+    {
+      "desk_public_key": "//////////////////////////////////////////8=",
+      "fingerprint": "E2021160500F0119",
+      "display": "E202 1160 500F 0119"
+    },
+    {
+      "desk_public_key": "xTufYdXLDP70JQ2BagEriw2eRkw1NWj1SA5DkMKDyaw=",
+      "fingerprint": "A5FC4B17010290F5",
+      "display": "A5FC 4B17 0102 90F5"
+    }
+  ]
+}
