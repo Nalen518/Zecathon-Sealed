@@ -135,3 +135,54 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Open:** PR #7 merge (then tell the frontend session, which maps `demo_locked`). PR #2. A PR for the watcher branches. C-25, `cargo deny`, Dockerfile, Railway.
 **Next:** @Apa merges PR #7. Then push `feat/watcher-demo-lock` when asked.
 
+## 2026-10-14 (backup export)
+
+**Done:** On `feat/web-backup-export` off `development`: "Download backup file" in Settings exports the current record with the desk token (D-94). Figma Settings — Delete inbox has the new card. e2e test: register, download from Settings, the token is inside only in encrypted form, a wiped browser restores the file and lands in the Inbox with tips. 28 desk e2e checks pass.
+**Findings:** The only backup until now was made at Create inbox 1, before registration, so it had no token, and nothing exported a newer one. A judge kit would have stopped at "sign in again", which needs the setup secret. The Pay QR holds about 914 characters (a fixed 511 byte memo as base64url plus the address), which makes a version 21 code at level L with about 3 px per module at 320 px. It cannot get shorter without making memos different lengths.
+**Decisions:** D-94, F-31.
+**QR:** the scan was with a phone camera or Google Lens, which cannot use `zcash:` links, so "no usable data found" is expected. Added "Show a larger code" (D-95) and the link in the Figma QR code component. Caption and link now centered as in Figma.
+**Open:** Test the QR with a Zcash wallet scanner on a real testnet address. Judge kit export after the watcher runs on testnet.
+**Next:** Push `feat/web-backup-export` when @Apa asks.
+
+## 2026-10-14 (desk Leave)
+
+**Done:** On `feat/web-desk-leave` (on top of `feat/web-backup-export`): Leave in the Figma Desk header, then in code (D-96). 34 desk e2e checks pass.
+**Decisions:** D-96, F-32.
+**Next:** Push `feat/web-backup-export` and `feat/web-desk-leave` when @Apa asks. Then the real testnet payment path with the backend session.
+
+## 2026-10-14 (end of day)
+
+**Done:** Settings backup export, larger QR and desk Leave pushed and merged with this PR. Whole day summarised in `docs/session-summary-2026-10-14.md` (findings, done, not done, frontend and backend).
+**Open:** See §3 of that file.
+**Next:** Real testnet desk for the live page, then the judge kit.
+
+## 2026-10-14 (backend, items 1, 2, 7, 8)
+
+**Done:** Contract C-25 written on `feat/contract-c25` (B-34, frontend D-94). On `feat/watcher-build`: `cargo deny` added (B-36), `rustls` 0.23.45 to 0.23.46 for RUSTSEC-2026-0346 to 0349, `.env.example` with every contract §8 variable and testnet on one server (B-35). Dockerfile, `.dockerignore` and `railway.json` written, not committed. T-6, T-8, T-9 and T-11 passed on NU7 testnet against a local `sealed`.
+**Findings:** `cargo deny` caught four `rustls` advisories on its first run, fixed by a release from the same day. Docker Desktop is installed but its engine was not running, so the image is not built yet. With only `testnet.zec.rocks` configured, health reads 1 of 1 and the WATCHER BEHIND warning is gone.
+**Decisions:** B-34, B-35, B-36, BF-20.
+**Open:** @Apa's call on the Dockerfile (keep and test locally, keep untested, or drop for Railway auto-detect). Push and merge `feat/contract-c25` and `feat/watcher-build`. Railway and Vercel near the deadline.
+
+## 2026-10-18
+
+**Done:** On `feat/web-hero-centered` off `development` (worktree `D:\ZECathon-web-links`): centered hero and the memo grid band from docs/hero-centered.md (D-98, F-33). The spec is committed with the work. e2e: band 1040 × 127 px at 1280 with the caption row above, Default shape at 360, label unchanged, reduced motion shows the sealed band, the loop still types on the band.
+**Findings:** The canvas had a fixed 477 px max width in `motion.css`, so the first band render was 64 tiny columns in 477 px. The band now lifts that cap. The spec's acceptance list still says 1020 px, but critique HC-01 widened the band to 1040 px, which Figma shows, so the code follows 1040. The repo has no pixel baseline tests (no `toHaveScreenshot`), so there were no baselines to update. Write grids are pixel-identical before and after. The backend took D-97 on its local `feat/contract-c25`, so this work uses D-98.
+**Decisions:** D-98, F-33.
+**Chips (later the same day):** Hero meta line replaced by three icon chips. Figma first (Icon/lock, Icon/coin, Icon/eye-off, Chip component, Chips row), then code (D-99, F-34). Hero is 797 px in Figma. Chips stay on one line at 1280 and stack at 360 with no horizontal scroll.
+**Open:** Everything in §3 of docs/session-summary-2026-10-14.md. `D:\ZECathon\docs\hero-centered.md` is an untracked copy in the backend checkout and blocks checking out `development` there once this merges.
+**Next:** Push and merge when @Apa asks.
+
+## 2026-10-19
+
+**Done:** On `feat/web-pay-link` off `development`: docs/pay-in-wallet.md committed. Config refuses a placeholder address, unit test for an empty or placeholder address, development-only log of the Pay link length and QR version, rules test §1.11 aligned with the rule (D-100, F-35). 113 unit tests pass. Ladder links made for the testnet desk.
+**Findings:** Spec Q-5 answered: the Pay screen already builds the real ZIP 321 link and QR in the browser. Link lengths for the testnet desk: address only 188 characters (QR version 8), plus amount 201 (9), plus memo "hi" 210 (9), real sealed memo 889 (21). No Pay visual baseline exists to update.
+**Open:** The ladder test in the wallet (@Apa, zcash-devtool). Spec Q-3 and Q-4.
+**Next:** Ladder result, then push when @Apa asks.
+
+## 2026-10-19 (connect wallet)
+
+**Done:** Snap spike by desk check, recorded in pay-in-wallet §7 (D-101, F-36). Untracked `hero-centered.md` and `pay-in-wallet.md` copies in `D:\ZECathon\docs` deleted after checking they matched `development`. Local servers 4173, 4174, 5173 and 8787 running from the latest `development`.
+**Findings:** WebZjs Snap: `allowedOrigins` is only `https://webzjs.chainsafe.dev`, coin type 133 (mainnet). `zcash-devtool wallet pay --payment-uri` pays a ZIP 321 link directly. The "smaller font" was the mobile type scale in a 731 px pane.
+**Open:** The ladder test in `zcash-devtool` (@Apa). Whether the demo uses mainnet so a phone wallet can scan the QR.
+**Judging plan:** testnet with 3 to 5 seeded tips (D-102). Judge box steps 01 and 03 updated, Figma first.
+**Next:** @Apa deploys the watcher (Railway, testnet, `SEALED_DEMO_INBOX_ID=desk`) and the frontend (Vercel), sends the seed tips with `zcash-devtool wallet pay`, rotates the token last, downloads the backup from Settings, then sets `demo_desk: true` and redeploys.

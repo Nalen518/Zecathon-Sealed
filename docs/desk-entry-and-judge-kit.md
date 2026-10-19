@@ -44,9 +44,9 @@ No dashes or semicolons join phrases (D-17). Copy below is final unless @Apa cha
 
 **Judge box (testnet only)**
 - Tag `TESTNET ONLY`. Title `Judging Sealed? Try both sides.`
-- 01 `Write a tip on this page. Pay with testnet ZEC from the faucet.`
+- 01 `Write and seal a tip on this page. Paying on testnet needs a testnet wallet, so tips are already waiting in the demo desk.` (changed Oct 19, D-102)
 - 02 `Open the desk. Restore the demo desk with the judge kit from the submission notes.`
-- 03 `Watch your tip arrive and open it. Then check its entry in the audit trail.`
+- 03 `Open the waiting tips in your browser. Then check their entries in the audit trail.` (changed Oct 19, D-102)
 - Note: `The demo desk key is shared with judges, so anyone with the kit can read tips sent here. Do not send anything real.`
 - Links: `Get free TAZ from the faucet` (faucetUrl, new tab) and `Open the desk` (`/desk/restore`).
 

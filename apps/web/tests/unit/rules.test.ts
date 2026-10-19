@@ -30,7 +30,8 @@ describe("rules.md, checked in the source", () => {
     expect(offenders(/clipboard\.read/)).toEqual([]);
   });
   it("§1.11: no console logging in shipped code", () => {
-    expect(offenders(/\bconsole\.(log|info|warn|error|debug)\b/)).toEqual([]);
+    // Allowed only on a line guarded by import.meta.env.DEV, which the production build removes.
+    expect(offenders(/^(?!.*import\.meta\.env\.DEV).*\bconsole\.(log|info|warn|error|debug)\b/m)).toEqual([]);
   });
   it("§1.3: no inline style attributes (blocked by style-src 'self')", () => {
     expect(offenders(/\sstyle=\{\{/)).toEqual([]);
