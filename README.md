@@ -23,7 +23,9 @@ The parts that run only in the browser (writing, sealing, paying, decrypting, th
 
 ## Desk key fingerprint
 
-Not published yet. When the desk creates its inbox, its key fingerprint goes here, so sources can compare it with the one on the tip page before they send.
+The tip page at https://zecathon-sealed.vercel.app seals every tip to this desk key. Compare it with the fingerprint shown on the page before you send. If they differ, stop.
+
+**`7AC9 FA20 45DA 2D28`** (testnet demo desk)
 
 ## Run your own desk
 
