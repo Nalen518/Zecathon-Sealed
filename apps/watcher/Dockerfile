@@ -11,13 +11,15 @@ RUN cargo build --release --locked --package sealed-api --bin sealed
 
 # Runtime stage: only the binary. TLS roots are compiled in (webpki), so no system CA bundle is needed.
 FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
-RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin sealed \
+RUN groupadd --system --gid 10001 sealed \
+    && useradd --system --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin sealed \
     && mkdir /data \
     && chown sealed:sealed /data
 COPY --from=build /src/target/release/sealed /usr/local/bin/sealed
-USER sealed
 # The Railway volume is mounted at /data. Every other variable comes from contract §8.
 ENV SEALED_DB_PATH=/data/sealed.db \
     PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/sealed"]
+# Railway mounts volumes owned by root (B-42), so the container starts as root only to hand /data
+# to `sealed`, then drops to uid 10001 for good before the service starts. No secret is touched as root.
+ENTRYPOINT ["/bin/sh", "-c", "chown -R sealed:sealed /data && exec setpriv --reuid=10001 --regid=10001 --clear-groups --no-new-privs /usr/local/bin/sealed \"$@\"", "sealed"]
