@@ -82,6 +82,14 @@ Time box: 30 minutes, on a throwaway branch. Pass only if all three are true:
 
 If any one fails, stop and record the result in this file. Do not ship it. A connect flow that is untested must not appear in the demo video.
 
+**Result, Oct 19 (desk check, stopped before any code):** fails check 3, and most likely check 1.
+
+- The published `snap.manifest.json` (ChainSafe/WebZjs, `packages/snap`) sets `endowment:rpc` with `allowedOrigins: ["https://webzjs.chainsafe.dev"]`. MetaMask refuses calls from any other origin, so Sealed's page cannot connect to the Snap.
+- It asks only for `snap_getBip44Entropy` with coin type 133, which is Zcash mainnet. No testnet setting appears in the manifest.
+- Not shipped, as §7 requires. "Connect wallet" stays out of Sealed (PW-03 closed, PW-04 still rejected).
+
+**What does pay from a link today:** `zcash-devtool wallet pay --payment-uri "<link>"` builds a payment straight from a ZIP 321 link, so the exact link behind the QR and "Open in wallet" can be paid on the laptop. Phone wallets that read `zcash:` QR codes run on mainnet, and cannot pay the NU7 testnet (backend B-29).
+
 ## 8. Risks
 
 | Risk | Impact | Handling |

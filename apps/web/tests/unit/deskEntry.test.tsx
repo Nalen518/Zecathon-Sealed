@@ -61,6 +61,7 @@ describe("Judge box and restore callout", () => {
   it("render with demo_desk true on testnet", () => {
     const box = html(<JudgeBox config={config({ demo_desk: true })} />);
     expect(box).toContain("Judging Sealed? Try both sides.");
+    expect(box).toContain("tips are already waiting in the demo desk.");
     expect(box).toContain("Testnet only");
     expect(box).toContain('href="https://faucet.testnet.valargroup.dev/"');
     expect(box).toContain('rel="noopener noreferrer"');

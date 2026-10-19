@@ -171,3 +171,11 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Findings:** Spec Q-5 answered: the Pay screen already builds the real ZIP 321 link and QR in the browser. Link lengths for the testnet desk: address only 188 characters (QR version 8), plus amount 201 (9), plus memo "hi" 210 (9), real sealed memo 889 (21). No Pay visual baseline exists to update.
 **Open:** The ladder test in the wallet (@Apa, zcash-devtool). Spec Q-3 and Q-4.
 **Next:** Ladder result, then push when @Apa asks.
+
+## 2026-10-19 (connect wallet)
+
+**Done:** Snap spike by desk check, recorded in pay-in-wallet §7 (D-101, F-36). Untracked `hero-centered.md` and `pay-in-wallet.md` copies in `D:\ZECathon\docs` deleted after checking they matched `development`. Local servers 4173, 4174, 5173 and 8787 running from the latest `development`.
+**Findings:** WebZjs Snap: `allowedOrigins` is only `https://webzjs.chainsafe.dev`, coin type 133 (mainnet). `zcash-devtool wallet pay --payment-uri` pays a ZIP 321 link directly. The "smaller font" was the mobile type scale in a 731 px pane.
+**Open:** The ladder test in `zcash-devtool` (@Apa). Whether the demo uses mainnet so a phone wallet can scan the QR.
+**Judging plan:** testnet with 3 to 5 seeded tips (D-102). Judge box steps 01 and 03 updated, Figma first.
+**Next:** @Apa deploys the watcher (Railway, testnet, `SEALED_DEMO_INBOX_ID=desk`) and the frontend (Vercel), sends the seed tips with `zcash-devtool wallet pay`, rotates the token last, downloads the backup from Settings, then sets `demo_desk: true` and redeploys.
