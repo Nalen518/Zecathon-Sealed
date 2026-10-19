@@ -48,6 +48,12 @@ describe("T-2 ZIP 321 payment link", () => {
     expect(() => buildPaymentUri({ address: "tmBsTi2xWTjUdEXnuTceL7fecEQKeWaPDJd", amountZat: 100_000, memoBytes })).toThrow();
   });
 
+  it("refuses an empty or placeholder address", () => {
+    for (const address of ["", "[utest1… desk shielded address]", "utest1…"]) {
+      expect(() => buildPaymentUri({ address, amountZat: 100_000, memoBytes })).toThrow();
+    }
+  });
+
   it("refuses a memo over 512 bytes", () => {
     expect(() => buildPaymentUri({ address: ADDRESS.test, amountZat: 100_000, memoBytes: new Uint8Array(513).fill(65) })).toThrow();
   });
