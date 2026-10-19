@@ -37,6 +37,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 | C-24 | Judges share one testnet demo desk through a backup file that carries the desk token. The desk token alone can rotate itself and change the tip floor, so one judge could break every other judge's backup (401) or move tips below the floor | A demo inbox lock set by `SEALED_DEMO_INBOX_ID`: on that inbox, token issue and PATCH need the setup secret and otherwise return `403 demo_locked` (§5.5, §6.4, §6.7, §8). Testnet only (Oct 14) |
 | C-25 | The code and the contract differed in three places: C-18 said tip, audit and health routes never return 503, but a storage failure or a request over the 10 s limit has no other code. A transparent address could never reach check 9 ("no shielded receiver") because check 8 refused every non-unified address, and ZIP 316 gives every unified address a shielded receiver. `name` had no length rule | A storage failure or a request over 10 s answers `503 watcher_unavailable` on any route, health included (C-18 still holds for an unreachable chain). A transparent address fails check 9 with `422 address_not_shielded`, any other non-unified address fails check 8. `name` is 1 to 64 characters (check 2) (Oct 14) |
 | C-26 | Desk routes were limited by token only, so a caller could send a fresh made-up token with every request, get a full allowance each time, and fill the server memory with one bucket per token | A request with a token is also counted by IP, with the desk limit, checked before the token. Still never written to logs or the database (§3) (Oct 19) |
+| C-27 | `429` carries `Retry-After`, but a browser hides that header from a page on another origin unless the API exposes it, so the desk always fell back to a 60 second wait | `Access-Control-Expose-Headers: Retry-After` on every response to an allowed origin (§3) (Oct 19) |
 
 ## 2. Base
 
@@ -73,6 +74,7 @@ These came up when the 17 Figma screens were checked against the Architecture AP
 - `Access-Control-Allow-Headers: Authorization, Content-Type, X-Setup-Secret`
 - `Access-Control-Allow-Credentials` is not sent. The frontend uses `credentials: "omit"`.
 - `Access-Control-Max-Age: 600`
+- `Access-Control-Expose-Headers: Retry-After` on every response to an allowed origin, so the page can read the wait on a `429` (C-27).
 
 **CSP on the frontend** includes the API origin in `connect-src` and nothing else.
 
