@@ -177,3 +177,5 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Done:** Snap spike by desk check, recorded in pay-in-wallet §7 (D-101, F-36). Untracked `hero-centered.md` and `pay-in-wallet.md` copies in `D:\ZECathon\docs` deleted after checking they matched `development`. Local servers 4173, 4174, 5173 and 8787 running from the latest `development`.
 **Findings:** WebZjs Snap: `allowedOrigins` is only `https://webzjs.chainsafe.dev`, coin type 133 (mainnet). `zcash-devtool wallet pay --payment-uri` pays a ZIP 321 link directly. The "smaller font" was the mobile type scale in a 731 px pane.
 **Open:** The ladder test in `zcash-devtool` (@Apa). Whether the demo uses mainnet so a phone wallet can scan the QR.
+**Judging plan:** testnet with 3 to 5 seeded tips (D-102). Judge box steps 01 and 03 updated, Figma first.
+**Next:** @Apa deploys the watcher (Railway, testnet, `SEALED_DEMO_INBOX_ID=desk`) and the frontend (Vercel), sends the seed tips with `zcash-devtool wallet pay`, rotates the token last, downloads the backup from Settings, then sets `demo_desk: true` and redeploys.
