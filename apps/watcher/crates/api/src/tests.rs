@@ -507,7 +507,7 @@ async fn rate_limited_with_retry_after() {
                 &app,
                 Method::POST,
                 "/v1/inbox",
-                &[("x-setup-secret", "guess")],
+                &[("x-setup-secret", "guess"), ("origin", ORIGIN)],
                 Some(json!({})),
             )
             .await,
@@ -517,6 +517,8 @@ async fn rate_limited_with_retry_after() {
     assert_eq!((r.status.as_u16(), code(&r)), (429, "rate_limited"));
     let wait: u64 = r.headers["retry-after"].to_str().unwrap().parse().unwrap();
     assert!(wait >= 1);
+    // The tip page runs on another origin, so it can read the wait only if it is exposed.
+    assert_eq!(r.headers["access-control-expose-headers"], "Retry-After");
 }
 
 #[tokio::test]

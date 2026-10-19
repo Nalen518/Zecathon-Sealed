@@ -134,6 +134,11 @@ fn finish(mut response: Response, origin: Option<HeaderValue>) -> Response {
     h.insert(header::VARY, HeaderValue::from_static("Origin"));
     if let Some(origin) = origin {
         h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+        // Browsers hide non-standard headers cross-origin, so a 429 would show no real wait.
+        h.insert(
+            header::ACCESS_CONTROL_EXPOSE_HEADERS,
+            HeaderValue::from_static("Retry-After"),
+        );
     }
     response
 }
