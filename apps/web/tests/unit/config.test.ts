@@ -25,6 +25,10 @@ describe("sealed.config.json", () => {
     expect(bundled.ok).toBe(true);
   });
 
+  it("the shipped desk is ready: its fingerprint matches its key", async () => {
+    expect((await checkDesk(bundled)).kind).toBe("ready");
+  });
+
   it("an empty desk is not set up, not invalid", async () => {
     const status = await checkDesk(parseConfig(base));
     expect(status.kind).toBe("not_set_up");
