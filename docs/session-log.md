@@ -195,3 +195,9 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Decisions:** B-37 to B-41, contract C-26 and C-27.
 **Open:** Audit nice-to-haves: a huge `after_seq` gives 503 instead of 400, and the default birthday can read a server no longer configured. Railway and Vercel deploys (@Apa), including a check that the Railway edge puts the client address last in `X-Forwarded-For`. Judge kit after the deploys. O-B5.
 **Next:** Deploy the watcher on Railway with the merged Dockerfile and `.env.example`, then seed the demo desk (D-102).
+
+## 2026-10-20
+
+**Done:** Merged branches deleted after the backend session confirmed (only `main` and `development` remain). Railway service given its public domain. `api_base_url` and the CSP set to it (D-103). Release PR into `main` so Vercel and Railway deploy from it.
+**Findings:** Railway builds the watcher from `main`. Its health says the last chain check was Oct 19 17:38 UTC, a minute after its deploy, and none since, so the watcher loop looks stopped (told the backend session).
+**Open:** @Apa imports the repo in Vercel (Root Directory `apps/web`). Then `ALLOWED_ORIGINS` on Railway gets the Vercel URL, the desk is created on the live site, and its public values go into the config. Then the judge plan (D-102).
