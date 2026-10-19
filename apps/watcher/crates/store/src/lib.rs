@@ -336,65 +336,49 @@ impl Store {
             })
             .optional()?;
         let confirmations = t.confirmations.min(status::CONFIRMATIONS_CAP);
-        match state_now.as_deref() {
-            None => {}
+        let state = status::chain_state(confirmations);
+        let format_ok = match state_now.as_deref() {
+            None => {
+                let format_ok = memo::format_ok(t.memo);
+                let stored_memo = memo::memo_b64(t.memo).map(|_| t.memo.to_vec());
+                let seq = next_seq(&tx, id)?;
+                tx.execute(
+                    "INSERT INTO tip (id, inbox_id, seq, txid, output_index, height, block_time_at, seen_at,
+                        amount_zat, confirmations, chain_state, format_ok, memo)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                    params![
+                        tip,
+                        id,
+                        seq,
+                        t.txid,
+                        t.output_index,
+                        t.height,
+                        t.block_time_at,
+                        t.seen_at,
+                        t.amount_zat,
+                        confirmations,
+                        state.as_str(),
+                        format_ok,
+                        stored_memo
+                    ],
+                )?;
+                format_ok
+            }
             // Mined again on the new chain after a reorg: back to pending or confirmed at its new
             // height. The contract has no own event for this, so it is a new `tip_received`.
             Some("orphaned") => {
-                let state = status::chain_state(confirmations);
                 tx.execute(
                     "UPDATE tip SET height = ?2, block_time_at = ?3, confirmations = ?4, chain_state = ?5
                      WHERE id = ?1",
                     params![tip, t.height, t.block_time_at, confirmations, state.as_str()],
                 )?;
                 bump_seq(&tx, id, &tip)?;
-                let format_ok: bool =
-                    tx.query_row("SELECT format_ok FROM tip WHERE id = ?1", [&tip], |r| {
-                        r.get(0)
-                    })?;
-                append_audit(
-                    &tx,
-                    id,
-                    t.seen_at,
-                    Actor::Watcher,
-                    &Event::TipReceived {
-                        tip_id: tip.clone(),
-                        txid: t.txid.to_owned(),
-                        output_index: t.output_index.into(),
-                        amount_zat: t.amount_zat,
-                        height: t.height.into(),
-                        format_ok,
-                    },
-                )?;
-                tx.commit()?;
-                return Ok(Some(tip));
+                tx.query_row("SELECT format_ok FROM tip WHERE id = ?1", [&tip], |r| {
+                    r.get(0)
+                })?
             }
             Some(_) => return Ok(None),
-        }
-        let state = status::chain_state(confirmations);
-        let format_ok = memo::format_ok(t.memo);
-        let stored_memo = memo::memo_b64(t.memo).map(|_| t.memo.to_vec());
-        let seq = next_seq(&tx, id)?;
-        tx.execute(
-            "INSERT INTO tip (id, inbox_id, seq, txid, output_index, height, block_time_at, seen_at,
-                amount_zat, confirmations, chain_state, format_ok, memo)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-            params![
-                tip,
-                id,
-                seq,
-                t.txid,
-                t.output_index,
-                t.height,
-                t.block_time_at,
-                t.seen_at,
-                t.amount_zat,
-                confirmations,
-                state.as_str(),
-                format_ok,
-                stored_memo
-            ],
-        )?;
+        };
         append_audit(
             &tx,
             id,
