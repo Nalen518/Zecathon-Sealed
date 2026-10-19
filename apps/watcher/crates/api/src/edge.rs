@@ -76,17 +76,16 @@ impl Limiter {
     }
 }
 
-/// The client address as Railway's edge reports it: the last `X-Forwarded-For` hop, which the
-/// edge appends itself, else the socket peer. Used only as a bucket key in memory.
+/// The client address as Railway's edge reports it in `X-Real-IP` (B-43), else the socket peer.
+/// `X-Forwarded-For` is never read: Railway passes on what the client sent, so it can be faked.
+/// Used only as a bucket key in memory.
 fn client_key(headers: &HeaderMap, peer: Option<SocketAddr>) -> String {
-    let forwarded = headers
-        .get("x-forwarded-for")
+    let real = headers
+        .get("x-real-ip")
         .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.rsplit(',').next())
         .map(|v| v.trim().to_owned())
         .filter(|v| !v.is_empty());
-    forwarded
-        .or_else(|| peer.map(|p| p.ip().to_string()))
+    real.or_else(|| peer.map(|p| p.ip().to_string()))
         .unwrap_or_else(|| "unknown".to_owned())
 }
 
@@ -270,12 +269,15 @@ mod tests {
     }
 
     #[test]
-    fn the_client_key_is_the_last_forwarded_hop() {
+    fn the_client_key_is_railways_real_ip_and_ignores_forwarded_for() {
         let mut h = HeaderMap::new();
-        h.insert(
-            "x-forwarded-for",
-            HeaderValue::from_static("1.1.1.1, 2.2.2.2"),
+        h.insert("x-forwarded-for", HeaderValue::from_static("1.1.1.1"));
+        assert_eq!(
+            client_key(&h, None),
+            "unknown",
+            "a client-sent header is ignored"
         );
+        h.insert("x-real-ip", HeaderValue::from_static("2.2.2.2"));
         assert_eq!(client_key(&h, None), "2.2.2.2");
         assert_eq!(client_key(&HeaderMap::new(), None), "unknown");
     }
