@@ -164,3 +164,10 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 **Chips (later the same day):** Hero meta line replaced by three icon chips. Figma first (Icon/lock, Icon/coin, Icon/eye-off, Chip component, Chips row), then code (D-99, F-34). Hero is 797 px in Figma. Chips stay on one line at 1280 and stack at 360 with no horizontal scroll.
 **Open:** Everything in §3 of docs/session-summary-2026-10-14.md. `D:\ZECathon\docs\hero-centered.md` is an untracked copy in the backend checkout and blocks checking out `development` there once this merges.
 **Next:** Push and merge when @Apa asks.
+
+## 2026-10-19
+
+**Done:** On `feat/web-pay-link` off `development`: docs/pay-in-wallet.md committed. Config refuses a placeholder address, unit test for an empty or placeholder address, development-only log of the Pay link length and QR version, rules test §1.11 aligned with the rule (D-100, F-35). 113 unit tests pass. Ladder links made for the testnet desk.
+**Findings:** Spec Q-5 answered: the Pay screen already builds the real ZIP 321 link and QR in the browser. Link lengths for the testnet desk: address only 188 characters (QR version 8), plus amount 201 (9), plus memo "hi" 210 (9), real sealed memo 889 (21). No Pay visual baseline exists to update.
+**Open:** The ladder test in the wallet (@Apa, zcash-devtool). Spec Q-3 and Q-4.
+**Next:** Ladder result, then push when @Apa asks.

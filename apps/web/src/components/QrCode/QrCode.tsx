@@ -19,6 +19,8 @@ export function QrCode({ value, label }: { value: string; label: string }) {
     qr.addData(value, "Byte");
     qr.make();
     const count = qr.getModuleCount();
+    // Dev only: size, never the link itself (it holds the sealed memo). Vite drops this branch in production.
+    if (import.meta.env.DEV) console.debug(`Pay link: ${value.length} characters, QR version ${(count - 17) / 4}`);
     let d = "";
     for (let r = 0; r < count; r++) {
       for (let c = 0; c < count; c++) {

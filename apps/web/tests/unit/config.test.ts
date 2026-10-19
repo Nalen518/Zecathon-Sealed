@@ -44,6 +44,12 @@ describe("sealed.config.json", () => {
     expect(status.kind).toBe("invalid");
   });
 
+  it("rejects a placeholder address, so no page can build a link to it", () => {
+    for (const address of ["[utest1… desk shielded address]", "utest1…", "utest1 qqq"]) {
+      expect(parseConfig({ ...base, address }).ok).toBe(false);
+    }
+  });
+
   it("rejects a transparent address (rules §3.3)", () => {
     const r = parseConfig({ ...base, address: "tmBsTi2xWTjUdEXnuTceL7fecEQKeWaPDJd" });
     expect(r.ok).toBe(false);

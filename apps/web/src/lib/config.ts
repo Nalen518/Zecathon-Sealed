@@ -105,7 +105,10 @@ export function parseConfig(input: unknown): ConfigResult {
 
   const address = str(input, "address");
   if (address && (network === "test" || network === "main")) {
-    if (/^(t1|t3|tm|t2|tex1|textest1)/.test(address)) {
+    if (!/^[a-z0-9]+$/.test(address)) {
+      // A placeholder such as "[utest1… desk address]" must block every page, never reach the Pay link.
+      errors.push("address has characters a Zcash address cannot have. Is it still a placeholder?");
+    } else if (/^(t1|t3|tm|t2|tex1|textest1)/.test(address)) {
       errors.push("address is transparent. A memo needs a shielded address (rules §3.3)");
     } else if (!address.startsWith(ADDRESS_PREFIX[network])) {
       errors.push(`address must be a unified address starting with ${ADDRESS_PREFIX[network]} on ${network}`);
