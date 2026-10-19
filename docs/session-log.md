@@ -160,5 +160,5 @@ Keep entries short and factual. Link IDs instead of repeating the full text of a
 
 **Done:** On `feat/web-pay-link` off `development`: docs/pay-in-wallet.md committed. Config refuses a placeholder address, unit test for an empty or placeholder address, development-only log of the Pay link length and QR version, rules test §1.11 aligned with the rule (D-100, F-35). 113 unit tests pass. Ladder links made for the testnet desk.
 **Findings:** Spec Q-5 answered: the Pay screen already builds the real ZIP 321 link and QR in the browser. Link lengths for the testnet desk: address only 188 characters (QR version 8), plus amount 201 (9), plus memo "hi" 210 (9), real sealed memo 889 (21). No Pay visual baseline exists to update.
-**Open:** Canvas or the current SVG QR. The ladder test in the wallet (@Apa, zcash-devtool). Spec Q-3 and Q-4.
+**Open:** The ladder test in the wallet (@Apa, zcash-devtool). Spec Q-3 and Q-4.
 **Next:** Ladder result, then push when @Apa asks.
