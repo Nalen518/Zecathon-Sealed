@@ -9,7 +9,7 @@
   "rewrites": [
     {
       "source": "/((?!assets/|fonts/).*)",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ],
   "headers": [

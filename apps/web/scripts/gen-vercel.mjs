@@ -19,7 +19,8 @@ const vercel = {
   outputDirectory: "dist",
   cleanUrls: true,
   trailingSlash: false,
-  rewrites: [{ source: "/((?!assets/|fonts/).*)", destination: "/index.html" }],
+  // With cleanUrls, /index.html itself redirects to /, so app routes must rewrite to "/" or Vercel answers 404.
+  rewrites: [{ source: "/((?!assets/|fonts/).*)", destination: "/" }],
   headers: [
     { source: "/(.*)", headers: securityHeaders(config) },
     { source: "/((?!assets/|fonts/).*)", headers: documentHeaders },
