@@ -294,6 +294,33 @@ fn audit_is_valid(store: &Store) {
 // ---------- Tests ----------
 
 #[tokio::test]
+async fn without_a_usable_viewing_key_the_scan_position_never_moves() {
+    use crate::detect::NoKey;
+    let chain = Chain::new(10);
+    chain.put_tx(BASE + 2, txid(1));
+    let mut store = memory_store();
+    let (src, _) = FakeSource::new(A, &chain);
+    let mut w = Watcher::new(vec![src], NoKey, config(true));
+    assert!(w.step(&mut store, NOW).await.is_err());
+    assert_eq!(store.inbox("desk").unwrap().unwrap().scanned_height, BASE);
+    assert_eq!(store.block_hash(BASE).unwrap(), None);
+
+    // Once the key opens again, the tip in the skipped blocks is still found.
+    let (src, _) = FakeSource::new(A, &chain);
+    let det = FakeDetector::default().pays(txid(1), 0, 100_000, z1());
+    let mut w = Watcher::new(vec![src], det, config(true));
+    sync(&mut w, &mut store, 3).await;
+    assert_eq!(tips(&store).len(), 1);
+
+    // Before any inbox exists, the keyless watcher still records health and does not fail.
+    let mut empty = Store::open_in_memory(DbKey::new([3; 32])).unwrap();
+    let (src, _) = FakeSource::new(A, &chain);
+    let mut w = Watcher::new(vec![src], NoKey, config(true));
+    assert_eq!(w.step(&mut empty, NOW).await.unwrap(), Step::NoInbox);
+    assert_eq!(empty.sources().unwrap().len(), 1);
+}
+
+#[tokio::test]
 async fn syncs_from_the_birthday_and_stores_each_tip_once() {
     let chain = Chain::new(10);
     chain.put_tx(BASE, txid(1)); // in the birthday block itself

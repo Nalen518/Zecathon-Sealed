@@ -412,6 +412,35 @@ fn a_tip_mined_again_after_a_reorg_comes_back_from_orphaned() {
 }
 
 #[test]
+fn a_tip_that_comes_back_already_confirmed_logs_tip_confirmed_again() {
+    let mut s = store();
+    let memo = z1_memo();
+    s.insert_tip("desk", &tip(TXID_A, 4_497_105, 100_000, 5, &memo))
+        .unwrap();
+    s.orphan_above("desk", 4_497_100, T1).unwrap();
+    // A deep reorg, rescanned later: the tip is back with 5 confirmations at once.
+    s.insert_tip("desk", &tip(TXID_A, 4_497_107, 100_000, 5, &memo))
+        .unwrap();
+    let audit = audit_values(&s);
+    let types: Vec<&str> = audit
+        .iter()
+        .filter_map(|e| e["type"].as_str())
+        .filter(|t| t.starts_with("tip_"))
+        .collect();
+    assert_eq!(
+        types,
+        [
+            "tip_received",
+            "tip_confirmed",
+            "tip_orphaned",
+            "tip_received",
+            "tip_confirmed"
+        ]
+    );
+    assert_eq!(verify_chain(&audit), Ok(()));
+}
+
+#[test]
 fn oldest_block_tracks_the_kept_window() {
     let mut s = store();
     assert_eq!(s.oldest_block().unwrap(), None);

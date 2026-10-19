@@ -12,7 +12,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{get, post};
-use sealed_chain::detect::{CompactBlock, DetectError, Detector, Received, ViewingKeyDetector};
+use sealed_chain::detect::{NoKey, ViewingKeyDetector};
 use sealed_chain::source::Lightwalletd;
 use sealed_chain::watcher::{Step, Watcher, WatcherConfig};
 use sealed_core::chain::utc_text;
@@ -74,18 +74,6 @@ pub fn router(state: Arc<AppState>) -> Router {
             edge::edge,
         ))
         .with_state(state)
-}
-
-/// Used before any inbox exists: matches nothing, so a step only records source health.
-struct NoKey;
-
-impl Detector for NoKey {
-    fn matches(&self, _: &CompactBlock) -> Result<Vec<[u8; 32]>, DetectError> {
-        Ok(vec![])
-    }
-    fn received(&self, _: &[u8], _: u32) -> Result<Vec<Received>, DetectError> {
-        Ok(vec![])
-    }
 }
 
 enum Running {

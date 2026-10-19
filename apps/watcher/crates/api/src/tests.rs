@@ -507,7 +507,7 @@ async fn rate_limited_with_retry_after() {
                 &app,
                 Method::POST,
                 "/v1/inbox",
-                &[("x-setup-secret", "guess")],
+                &[("x-setup-secret", "guess"), ("origin", ORIGIN)],
                 Some(json!({})),
             )
             .await,
@@ -517,6 +517,28 @@ async fn rate_limited_with_retry_after() {
     assert_eq!((r.status.as_u16(), code(&r)), (429, "rate_limited"));
     let wait: u64 = r.headers["retry-after"].to_str().unwrap().parse().unwrap();
     assert!(wait >= 1);
+    // The tip page runs on another origin, so it can read the wait only if it is exposed.
+    assert_eq!(r.headers["access-control-expose-headers"], "Retry-After");
+}
+
+#[tokio::test]
+async fn made_up_tokens_from_one_address_are_still_rate_limited() {
+    let (app, _) = app(true);
+    let mut statuses = Vec::new();
+    for i in 0..121 {
+        let auth = format!("Bearer sld_madeup{i}");
+        let r = call(
+            &app,
+            Method::GET,
+            "/v1/inbox/desk/tips",
+            &[("authorization", auth.as_str())],
+            None,
+        )
+        .await;
+        statuses.push(r.status.as_u16());
+    }
+    assert!(statuses[..120].iter().all(|s| *s != 429));
+    assert_eq!(statuses[120], 429, "the address bucket (C-26) ran out");
 }
 
 #[tokio::test]
