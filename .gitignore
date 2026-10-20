@@ -78,3 +78,22 @@ sealed-desk-backup*.json
 
 # rust build output
 target/
+
+# Private working notes: our own process and rules, kept on disk, never published.
+# Public docs stay: the architecture and the API contract (the README links to it for self-hosting).
+CLAUDE.md
+.claude/
+demo-video-plan.md
+docs/*
+!docs/api-contract.md
+!docs/Architecture Shielded Tip Line (Zecathon, Wildcard).md
+
+# Secrets and wallets: never in the repo (grading allows no leaked data)
+*.age
+wallets/
+secrets/
+*.secret
+railway*.txt
+*token*.txt
+*passphrase*
+dbkey*

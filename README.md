@@ -46,7 +46,7 @@ Keep the backup file and passphrase apart, and never commit the backup file. Tes
 | `apps/web` | Frontend (Vite, React, TypeScript), deployed on Vercel |
 | `apps/watcher` | Rust watcher and Inbox API on librustzcash (crates `core`, `store`, `chain`, `api`), deployed on Railway |
 | `contracts/fixtures` | Shared JSON fixtures that both sides test against |
-| `docs` | PRD, SRD, architecture, API contract, design and frontend rules |
+| `docs` | The architecture and the API contract |
 
 ## Principles
 
