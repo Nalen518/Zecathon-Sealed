@@ -16,7 +16,7 @@ Sealed seals the tip in the source's browser with the desk's public key before a
 |---|---|
 | Tip page (testnet) | https://zecathon-sealed.vercel.app |
 | Desk | https://zecathon-sealed.vercel.app/desk |
-| Demo video (YouTube, unlisted, 1:48) | `TODO(@Apa): paste the YouTube link here and in the thumbnail below` |
+| Demo video (YouTube, unlisted, 1:48) | https://youtu.be/BvBu8b0EAfk |
 | Repository | https://github.com/Nalen518/Zecathon-Sealed |
 | Watcher health (public) | https://zecathon-sealed-production.up.railway.app/v1/health |
 
