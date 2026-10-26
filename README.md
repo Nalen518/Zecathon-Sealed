@@ -20,7 +20,7 @@ Sealed seals the tip in the source's browser with the desk's public key before a
 | Repository | https://github.com/Nalen518/Zecathon-Sealed |
 | Watcher health (public) | https://zecathon-sealed-production.up.railway.app/v1/health |
 
-[![Sealed demo video](media/demo-thumbnail.jpg)](https://youtu.be/TODO-APA-VIDEO-ID)
+[![Sealed demo video](https://youtu.be/BvBu8b0EAfk)
 
 | Network | Desk address | Desk key fingerprint |
 |---|---|---|
