@@ -20,8 +20,6 @@ Sealed seals the tip in the source's browser with the desk's public key before a
 | Repository | https://github.com/Nalen518/Zecathon-Sealed |
 | Watcher health (public) | https://zecathon-sealed-production.up.railway.app/v1/health |
 
-[![Sealed demo video](https://youtu.be/BvBu8b0EAfk)
-
 | Network | Desk address | Desk key fingerprint |
 |---|---|---|
 | Zcash testnet (NU7, Ironwood pool) | `utest1wwkx7c9ehn53hf88katulsk6uypz7mdsdjkn3cdq2fr6mmy4gmae9777v7glcqvxjpvs7fxqx5ad6p37w04y25dsq9qkumgc27mfaqemn3mq9zvf24xkza9gwxrp3c7kpxcflxxm97w46v0qxpyl5vx6hefe3zje4vq0s64rsqvtarhu` | **`7AC9 FA20 45DA 2D28`** |
