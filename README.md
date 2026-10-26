@@ -38,10 +38,10 @@ The tip page shows the same fingerprint before a source sends. If the two differ
    zcash-devtool wallet -w <wallet> pay --identity <wallet>.age --disable-confirmation --payment-uri "<link>"
    ```
    `--disable-confirmation` matters on Windows: without it, `pay` waits for an answer to a question it never prints.
-4. **Open the desk** at https://zecathon-sealed.vercel.app/desk and restore the demo desk with the judge kit (backup file and passphrase). The tip appears about 2 minutes after 3 confirmations. Open it: it is decrypted in your browser.
-5. **Check the audit trail.** Audit trail verifies the hash chain in your browser and shows the entry for your tip.
+4. **Check your payment on the explorer.** `pay` prints a transaction id. Look it up on the [testnet explorer](https://testnet.zecblock.com/): the transaction is fully shielded, and the amount and memo are encrypted.
+5. **See the desk side.** The tip reaches the desk about 2 minutes after 3 confirmations, and only the desk can open it. The [demo video](#live) shows the desk receiving and opening a tip (0:43), and the audit trail recording it.
 
-The judge kit is in the private submission notes, never in this repository. The demo desk key is shared with judges, so do not send anything real to it.
+There is no shared judge key. The desk key never leaves the newsroom's browser, so nobody outside the desk can open a tip, judges included. To open tips yourself, [run your own desk](#run-your-own-desk) on testnet.
 
 ## Who it is for
 
