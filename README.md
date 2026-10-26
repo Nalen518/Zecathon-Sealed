@@ -193,12 +193,6 @@ Rust tests live in `apps/watcher/crates/*/src/tests.rs`. Shared JSON fixtures in
 - **Who uses the tip page.** Visiting the page is visible to the network and the host, like any website.
 - **Timing.** The desk and the server see when a tip arrives.
 
-## Security notes
-
-- **Oct 21 2026, Railway.** `TODO(@Apa): what happened, what was exposed, what was rotated (desk token rotated Oct 21, audit trail entry #3) and when.`
-- **Oct 20 2026, client address.** The API first read the client address from `X-Forwarded-For`, which a client can spoof to dodge rate limits. It now trusts only the last `X-Real-IP` value, the one Railway's edge adds.
-- **Oct 20 2026, private notes.** Working notes, decisions and the judge kit were moved out of the repository. Only the architecture and the API contract are published.
-
 ## What comes next
 
 - A mainnet desk with two or more lightwalletd servers and the stable librustzcash crates.
